@@ -7,6 +7,8 @@ temp/
 local/
 logs/
 build/
+profiles/
+native/
 
 # OS / editor
 .DS_Store
