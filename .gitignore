@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# Cocos Creator generated
+library/
+temp/
+local/
+logs/
+build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# env
+.env
+.env.local
+
+# IMPORTANT:
+# Do NOT ignore *.meta files in Cocos Creator.
+# Cocos .meta files must be committed.
