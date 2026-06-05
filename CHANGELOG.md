@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 2026-06-05 006-enemy-wave-system 完成
+
+### Changed
+
+- 更新 `assets/scripts/battle/BattleSettlement.ts`：`recordKill()` 新增 `reward` 参数，累计敌人击杀奖励；新增 `_totalEnemyReward` 字段；`_calculateBattleCoinReward()` 改为基于累计敌人奖励 × 关卡倍率 × 胜负倍率计算。
+- 更新 `assets/scripts/battle/BattleManager.ts`：ENEMY_DEATH 监听中将 `data.reward` 传给 `BattleSettlement.recordKill()`。
+- 更新 `assets/scripts/battle/EnemySpawner.ts`：新增 `_waveStartedSet` 跟踪已开始波次；每波首次开始生成时触发 `STAGE_WAVE_START` 事件并更新 `_currentWaveIndex`；`clear()` 中清理 `_waveStartedSet`。
+- 更新 `docs/GAME_DESIGN.md`：新增第 15 节「敌人与波次系统」，包含模块职责、五种敌人属性表、波次配置设计、敌人行为、事件通信、验收标准。
+
+### Notes
+
+- 敌人奖励衔接已实现：EnemyController 死亡事件携带 reward → BattleManager 传递 → BattleSettlement 累计 → 结算时 battleCoinReward = 累计奖励 × 关卡倍率 × 胜负倍率。
+- 波次事件已修正：每波首次开始生成时触发 STAGE_WAVE_START，同步更新 _currentWaveIndex。
+- 配置驱动验证：敌人属性全部来自 EnemyConfig，波次配置来自 StageConfig，无硬编码数值。
+- 分裂无人机的分裂逻辑（死亡后生成小单位）当前未在 EnemyController 中实现，属于后续扩展点，不影响 MVP 波次系统验收。
+
 ## 2026-06-05 005-tower-system 完成
 
 ### Added

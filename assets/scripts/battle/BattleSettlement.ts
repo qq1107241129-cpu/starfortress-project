@@ -22,6 +22,7 @@ export class BattleSettlement {
     private _stageConfig: StageConfig;
     private _killCount: number = 0;
     private _bossKillCount: number = 0;
+    private _totalEnemyReward: number = 0;
     private _startTime: number = 0;
 
     constructor(stageConfig: StageConfig) {
@@ -34,14 +35,18 @@ export class BattleSettlement {
     reset(): void {
         this._killCount = 0;
         this._bossKillCount = 0;
+        this._totalEnemyReward = 0;
         this._startTime = Date.now();
     }
 
     /**
-     * 记录击杀
+     * 记录击杀，累计敌人奖励
+     * @param isBoss 是否为 Boss
+     * @param reward 该敌人配置的奖励值
      */
-    recordKill(isBoss: boolean): void {
+    recordKill(isBoss: boolean, reward: number): void {
         this._killCount++;
+        this._totalEnemyReward += reward;
         if (isBoss) {
             this._bossKillCount++;
         }
@@ -82,13 +87,13 @@ export class BattleSettlement {
 
     /**
      * 计算战斗金币奖励
+     * 基于敌人实际击杀奖励 × 关卡倍率 × 胜负倍率
      */
     private _calculateBattleCoinReward(result: 'victory' | 'defeat'): number {
-        const baseReward = 100; // 基础奖励
         const stageMultiplier = this._stageConfig.rewardMultiplier;
         const resultMultiplier = result === 'victory' ? 1.0 : 0.3; // 失败给 30%
 
-        const reward = Math.floor(baseReward * stageMultiplier * resultMultiplier);
+        const reward = Math.floor(this._totalEnemyReward * stageMultiplier * resultMultiplier);
         return reward;
     }
 

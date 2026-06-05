@@ -65,7 +65,7 @@ export class BattleManager {
         // 监听敌人死亡
         this._eventBus.on(BATTLE_EVENTS.ENEMY_DEATH, (data: { enemyId: string; reward: number; isBoss: boolean }) => {
             if (this._battleSettlement) {
-                this._battleSettlement.recordKill(data.isBoss);
+                this._battleSettlement.recordKill(data.isBoss, data.reward);
             }
         });
 

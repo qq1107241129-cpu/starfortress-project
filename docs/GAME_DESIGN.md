@@ -296,3 +296,64 @@ MVP 选项方向：
 4. 冰塔能减速。
 5. 电塔能链式攻击。
 6. 塔属性来自 TowerConfig 配置。
+
+## 15. 敌人与波次系统（006-enemy-wave-system）
+
+### 15.1 系统概述
+
+敌人与波次系统实现 MVP 5 种敌人和 10 关配置驱动波次。所有敌人属性来自 `EnemyConfig`，波次配置来自 `StageConfig`，无硬编码数值。Boss 在每关最后 30 秒出现。
+
+### 15.2 模块职责
+
+- **EnemySpawner**：敌人生成器。根据 `StageConfig.waves` 波次配置，按时间点生成敌人；在 `bossTime` 时间点生成 Boss。管理波次计时器、已生成数量计数、Boss 生成标记。
+- **EnemyController**：敌人控制器。控制单个敌人的行为：沿路径移动、受伤计算（含护甲）、死亡事件、到达基地事件、减速效果。所有属性从 `EnemyConfig` 读取。
+- **StageManager**：关卡管理器。加载关卡配置、初始化路径和基地状态。基地受伤时检测失败条件。
+
+### 15.3 五种 MVP 敌人
+
+| 敌人 | id | 类型 | 血量 | 速度 | 护甲 | 奖励 | 特殊 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 普通机械虫 | enemy_mech_bug | normal | 50 | 1.0 | 0 | 10 | 无 |
+| 快速突击虫 | enemy_fast_bug | fast | 30 | 2.0 | 0 | 15 | 无 |
+| 重甲机械兵 | enemy_heavy_mech | heavy | 200 | 0.5 | 20 | 50 | 无 |
+| 分裂无人机 | enemy_split_drone | split | 80 | 1.2 | 5 | 30 | splitCount=2 |
+| 小 Boss | enemy_boss | boss | 1000 | 0.3 | 30 | 200 | 无 |
+
+### 15.4 波次配置设计
+
+每关 180 秒，配置 4 波 + 1 个 Boss：
+
+- **波次结构**：`{ time, enemyId, count, interval }` — 起始时间、敌人类型、数量、生成间隔。
+- **Boss 出现**：每关 `bossTime = 150`（最后 30 秒），生成 `enemy_boss`。
+- **难度递增**：关卡 1→10 通过以下方式递增：
+  - 每波敌人数量增加（5→30）
+  - 生成间隔缩短（2.0→0.3 秒）
+  - 引入更强敌人类型（后期出现重甲、分裂）
+  - 奖励倍率递增（1.0→3.0）
+  - 基地生命值递增（100→200）
+
+### 15.5 敌人行为
+
+- 敌人沿固定路径移动，速度受减速效果影响。
+- 到达基地时造成 10 点基础伤害，触发 `ENEMY_REACH_BASE` 事件。
+- 死亡时触发 `ENEMY_DEATH` 事件，携带奖励信息。
+- 护甲减少伤害：`actualDamage = max(1, damage - armor)`。
+- 减速效果：`effectiveSpeed = speed × (1 - slowFactor)`。
+
+### 15.6 事件通信
+
+通过 `EventBus` 实现模块间通信：
+
+- `ENEMY_SPAWN`：敌人生成，携带 enemyId、configId、position。
+- `ENEMY_DEATH`：敌人死亡，携带 enemyId、reward、isBoss。
+- `ENEMY_REACH_BASE`：敌人到达基地，携带 damage。
+- `STAGE_WAVE_START`：波次开始，携带 waveIndex。
+- `STAGE_BOSS_SPAWN`：Boss 生成，携带 bossId。
+
+### 15.7 验收标准
+
+1. 关卡能按配置刷怪。
+2. 敌人属性来自配置。
+3. Boss 能在指定时间出现。
+4. 10 关有基础难度变化。
+5. 失败与胜利结算不受影响。

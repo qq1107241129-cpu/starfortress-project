@@ -16,6 +16,7 @@ export class EnemySpawner {
     private _currentWaveIndex: number = 0;
     private _waveSpawnTimers: Map<number, number> = new Map();
     private _waveSpawnedCounts: Map<number, number> = new Map();
+    private _waveStartedSet: Set<number> = new Set();
     private _bossSpawned: boolean = false;
 
     constructor(stageConfig: StageConfig, path: { x: number; y: number }[]) {
@@ -32,14 +33,13 @@ export class EnemySpawner {
         this._bossSpawned = false;
         this._waveSpawnTimers.clear();
         this._waveSpawnedCounts.clear();
+        this._waveStartedSet.clear();
 
         // 初始化波次计时器和已生成数量
         this._stageConfig.waves.forEach((wave, index) => {
             this._waveSpawnTimers.set(index, 0);
             this._waveSpawnedCounts.set(index, 0);
         });
-
-        this._eventBus.emit(BATTLE_EVENTS.STAGE_WAVE_START, { waveIndex: 0 });
     }
 
     /**
@@ -49,6 +49,12 @@ export class EnemySpawner {
         // 检查波次生成
         this._stageConfig.waves.forEach((wave, index) => {
             if (currentTime >= wave.time) {
+                // 每波首次开始生成时触发波次开始事件
+                if (!this._waveStartedSet.has(index)) {
+                    this._waveStartedSet.add(index);
+                    this._currentWaveIndex = index;
+                    this._eventBus.emit(BATTLE_EVENTS.STAGE_WAVE_START, { waveIndex: index });
+                }
                 this._spawnWaveIfNeeded(index, deltaTime);
             }
         });
@@ -181,6 +187,7 @@ export class EnemySpawner {
     clear(): void {
         this._enemies.clear();
         this._waveSpawnTimers.clear();
+        this._waveStartedSet.clear();
         this._bossSpawned = false;
     }
 }
