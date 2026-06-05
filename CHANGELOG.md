@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## 2026-06-05 006.5-foundation-playable-integration 完成
+
+### Added
+
+- 新增 `assets/scripts/bootstrap/GameBootstrap.ts`：游戏启动入口脚本，负责初始化所有系统并启动战斗。
+- 新增 `assets/scripts/bootstrap/GameBootstrap.ts.meta`：meta 文件。
+
+### Fixed
+
+- 修复目录名拼写错误：`assets/sences` → `assets/scenes`。
+- GameBootstrap.onDestroy() 不再调用 EventBus.clear()，改为只解绑自身注册的事件监听。
+
+### Verified
+
+- `assets/scenes/Battle.scene` 已在 Cocos Creator 3.8.x 中重新保存，GameBootstrap 组件已挂载到 Canvas 节点。
+- 调试 Label（debugLabel、stageLabel、timeLabel、baseHpLabel、enemyCountLabel、towerCountLabel）已绑定到场景节点。
+- 本地预览 Console 验证通过：战斗流程启动、刷怪、塔攻击、结算日志正常输出。
+- 001~006 集成验收通过：
+  - 002 Platform adapter 在 WebMock 环境下正常降级
+  - 003 ConfigManager 能读取 MVP 配置（4 种塔、5 种敌人、10 关）
+  - 004 战斗原型能初始化、开始、计时、结束和结算
+  - 005 塔系统能创建塔、搜索目标、攻击敌人
+  - 006 敌人和波次系统能读取关卡配置并按波次刷怪
+
+### Notes
+
+- GameBootstrap 自动启动第 1 关测试战斗
+- 自动放置 4 种测试塔（机枪塔、炮塔、冰塔、电塔）
+- 输出详细调试日志，便于验证战斗流程
+- 未实现 007 肉鸽选择、主动技能等后续功能
+- 未修改平台适配层核心文件
+
 ## 2026-06-05 006-enemy-wave-system 完成
 
 ### Changed

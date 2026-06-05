@@ -114,7 +114,43 @@ flowchart TD
 
 平台 API 只能出现在 `assets/scripts/platform/`。
 
-## 6. 数据流图
+## 6. 启动流程
+
+```txt
+GameBootstrap.onLoad()
+  → Platform.instance (WebMock)
+  → ConfigManager.getInstance()
+  → EventBus.getInstance()
+  → TimeManager.getInstance()
+  → BattleManager.getInstance()
+
+GameBootstrap.start()
+  → BattleManager.startBattleByIndex(0)
+  → 自动放置测试塔
+  → 战斗循环开始
+
+GameBootstrap.update(deltaTime)
+  → BattleManager.update(deltaTime)
+  → 更新 UI
+```
+
+GameBootstrap 职责：
+
+1. 初始化所有 Manager 单例
+2. 启动第 1 关测试战斗
+3. 自动放置测试塔
+4. 输出调试日志
+5. 更新 UI 显示
+
+注意：
+
+- GameBootstrap 只负责启动和连接系统
+- 不把大量战斗逻辑塞进 GameBootstrap
+- 不硬编码大量核心数值
+- 不直接调用平台 API
+- 不实现 007 之后的功能
+
+## 7. 数据流图
 
 ```mermaid
 flowchart LR
@@ -127,7 +163,7 @@ flowchart LR
   Runtime --> UI["UI 展示"]
 ```
 
-## 7. 主要 Manager 划分
+## 8. 主要 Manager 划分
 
 - `GameManager`：流程状态、模块初始化、主界面与战斗切换。
 - `ConfigManager`：统一读取塔、敌人、关卡、建筑、技能、经济和重构配置。
@@ -143,7 +179,7 @@ flowchart LR
 - `IdleIncomeManager`：在线收益、离线收益和上限。
 - `RebirthManager`：星核重构条件、碎片计算、重置与保留。
 
-## 8. 配置系统设计
+## 9. 配置系统设计
 
 MVP 至少包含：
 
@@ -162,7 +198,7 @@ MVP 至少包含：
 - MVP 可先用 TypeScript 常量，后续可迁移 JSON 或表格。
 - 配置读取统一经过 `ConfigManager`。
 
-## 9. 存档系统设计
+## 10. 存档系统设计
 
 MVP 存档字段：
 
@@ -192,7 +228,7 @@ settings
 - 小游戏平台使用 platform adapter 的 storage 能力。
 - 第一阶段不接服务器。
 
-## 10. 构建与包体原则
+## 11. 构建与包体原则
 
 - 主包目标小于 4MB。
 - 大资源预留分包和远程资源。
