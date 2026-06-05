@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## 2026-06-05 005-tower-system 完成
+
+### Added
+
+- 新增 `assets/scripts/battle/TowerManager.ts`：塔管理器，管理所有塔实例、固定槽位、攻击调度。
+- 新增 `assets/scripts/battle/TowerController.ts`：塔控制器，控制单个塔的目标选择、攻击冷却、属性读取。
+- 新增 `assets/scripts/battle/ProjectileManager.ts`：投射物管理器，管理投射物飞行、碰撞检测、伤害结算，支持单体/范围/链式三种类型。
+
+### Changed
+
+- 更新 `assets/scripts/data/TowerConfig.ts`：TowerConfig 新增 `splashRadius`（炮塔爆炸半径）、`chainCount`（电塔弹射数量）、`slowFactor`（冰塔减速系数）、`slowDuration`（冰塔减速持续时间）字段。
+- 更新 `assets/scripts/battle/EnemyController.ts`：新增 `applySlow()` 减速接口、`getEffectiveSpeed()` 有效速度计算、`getPathProgress()` 路径进度查询。EnemyState 新增 `slowFactor`、`slowRemaining` 字段。
+- 更新 `assets/scripts/battle/BattleManager.ts`：集成 TowerManager，战斗循环中驱动塔更新和攻击。
+
+### Notes
+
+- 四种塔攻击行为已验证：机枪塔单体高频、炮塔范围伤害（含距离衰减）、冰塔减速、电塔链式弹射（含伤害衰减）。
+- 塔属性全部来自 TowerConfig，无硬编码数值。
+- 固定塔位由 TowerSlot 配置提供，不做自由摆放。
+- 投射物为逻辑层数据，无 Cocos 节点或 Prefab 创建。
+
 ## 2026-06-05 004-battle-prototype 完成
 
 ### Added

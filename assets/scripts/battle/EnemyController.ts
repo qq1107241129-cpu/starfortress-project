@@ -1,6 +1,6 @@
 /**
  * 敌人控制器
- * 控制单个敌人的行为：移动、受伤、死亡
+ * 控制单个敌人的行为：移动、受伤、死亡、减速
  */
 
 import { EnemyConfig } from '../data/EnemyConfig';
@@ -19,6 +19,10 @@ export interface EnemyState {
     pathProgress: number;
     isAlive: boolean;
     isBoss: boolean;
+    /** 当前减速系数（0~1），0 表示无减速 */
+    slowFactor: number;
+    /** 减速剩余时间（秒） */
+    slowRemaining: number;
 }
 
 export class EnemyController {
@@ -49,7 +53,9 @@ export class EnemyController {
             pathIndex: 0,
             pathProgress: 0,
             isAlive: true,
-            isBoss: config.type === 'boss'
+            isBoss: config.type === 'boss',
+            slowFactor: 0,
+            slowRemaining: 0,
         };
     }
 
@@ -75,10 +81,41 @@ export class EnemyController {
     }
 
     /**
+     * 获取当前有效速度（考虑减速）
+     */
+    getEffectiveSpeed(): number {
+        const slowFactor = this._state.slowRemaining > 0 ? this._state.slowFactor : 0;
+        return this._state.speed * (1 - slowFactor);
+    }
+
+    /**
+     * 施加减速效果
+     * @param slowFactor 减速系数（0~1），速度乘以 (1 - slowFactor)
+     * @param duration 持续时间（秒）
+     */
+    applySlow(slowFactor: number, duration: number): void {
+        // 取更强的减速效果
+        if (slowFactor > this._state.slowFactor || this._state.slowRemaining <= 0) {
+            this._state.slowFactor = slowFactor;
+        }
+        // 刷新持续时间
+        this._state.slowRemaining = Math.max(this._state.slowRemaining, duration);
+    }
+
+    /**
      * 更新敌人位置（每帧调用）
      */
     update(deltaTime: number): void {
         if (!this._state.isAlive || this._path.length < 2) return;
+
+        // 更新减速计时
+        if (this._state.slowRemaining > 0) {
+            this._state.slowRemaining -= deltaTime;
+            if (this._state.slowRemaining <= 0) {
+                this._state.slowFactor = 0;
+                this._state.slowRemaining = 0;
+            }
+        }
 
         const currentTarget = this._path[this._state.pathIndex + 1];
         if (!currentTarget) {
@@ -87,8 +124,9 @@ export class EnemyController {
             return;
         }
 
-        // 计算移动距离
-        const moveDistance = this._state.speed * deltaTime * 100; // 100 像素/秒为基础速度
+        // 计算移动距离（使用有效速度）
+        const effectiveSpeed = this.getEffectiveSpeed();
+        const moveDistance = effectiveSpeed * deltaTime * 100; // 100 像素/秒为基础速度
         const dx = currentTarget.x - this._state.position.x;
         const dy = currentTarget.y - this._state.position.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -131,6 +169,28 @@ export class EnemyController {
     }
 
     /**
+     * 获取当前位置
+     */
+    getPosition(): { x: number; y: number } {
+        return { ...this._state.position };
+    }
+
+    /**
+     * 获取路径进度（用于目标优先级排序）
+     */
+    getPathProgress(): number {
+        return this._state.pathProgress;
+    }
+
+    /**
+     * 获取生命值百分比
+     */
+    getHealthPercent(): number {
+        if (this._state.maxHealth <= 0) return 0;
+        return this._state.health / this._state.maxHealth;
+    }
+
+    /**
      * 敌人到达基地
      */
     private _reachBase(): void {
@@ -155,20 +215,5 @@ export class EnemyController {
             isBoss: this._state.isBoss,
             position: { ...this._state.position }
         });
-    }
-
-    /**
-     * 获取当前位置
-     */
-    getPosition(): { x: number; y: number } {
-        return { ...this._state.position };
-    }
-
-    /**
-     * 获取生命值百分比
-     */
-    getHealthPercent(): number {
-        if (this._state.maxHealth <= 0) return 0;
-        return this._state.health / this._state.maxHealth;
     }
 }

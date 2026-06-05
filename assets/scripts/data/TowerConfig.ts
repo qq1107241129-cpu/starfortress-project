@@ -19,6 +19,14 @@ export interface TowerConfig {
     baseAttack: number;
     baseAttackSpeed: number;
     baseRange: number;
+    /** 炮塔：爆炸半径（像素），0 表示单体 */
+    splashRadius: number;
+    /** 电塔：链式弹射数量，0 表示不弹射 */
+    chainCount: number;
+    /** 冰塔：减速系数（0~1），0 表示无减速。敌人速度乘以 (1 - slowFactor) */
+    slowFactor: number;
+    /** 冰塔：减速持续时间（秒） */
+    slowDuration: number;
     levels: TowerLevelConfig[];
 }
 
@@ -31,6 +39,10 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         baseAttack: 10,
         baseAttackSpeed: 0.5,
         baseRange: 150,
+        splashRadius: 0,
+        chainCount: 0,
+        slowFactor: 0,
+        slowDuration: 0,
         levels: [
             { level: 1, attack: 10, attackSpeed: 0.5, range: 150, upgradeCost: 0 },
             { level: 2, attack: 15, attackSpeed: 0.45, range: 160, upgradeCost: 100 },
@@ -47,6 +59,10 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         baseAttack: 25,
         baseAttackSpeed: 1.5,
         baseRange: 120,
+        splashRadius: 60,
+        chainCount: 0,
+        slowFactor: 0,
+        slowDuration: 0,
         levels: [
             { level: 1, attack: 25, attackSpeed: 1.5, range: 120, upgradeCost: 0 },
             { level: 2, attack: 40, attackSpeed: 1.4, range: 130, upgradeCost: 150 },
@@ -63,6 +79,10 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         baseAttack: 5,
         baseAttackSpeed: 1.0,
         baseRange: 130,
+        splashRadius: 0,
+        chainCount: 0,
+        slowFactor: 0.4,
+        slowDuration: 2.0,
         levels: [
             { level: 1, attack: 5, attackSpeed: 1.0, range: 130, upgradeCost: 0 },
             { level: 2, attack: 8, attackSpeed: 0.9, range: 140, upgradeCost: 120 },
@@ -79,6 +99,10 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         baseAttack: 15,
         baseAttackSpeed: 0.8,
         baseRange: 140,
+        splashRadius: 0,
+        chainCount: 3,
+        slowFactor: 0,
+        slowDuration: 0,
         levels: [
             { level: 1, attack: 15, attackSpeed: 0.8, range: 140, upgradeCost: 0 },
             { level: 2, attack: 22, attackSpeed: 0.75, range: 150, upgradeCost: 130 },

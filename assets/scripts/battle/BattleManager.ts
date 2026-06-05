@@ -6,6 +6,7 @@
 import { StageManager } from './StageManager';
 import { EnemySpawner } from './EnemySpawner';
 import { BattleSettlement } from './BattleSettlement';
+import { TowerManager, TowerSlot } from './TowerManager';
 import { TimeManager } from '../core/TimeManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { ConfigManager } from '../core/ConfigManager';
@@ -22,6 +23,7 @@ export interface BattleInfo {
     killCount: number;
     bossKillCount: number;
     enemyCount: number;
+    towerCount: number;
 }
 
 export class BattleManager {
@@ -30,6 +32,7 @@ export class BattleManager {
     private _stageManager: StageManager;
     private _enemySpawner: EnemySpawner | null = null;
     private _battleSettlement: BattleSettlement | null = null;
+    private _towerManager: TowerManager | null = null;
     private _timeManager: TimeManager;
     private _eventBus: EventBus;
     private _configManager: ConfigManager;
@@ -99,6 +102,15 @@ export class BattleManager {
         this._battleSettlement = new BattleSettlement(stageConfig);
         this._battleSettlement.reset();
 
+        // 初始化塔管理器（使用默认槽位，后续可从关卡配置加载）
+        const defaultSlots: TowerSlot[] = [
+            { id: 'slot_1', position: { x: 200, y: 300 }, towerId: null },
+            { id: 'slot_2', position: { x: 400, y: 200 }, towerId: null },
+            { id: 'slot_3', position: { x: 400, y: 400 }, towerId: null },
+            { id: 'slot_4', position: { x: 600, y: 300 }, towerId: null },
+        ];
+        this._towerManager = new TowerManager(defaultSlots);
+
         // 开始计时
         this._timeManager.startBattleTimer(stageConfig.duration);
 
@@ -158,6 +170,12 @@ export class BattleManager {
         if (this._enemySpawner) {
             this._enemySpawner.update(deltaTime, currentTime);
         }
+
+        // 更新塔（目标选择 + 攻击）
+        if (this._towerManager && this._enemySpawner) {
+            const aliveEnemies = this._enemySpawner.getAliveEnemies();
+            this._towerManager.update(deltaTime, aliveEnemies);
+        }
     }
 
     /**
@@ -197,9 +215,11 @@ export class BattleManager {
     returnToIdle(): void {
         this._state = 'idle';
         this._enemySpawner?.clear();
+        this._towerManager?.clear();
         this._stageManager.reset();
         this._battleSettlement = null;
         this._enemySpawner = null;
+        this._towerManager = null;
     }
 
     /**
@@ -225,7 +245,8 @@ export class BattleManager {
             baseHealthMax: baseState.maxHealth,
             killCount: this._battleSettlement?.getKillCount() || 0,
             bossKillCount: this._battleSettlement?.getBossKillCount() || 0,
-            enemyCount: this._enemySpawner?.getEnemyCount() || 0
+            enemyCount: this._enemySpawner?.getEnemyCount() || 0,
+            towerCount: this._towerManager?.getTowers().length || 0,
         };
     }
 
@@ -248,6 +269,13 @@ export class BattleManager {
      */
     getPath() {
         return this._stageManager.getPath();
+    }
+
+    /**
+     * 获取塔管理器
+     */
+    getTowerManager(): TowerManager | null {
+        return this._towerManager;
     }
 
     /**
