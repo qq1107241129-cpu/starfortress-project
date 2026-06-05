@@ -1,0 +1,99 @@
+/**
+ * 塔配置
+ * 定义 MVP 四种塔的属性
+ */
+
+export interface TowerLevelConfig {
+    level: number;
+    attack: number;
+    attackSpeed: number;
+    range: number;
+    upgradeCost: number;
+}
+
+export interface TowerConfig {
+    id: string;
+    name: string;
+    description: string;
+    type: 'machinegun' | 'cannon' | 'ice' | 'electric';
+    baseAttack: number;
+    baseAttackSpeed: number;
+    baseRange: number;
+    levels: TowerLevelConfig[];
+}
+
+export const TOWER_CONFIGS: TowerConfig[] = [
+    {
+        id: 'tower_machinegun',
+        name: '机枪塔',
+        description: '基础单体输出，射速快，伤害稳定',
+        type: 'machinegun',
+        baseAttack: 10,
+        baseAttackSpeed: 0.5,
+        baseRange: 150,
+        levels: [
+            { level: 1, attack: 10, attackSpeed: 0.5, range: 150, upgradeCost: 0 },
+            { level: 2, attack: 15, attackSpeed: 0.45, range: 160, upgradeCost: 100 },
+            { level: 3, attack: 22, attackSpeed: 0.4, range: 170, upgradeCost: 250 },
+            { level: 4, attack: 30, attackSpeed: 0.35, range: 180, upgradeCost: 500 },
+            { level: 5, attack: 40, attackSpeed: 0.3, range: 200, upgradeCost: 1000 },
+        ],
+    },
+    {
+        id: 'tower_cannon',
+        name: '炮塔',
+        description: '范围伤害，攻击慢，爆炸范围伤害',
+        type: 'cannon',
+        baseAttack: 25,
+        baseAttackSpeed: 1.5,
+        baseRange: 120,
+        levels: [
+            { level: 1, attack: 25, attackSpeed: 1.5, range: 120, upgradeCost: 0 },
+            { level: 2, attack: 40, attackSpeed: 1.4, range: 130, upgradeCost: 150 },
+            { level: 3, attack: 60, attackSpeed: 1.3, range: 140, upgradeCost: 350 },
+            { level: 4, attack: 85, attackSpeed: 1.2, range: 150, upgradeCost: 700 },
+            { level: 5, attack: 120, attackSpeed: 1.1, range: 160, upgradeCost: 1400 },
+        ],
+    },
+    {
+        id: 'tower_ice',
+        name: '冰塔',
+        description: '控制，降低敌人移动速度',
+        type: 'ice',
+        baseAttack: 5,
+        baseAttackSpeed: 1.0,
+        baseRange: 130,
+        levels: [
+            { level: 1, attack: 5, attackSpeed: 1.0, range: 130, upgradeCost: 0 },
+            { level: 2, attack: 8, attackSpeed: 0.9, range: 140, upgradeCost: 120 },
+            { level: 3, attack: 12, attackSpeed: 0.8, range: 150, upgradeCost: 280 },
+            { level: 4, attack: 18, attackSpeed: 0.7, range: 160, upgradeCost: 560 },
+            { level: 5, attack: 25, attackSpeed: 0.6, range: 180, upgradeCost: 1100 },
+        ],
+    },
+    {
+        id: 'tower_electric',
+        name: '电塔',
+        description: '链式攻击，攻击多个敌人',
+        type: 'electric',
+        baseAttack: 15,
+        baseAttackSpeed: 0.8,
+        baseRange: 140,
+        levels: [
+            { level: 1, attack: 15, attackSpeed: 0.8, range: 140, upgradeCost: 0 },
+            { level: 2, attack: 22, attackSpeed: 0.75, range: 150, upgradeCost: 130 },
+            { level: 3, attack: 32, attackSpeed: 0.7, range: 160, upgradeCost: 300 },
+            { level: 4, attack: 45, attackSpeed: 0.65, range: 170, upgradeCost: 600 },
+            { level: 5, attack: 60, attackSpeed: 0.6, range: 180, upgradeCost: 1200 },
+        ],
+    },
+];
+
+export function getTowerConfig(towerId: string): TowerConfig | undefined {
+    return TOWER_CONFIGS.find(t => t.id === towerId);
+}
+
+export function getTowerLevelConfig(towerId: string, level: number): TowerLevelConfig | undefined {
+    const tower = getTowerConfig(towerId);
+    return tower?.levels.find(l => l.level === level);
+}
