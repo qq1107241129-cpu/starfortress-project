@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-06-05 004-battle-prototype 完成
+
+### Added
+
+- 新增 `assets/scripts/battle/BattleManager.ts`：战斗管理器，管理战斗流程（开始、暂停、结算）。
+- 新增 `assets/scripts/battle/StageManager.ts`：关卡管理器，管理关卡配置、路径、基地状态。
+- 新增 `assets/scripts/battle/EnemySpawner.ts`：敌人生成器，根据关卡波次配置生成敌人。
+- 新增 `assets/scripts/battle/EnemyController.ts`：敌人控制器，控制单个敌人的行为（移动、受伤、死亡）。
+- 新增 `assets/scripts/battle/BattleSettlement.ts`：战斗结算，处理战斗结束后的奖励计算、数据统计。
+- 新增 `assets/scripts/core/EventBus.ts`：事件总线，用于模块间通信，解耦业务逻辑。
+- 新增 `assets/scripts/core/TimeManager.ts`：时间管理器，管理战斗计时、暂停、恢复、停止、时间更新。
+
+### Notes
+
+- 实现最小战斗原型，支持敌人沿路径移动、基地受伤、胜负判定和结算。
+- 战斗时长按 180 秒配置，失败也给予少量奖励。
+- 使用简单占位路径，后续可替换为实际地图路径。
+- 无 Cocos 场景或资源文件改动。
+
 ## 2026-06-05 003-core-data-config 完成
 
 ### Added
