@@ -103,6 +103,21 @@ export class EnemyController {
     }
 
     /**
+     * 冻结敌人（完全停止移动）
+     * @param duration 冻结持续时间（秒）
+     */
+    freeze(duration: number): void {
+        this.applySlow(1.0, duration);
+    }
+
+    /**
+     * 敌人是否被冻结
+     */
+    isFrozen(): boolean {
+        return this._state.slowRemaining > 0 && this._state.slowFactor >= 1.0;
+    }
+
+    /**
      * 更新敌人位置（每帧调用）
      */
     update(deltaTime: number): void {

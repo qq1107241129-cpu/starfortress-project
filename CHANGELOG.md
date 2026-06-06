@@ -1,5 +1,49 @@
 # CHANGELOG
 
+## 2026-06-05 007-rogue-choice-and-skills 完成
+
+### Added
+
+- 新增 `assets/scripts/battle/RogueChoiceManager.ts`：肉鸽选择管理器，管理局内 3 选 1 强化选择（触发计时、选项生成、选择生效）。
+- 新增 `assets/scripts/battle/SkillManager.ts`：主动技能管理器，管理技能充能次数和释放逻辑（轨道炮区域伤害、全屏冻结）。
+- 新增 `assets/scripts/ui/BattleUI.ts`：战斗 UI 组件，管理技能按钮和肉鸽选择面板的交互。
+
+### Changed
+
+- 更新 `assets/scripts/core/EventBus.ts`：新增肉鸽选择事件（ROGUE_CHOICE_TRIGGER、ROGUE_CHOICE_SELECT、ROGUE_CHOICE_COMPLETE）、主动技能事件（SKILL_USE、SKILL_CHARGE_CHANGE、SKILL_ORBITAL_CANNON、SKILL_FREEZE）、战斗强制暂停/恢复事件（BATTLE_FORCE_PAUSE、BATTLE_FORCE_RESUME）。
+- 更新 `assets/scripts/data/SkillConfig.ts`：ActiveSkillConfig 新增 `initialCharges` 字段；RogueUpgradeConfig.type 新增 `tower_chain_count` 类型；`rogue_electric_bounce` 改为 `tower_chain_count` 类型，真正实现电塔弹射次数 +1。
+- 更新 `assets/scripts/battle/EnemyController.ts`：新增 `freeze()` 方法（完全停止移动）和 `isFrozen()` 方法。
+- 更新 `assets/scripts/battle/TowerController.ts`：新增 `applyAttackBonus()`、`applySpeedBonus()`、`applyRangeBonus()`、`applyChainCountBonus()` 方法；`getChainCount()` 现在包含弹射次数加成。
+- 更新 `assets/scripts/battle/TowerManager.ts`：`applyRogueUpgrade()` 支持 `tower_chain_count` 类型。
+- 更新 `assets/scripts/battle/BattleManager.ts`：集成 RogueChoiceManager 和 SkillManager；新增 `useSkill()`、`getSkillManager()`、`getRogueChoiceManager()` 方法；update() 中集成肉鸽选择触发逻辑；支持肉鸽选择期间强制暂停/恢复战斗。
+- 更新 `docs/GAME_DESIGN.md`：新增第 16 节「局内肉鸽选择系统」和第 17 节「主动技能系统」；`rogue_electric_bounce` 类型修正为 `tower_chain_count`。
+
+### Fixed
+
+- RogueChoiceManager._applyUpgrade() 缺少 `tower_chain_count` 分支：`rogue_electric_bounce` 选择后实际不生效。补全该分支，调用 `TowerManager.applyRogueUpgrade()`。
+- tower_speed 不生效：`TowerController.resetCooldown()` 直接使用原始 `attackSpeed`，忽略 `_speedBonus`。改为调用 `getAttackSpeed()`（含加成）。
+- tower_range 不生效：`TowerController.selectTarget()` 和 `getEnemiesInRange()` 直接使用原始 `range`，忽略 `_rangeBonus`。改为调用 `getRange()`（含加成）。
+- 炮塔爆炸范围不随 tower_range 加成变化：`getSplashRadius()` 改为应用 `_rangeBonus`，与配置文案"炮塔爆炸范围 +20%"语义一致。
+- BattleUI.onDestroy() 事件解绑失败：改为存储绑定回调引用，复用同一引用进行 on/off。
+- BattleUI 移除未使用导入（UITransform、Color、Sprite）。
+- 轨道炮无存活敌人时不再消耗充能：`useSkill()` 在无有效目标时返回 false，不扣除 charge。
+- 全屏冻结无存活敌人时不再消耗充能：同上。
+- `rogue_electric_bounce` 实现修正：从 `tower_attack`（攻击加成）改为 `tower_chain_count`（弹射次数 +1），电塔链式弹射次数受肉鸽强化影响。
+- `rogue_ice_effect` 文案与实际效果不一致：原类型为 `tower_attack`（攻击加成），但配置描述为"冰塔减速效果 +10%"。新增 `tower_slow_effect` 类型、`TowerController._slowBonus`/`applySlowBonus()`/`getSlowFactor()` 加成接口，`RogueChoiceManager`/`TowerManager` 补全该分支。
+- `docs/GAME_DESIGN.md` 16.3 类型表遗漏 `tower_chain_count` 和 `tower_slow_effect`：从"4 类"更正为"6 类"。
+
+### Notes
+
+- 肉鸽选择触发时间：45 秒、90 秒、135 秒，每局 3 次。
+- 轨道炮自动锁定敌人最密集区域，造成 500 点范围伤害（半径 100 像素）。
+- 全屏冻结使所有敌人停止移动 2 秒（通过 EnemyController.applySlow(1.0, 2) 实现）。
+- 肉鸽选择期间战斗强制暂停，选择完成后恢复。
+- 技能采用充能制，每局初始 1 次，可通过肉鸽选择获得额外充能。
+- BattleUI 已在 Cocos Creator 编辑器中挂载到 Battle.scene 并绑定技能按钮和肉鸽选择面板。
+- .meta 文件由 Cocos Creator 自动生成，未手写。
+- 未实现复杂技能树、广告刷新肉鸽选项等 MVP 外功能。
+- **Web 预览验证待执行**：需在 Cocos Creator 中运行一局战斗，验证肉鸽选择弹出、技能使用、电塔弹射 +1 效果。
+
 ## 2026-06-05 006.5-foundation-playable-integration 完成
 
 ### Added

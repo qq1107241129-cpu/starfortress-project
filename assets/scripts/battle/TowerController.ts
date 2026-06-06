@@ -19,6 +19,16 @@ export class TowerController {
     private _state: TowerState;
     private _config: TowerConfig;
     private _levelConfig: TowerLevelConfig;
+    /** 肉鸽强化加成：攻击倍率 */
+    private _attackBonus: number = 0;
+    /** 肉鸽强化加成：射速倍率 */
+    private _speedBonus: number = 0;
+    /** 肉鸽强化加成：范围倍率 */
+    private _rangeBonus: number = 0;
+    /** 肉鸽强化加成：电塔弹射次数增量 */
+    private _chainCountBonus: number = 0;
+    /** 肉鸽强化加成：减速效果倍率 */
+    private _slowBonus: number = 0;
 
     constructor(
         configId: string,
@@ -59,15 +69,56 @@ export class TowerController {
     }
 
     getRange(): number {
-        return this._levelConfig.range;
+        return Math.floor(this._levelConfig.range * (1 + this._rangeBonus));
     }
 
     getAttack(): number {
-        return this._levelConfig.attack;
+        return Math.floor(this._levelConfig.attack * (1 + this._attackBonus));
     }
 
     getAttackSpeed(): number {
-        return this._levelConfig.attackSpeed;
+        // 射速加成：attackSpeed 越小越快，所以 bonus 要反向应用
+        return this._levelConfig.attackSpeed * (1 - this._speedBonus);
+    }
+
+    /**
+     * 应用攻击加成（累加）
+     * @param bonus 加成倍率（如 0.1 表示 +10%）
+     */
+    applyAttackBonus(bonus: number): void {
+        this._attackBonus += bonus;
+    }
+
+    /**
+     * 应用射速加成（累加）
+     * @param bonus 加成倍率（如 0.15 表示 +15%）
+     */
+    applySpeedBonus(bonus: number): void {
+        this._speedBonus += bonus;
+    }
+
+    /**
+     * 应用范围加成（累加）
+     * @param bonus 加成倍率（如 0.2 表示 +20%）
+     */
+    applyRangeBonus(bonus: number): void {
+        this._rangeBonus += bonus;
+    }
+
+    /**
+     * 应用弹射次数加成（累加整数）
+     * @param bonus 弹射次数增量（如 1 表示 +1 次弹射）
+     */
+    applyChainCountBonus(bonus: number): void {
+        this._chainCountBonus += bonus;
+    }
+
+    /**
+     * 应用减速效果加成（累加）
+     * @param bonus 加成倍率（如 0.1 表示 +10%）
+     */
+    applySlowBonus(bonus: number): void {
+        this._slowBonus += bonus;
     }
 
     getType(): TowerConfig['type'] {
@@ -75,15 +126,15 @@ export class TowerController {
     }
 
     getSplashRadius(): number {
-        return this._config.splashRadius;
+        return Math.floor(this._config.splashRadius * (1 + this._rangeBonus));
     }
 
     getChainCount(): number {
-        return this._config.chainCount;
+        return this._config.chainCount + this._chainCountBonus;
     }
 
     getSlowFactor(): number {
-        return this._config.slowFactor;
+        return this._config.slowFactor * (1 + this._slowBonus);
     }
 
     getSlowDuration(): number {
@@ -105,7 +156,7 @@ export class TowerController {
      * 重置攻击冷却
      */
     resetCooldown(): void {
-        this._state.cooldownRemaining = this._levelConfig.attackSpeed;
+        this._state.cooldownRemaining = this.getAttackSpeed();
     }
 
     /**
@@ -113,7 +164,7 @@ export class TowerController {
      * 优先选择射程内路径进度最高的敌人（距离基地最近）
      */
     selectTarget(enemies: EnemyController[]): EnemyController | null {
-        const range = this._levelConfig.range;
+        const range = this.getRange();
         const pos = this._state.position;
 
         let bestTarget: EnemyController | null = null;
@@ -143,7 +194,7 @@ export class TowerController {
      * 获取射程内所有敌人（用于炮塔范围伤害）
      */
     getEnemiesInRange(enemies: EnemyController[]): EnemyController[] {
-        const range = this._levelConfig.range;
+        const range = this.getRange();
         const pos = this._state.position;
 
         return enemies.filter(enemy => {

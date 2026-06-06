@@ -357,3 +357,95 @@ MVP 选项方向：
 3. Boss 能在指定时间出现。
 4. 10 关有基础难度变化。
 5. 失败与胜利结算不受影响。
+
+## 16. 局内肉鸽选择系统（007-rogue-choice-and-skills）
+
+### 16.1 系统概述
+
+局内肉鸽选择系统在战斗过程中为玩家提供 3 次强化选择机会，每次从配置池中随机抽取 3 个选项供玩家选择。选择后立即生效，为当局战斗提供额外加成。
+
+### 16.2 触发机制
+
+- 触发时间：第 45 秒、第 90 秒、第 135 秒
+- 触发时暂停战斗计时和敌人生成
+- 玩家选择后恢复战斗
+- 每局最多触发 3 次
+
+### 16.3 选项类型
+
+肉鸽强化选项分为 6 类：
+
+| 类型 | 说明 | 示例 |
+|------|------|------|
+| tower_attack | 塔攻击加成 | 所有塔攻击 +10% |
+| tower_speed | 塔射速加成 | 机枪塔射速 +15% |
+| tower_range | 塔范围加成 | 炮塔爆炸范围 +20% |
+| tower_chain_count | 塔弹射次数加成 | 电塔弹射次数 +1 |
+| tower_slow_effect | 塔减速效果加成 | 冰塔减速效果 +10% |
+| skill_charge | 技能充能 | 获得 1 次轨道炮 |
+
+### 16.4 MVP 肉鸽选项
+
+| ID | 名称 | 类型 | 目标 | 数值 |
+|----|------|------|------|------|
+| rogue_all_attack | 火力增幅 | tower_attack | 全局 | +10% |
+| rogue_machinegun_speed | 机枪强化 | tower_speed | machinegun | +15% |
+| rogue_cannon_range | 炮击扩展 | tower_range | cannon | +20% |
+| rogue_ice_effect | 冰冻增幅 | tower_slow_effect | ice | +10% |
+| rogue_electric_bounce | 电弧扩展 | tower_chain_count | electric | +1 |
+| rogue_orbital_charge | 轨道炮充能 | skill_charge | skill_orbital_cannon | +1 |
+| rogue_freeze_charge | 冻结充能 | skill_charge | skill_freeze | +1 |
+
+### 16.5 事件通信
+
+- `ROGUE_CHOICE_TRIGGER`：触发肉鸽选择，携带选项列表和选择序号
+- `ROGUE_CHOICE_SELECT`：玩家选择事件，携带选择索引
+- `ROGUE_CHOICE_COMPLETE`：选择完成，携带选择结果
+- `BATTLE_FORCE_PAUSE`：暂停战斗（选择期间）
+- `BATTLE_FORCE_RESUME`：恢复战斗（选择完成后）
+
+## 17. 主动技能系统（007-rogue-choice-and-skills）
+
+### 17.1 系统概述
+
+主动技能为玩家提供关键时刻的主动操作能力。MVP 包含 2 个主动技能：轨道炮和全屏冻结。技能采用充能制，每局初始 1 次使用机会，可通过肉鸽选择获得额外充能。
+
+### 17.2 技能列表
+
+#### 轨道炮（skill_orbital_cannon）
+
+- 效果：对敌人最密集区域造成 500 点范围伤害
+- 命中半径：100 像素
+- 目标选择：自动锁定敌人最密集区域
+- 初始充能：1 次
+- 用途：救场和清精英波
+
+#### 全屏冻结（skill_freeze）
+
+- 效果：使所有敌人停止移动 2 秒
+- 作用范围：全屏所有存活敌人
+- 初始充能：1 次
+- 用途：拖延敌潮和保护基地核心
+
+### 17.3 充能机制
+
+- 每局开始时，每个技能初始化为配置的初始充能数
+- 使用技能消耗 1 次充能
+- 充能为 0 时技能不可用
+- 肉鸽选择可获得额外充能（skill_charge 类型选项）
+
+### 17.4 事件通信
+
+- `SKILL_USE`：技能使用事件，携带技能 ID 和剩余充能
+- `SKILL_CHARGE_CHANGE`：充能变化事件，携带技能 ID 和变化量
+- `SKILL_ORBITAL_CANNON`：轨道炮命中事件，携带位置、半径、伤害、命中数
+- `SKILL_FREEZE`：全屏冻结事件，携带持续时间和目标数量
+
+### 17.5 验收标准
+
+1. 战斗中能弹出肉鸽选择。
+2. 选择后立即生效。
+3. 主动技能按钮可点击。
+4. 轨道炮能造成伤害。
+5. 全屏冻结能暂停敌人移动。
+6. 每局最多触发 3 次肉鸽选择。

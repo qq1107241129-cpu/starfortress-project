@@ -7,6 +7,8 @@ import { StageManager } from './StageManager';
 import { EnemySpawner } from './EnemySpawner';
 import { BattleSettlement } from './BattleSettlement';
 import { TowerManager, TowerSlot } from './TowerManager';
+import { RogueChoiceManager } from './RogueChoiceManager';
+import { SkillManager } from './SkillManager';
 import { TimeManager } from '../core/TimeManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { ConfigManager } from '../core/ConfigManager';
@@ -33,12 +35,18 @@ export class BattleManager {
     private _enemySpawner: EnemySpawner | null = null;
     private _battleSettlement: BattleSettlement | null = null;
     private _towerManager: TowerManager | null = null;
+    private _rogueChoiceManager: RogueChoiceManager;
+    private _skillManager: SkillManager;
     private _timeManager: TimeManager;
     private _eventBus: EventBus;
     private _configManager: ConfigManager;
+    /** 是否因肉鸽选择而暂停 */
+    private _isForcePaused: boolean = false;
 
     constructor() {
         this._stageManager = new StageManager();
+        this._rogueChoiceManager = new RogueChoiceManager();
+        this._skillManager = new SkillManager();
         this._timeManager = TimeManager.getInstance();
         this._eventBus = EventBus.getInstance();
         this._configManager = ConfigManager.getInstance();
@@ -72,6 +80,18 @@ export class BattleManager {
         // 监听战斗结果
         this._eventBus.on(BATTLE_EVENTS.BATTLE_RESULT, (data: { result: 'victory' | 'defeat' }) => {
             this._endBattle(data.result);
+        });
+
+        // 监听强制暂停（肉鸽选择期间）
+        this._eventBus.on(BATTLE_EVENTS.BATTLE_FORCE_PAUSE, () => {
+            this._isForcePaused = true;
+            this._timeManager.pauseBattleTimer();
+        });
+
+        // 监听强制恢复（肉鸽选择完成后）
+        this._eventBus.on(BATTLE_EVENTS.BATTLE_FORCE_RESUME, () => {
+            this._isForcePaused = false;
+            this._timeManager.resumeBattleTimer();
         });
     }
 
@@ -110,6 +130,16 @@ export class BattleManager {
             { id: 'slot_4', position: { x: 600, y: 300 }, towerId: null },
         ];
         this._towerManager = new TowerManager(defaultSlots);
+
+        // 初始化肉鸽选择管理器
+        this._rogueChoiceManager.reset();
+        this._rogueChoiceManager.setTowerManager(this._towerManager);
+
+        // 初始化主动技能管理器
+        this._skillManager.init();
+
+        // 重置强制暂停状态
+        this._isForcePaused = false;
 
         // 开始计时
         this._timeManager.startBattleTimer(stageConfig.duration);
@@ -162,9 +192,15 @@ export class BattleManager {
     update(deltaTime: number): void {
         if (this._state !== 'playing') return;
 
+        // 如果因肉鸽选择而暂停，跳过战斗逻辑更新
+        if (this._isForcePaused) return;
+
         // 更新时间
         this._timeManager.updateBattleTime(deltaTime);
         const currentTime = this._timeManager.getBattleTime();
+
+        // 更新肉鸽选择（检查是否触发）
+        this._rogueChoiceManager.update(currentTime);
 
         // 更新敌人生成器
         if (this._enemySpawner) {
@@ -276,6 +312,33 @@ export class BattleManager {
      */
     getTowerManager(): TowerManager | null {
         return this._towerManager;
+    }
+
+    /**
+     * 使用主动技能
+     * @param skillId 技能ID
+     * @returns 是否使用成功
+     */
+    useSkill(skillId: string): boolean {
+        if (this._state !== 'playing') return false;
+        if (!this._enemySpawner) return false;
+
+        const aliveEnemies = this._enemySpawner.getAliveEnemies();
+        return this._skillManager.useSkill(skillId, aliveEnemies);
+    }
+
+    /**
+     * 获取主动技能管理器
+     */
+    getSkillManager(): SkillManager {
+        return this._skillManager;
+    }
+
+    /**
+     * 获取肉鸽选择管理器
+     */
+    getRogueChoiceManager(): RogueChoiceManager {
+        return this._rogueChoiceManager;
     }
 
     /**

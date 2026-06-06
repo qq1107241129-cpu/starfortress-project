@@ -7,6 +7,7 @@ import { TowerController } from './TowerController';
 import { ProjectileManager } from './ProjectileManager';
 import { EnemyController } from './EnemyController';
 import { getTowerConfig } from '../data/TowerConfig';
+import { RogueUpgradeConfig } from '../data/SkillConfig';
 
 /** 固定塔位定义 */
 export interface TowerSlot {
@@ -159,6 +160,53 @@ export class TowerManager {
         if (!tower) return false;
 
         return tower.upgrade();
+    }
+
+    /**
+     * 应用肉鸽强化效果
+     * @param upgrade 肉鸽强化配置
+     */
+    applyRogueUpgrade(upgrade: RogueUpgradeConfig): void {
+        this._towers.forEach(tower => {
+            switch (upgrade.type) {
+                case 'tower_attack':
+                    // 全局攻击加成（target 为空）或特定类型塔加成
+                    if (!upgrade.target || tower.getType() === upgrade.target) {
+                        tower.applyAttackBonus(upgrade.value);
+                    }
+                    break;
+
+                case 'tower_speed':
+                    // 射速加成（target 为塔类型）
+                    if (!upgrade.target || tower.getType() === upgrade.target) {
+                        tower.applySpeedBonus(upgrade.value);
+                    }
+                    break;
+
+                case 'tower_range':
+                    // 范围加成（target 为塔类型）
+                    if (!upgrade.target || tower.getType() === upgrade.target) {
+                        tower.applyRangeBonus(upgrade.value);
+                    }
+                    break;
+
+                case 'tower_chain_count':
+                    // 弹射次数加成（target 为塔类型，如 electric）
+                    if (!upgrade.target || tower.getType() === upgrade.target) {
+                        tower.applyChainCountBonus(upgrade.value);
+                    }
+                    break;
+
+                case 'tower_slow_effect':
+                    // 减速效果加成（target 为塔类型，如 ice）
+                    if (!upgrade.target || tower.getType() === upgrade.target) {
+                        tower.applySlowBonus(upgrade.value);
+                    }
+                    break;
+            }
+        });
+
+        console.log(`[TowerManager] 应用肉鸽强化: ${upgrade.name} (${upgrade.type})`);
     }
 
     /**

@@ -78,4 +78,16 @@ export const BATTLE_EVENTS = {
     STAGE_BOSS_SPAWN: 'stage:boss_spawn',
     TIME_UPDATE: 'time:update',
     BATTLE_RESULT: 'battle:result',
+    // 肉鸽选择事件
+    ROGUE_CHOICE_TRIGGER: 'rogue:choice_trigger',
+    ROGUE_CHOICE_SELECT: 'rogue:choice_select',
+    ROGUE_CHOICE_COMPLETE: 'rogue:choice_complete',
+    // 主动技能事件
+    SKILL_USE: 'skill:use',
+    SKILL_CHARGE_CHANGE: 'skill:charge_change',
+    SKILL_ORBITAL_CANNON: 'skill:orbital_cannon',
+    SKILL_FREEZE: 'skill:freeze',
+    // 战斗暂停/恢复（用于肉鸽选择期间）
+    BATTLE_FORCE_PAUSE: 'battle:force_pause',
+    BATTLE_FORCE_RESUME: 'battle:force_resume',
 } as const;

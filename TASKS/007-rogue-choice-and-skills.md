@@ -17,6 +17,7 @@
 - `assets/scripts/battle/EnemyController.ts`
 - `assets/scripts/data/SkillConfig.ts`
 - `assets/scripts/ui/BattleUI.ts`
+- `assets/scenes/Battle.scene`
 - `docs/GAME_DESIGN.md`
 - `CHANGELOG.md`
 
@@ -36,6 +37,7 @@
 
 ## 6. 实现假设
 
+- BattleUI 是 Cocos 组件，必须挂载到 Battle.scene 中才能在运行时激活。因此 Battle.scene 需要编辑器修改以添加 BattleUI 组件节点、绑定技能按钮和肉鸽选择面板引用。
 - 肉鸽选择触发时间为 45 秒、90 秒、135 秒。
 - 每次从配置池中抽取 3 个选项。
 - 轨道炮自动锁定敌人最密集区域。

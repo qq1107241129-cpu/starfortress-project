@@ -10,13 +10,15 @@ export interface ActiveSkillConfig {
     cooldown: number;
     damage?: number;
     duration?: number;
+    /** 每局初始充能次数 */
+    initialCharges: number;
 }
 
 export interface RogueUpgradeConfig {
     id: string;
     name: string;
     description: string;
-    type: 'tower_attack' | 'tower_speed' | 'tower_range' | 'skill_charge';
+    type: 'tower_attack' | 'tower_speed' | 'tower_range' | 'tower_chain_count' | 'tower_slow_effect' | 'skill_charge';
     target?: string;
     value: number;
 }
@@ -28,6 +30,7 @@ export const ACTIVE_SKILL_CONFIGS: ActiveSkillConfig[] = [
         description: '对敌人最密集区域造成高额伤害',
         cooldown: 60,
         damage: 500,
+        initialCharges: 1,
     },
     {
         id: 'skill_freeze',
@@ -35,6 +38,7 @@ export const ACTIVE_SKILL_CONFIGS: ActiveSkillConfig[] = [
         description: '使所有敌人停止移动 2 秒',
         cooldown: 45,
         duration: 2,
+        initialCharges: 1,
     },
 ];
 
@@ -66,7 +70,7 @@ export const ROGUE_UPGRADE_CONFIGS: RogueUpgradeConfig[] = [
         id: 'rogue_ice_effect',
         name: '冰冻增幅',
         description: '冰塔减速效果 +10%',
-        type: 'tower_attack',
+        type: 'tower_slow_effect',
         target: 'ice',
         value: 0.1,
     },
@@ -74,7 +78,7 @@ export const ROGUE_UPGRADE_CONFIGS: RogueUpgradeConfig[] = [
         id: 'rogue_electric_bounce',
         name: '电弧扩展',
         description: '电塔弹射次数 +1',
-        type: 'tower_attack',
+        type: 'tower_chain_count',
         target: 'electric',
         value: 1,
     },
