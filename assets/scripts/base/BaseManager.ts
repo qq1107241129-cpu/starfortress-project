@@ -11,11 +11,13 @@
 
 import { SaveManager } from '../core/SaveManager';
 import { BuildingManager, BuildingState } from './BuildingManager';
+import { RebirthManager, RebirthStatus, PermanentSkillState } from './RebirthManager';
 
 export class BaseManager {
     private static _instance: BaseManager | null = null;
     private _saveManager: SaveManager;
     private _buildingManager: BuildingManager;
+    private _rebirthManager: RebirthManager;
     private _battleCoin: number = 0;
     private _baseCoin: number = 0;
     private _initialized: boolean = false;
@@ -23,6 +25,7 @@ export class BaseManager {
     constructor() {
         this._saveManager = SaveManager.getInstance();
         this._buildingManager = BuildingManager.getInstance();
+        this._rebirthManager = RebirthManager.getInstance();
     }
 
     static getInstance(): BaseManager {
@@ -45,6 +48,7 @@ export class BaseManager {
         this._battleCoin = saveData.battleCoin;
         this._baseCoin = saveData.baseCoin;
         this._buildingManager.initFromSave(saveData);
+        this._rebirthManager.initFromSave(saveData);
         this._initialized = true;
         console.log(`[BaseManager] 初始化完成，经营币: ${this._baseCoin}，战斗金币: ${this._battleCoin}`);
     }
@@ -254,6 +258,103 @@ export class BaseManager {
      */
     getTotalBuildingLevels(): number {
         return this._buildingManager.getTotalBuildingLevels();
+    }
+
+    // ==================== 星核重构 ====================
+
+    /**
+     * 获取 RebirthManager 实例
+     */
+    getRebirthManager(): RebirthManager {
+        return this._rebirthManager;
+    }
+
+    /**
+     * 检查是否满足转生条件
+     */
+    checkRebirthConditions(): RebirthStatus {
+        return this._rebirthManager.checkRebirthConditions({
+            baseCoreLevel: this.getBaseCoreLevel(),
+            highestStage: this._saveManager.getSave().highestStage,
+            totalBuildingLevels: this.getTotalBuildingLevels(),
+            totalPower: 0, // TODO: 接入战力计算系统
+        });
+    }
+
+    /**
+     * 执行星核重构
+     * 流程：
+     * 1. RebirthManager 计算碎片、更新内存、重置 SaveManager 内存状态
+     * 2. BaseManager 重置资源和建筑
+     * 3. 统一保存（包含永久内容）
+     */
+    async executeRebirth(): Promise<{ shardsGained: number; totalShards: number }> {
+        const result = await this._rebirthManager.executeRebirth({
+            highestStage: this._saveManager.getSave().highestStage,
+            baseLevel: this.getBaseCoreLevel(),
+            totalBuildingLevels: this.getTotalBuildingLevels(),
+            totalPower: 0,
+        });
+
+        // 重置基地资源和建筑内存状态
+        this._battleCoin = 0;
+        this._baseCoin = 0;
+        this._buildingManager.reset();
+
+        // 统一保存（SaveManager 已由 RebirthManager 重置内存状态，此处持久化）
+        await this._save();
+        console.log('[BaseManager] 基地已重置（星核重构）');
+
+        return result;
+    }
+
+    /**
+     * 获取永久技能状态列表
+     */
+    getAllPermanentSkillStates(): PermanentSkillState[] {
+        return this._rebirthManager.getAllPermanentSkillStates();
+    }
+
+    /**
+     * 升级永久技能
+     */
+    async upgradePermanentSkill(skillId: string): Promise<boolean> {
+        return this._rebirthManager.upgradePermanentSkill(skillId);
+    }
+
+    /**
+     * 获取永久塔攻击加成倍率
+     */
+    getPermanentAttackBonus(): number {
+        return this._rebirthManager.getPermanentAttackBonus();
+    }
+
+    /**
+     * 获取永久经营产出加成倍率
+     */
+    getPermanentProductionBonus(): number {
+        return this._rebirthManager.getPermanentProductionBonus();
+    }
+
+    /**
+     * 获取永久开局轨道炮充能次数
+     */
+    getPermanentOrbitalCharges(): number {
+        return this._rebirthManager.getPermanentOrbitalCharges();
+    }
+
+    /**
+     * 获取永久离线收益上限额外分钟数
+     */
+    getPermanentOfflineBonusMinutes(): number {
+        return this._rebirthManager.getPermanentOfflineBonusMinutes();
+    }
+
+    /**
+     * 获取永久肉鸽品质加成倍率
+     */
+    getPermanentRogueQualityBonus(): number {
+        return this._rebirthManager.getPermanentRogueQualityBonus();
     }
 
     // ==================== 存档操作 ====================

@@ -92,6 +92,7 @@ assets/
       ├─ SettlementUI.ts
       ├─ BuildingUI.ts
       ├─ TowerUpgradeUI.ts
+      ├─ OfflineRewardUI.ts
       ├─ RebirthUI.ts
       └─ SettingsUI.ts
 ```
@@ -177,7 +178,7 @@ flowchart LR
 - `RogueChoiceManager`：局内 3 选 1 强化。
 - `BuildingManager`：建筑等级、升级、效果汇总。
 - `IdleIncomeManager`：在线收益计时（每帧累加经营币）、离线收益计算（基于离线时长和工厂等级）、离线收益上限、离线收益领取。
-- `RebirthManager`：星核重构条件、碎片计算、重置与保留。
+- `RebirthManager`：星核重构条件判断、碎片计算、转生执行（保留永久内容）、永久技能等级管理和加成读取。通过 `resetForRebirth()` 与 SaveManager 协作重置存档。
 
 ## 9. 配置系统设计
 
@@ -218,6 +219,7 @@ towerLevels
 permanentSkillLevels
 lastOfflineTimestamp
 settings
+totalRebirths (可选，统计用)
 ```
 
 规则：

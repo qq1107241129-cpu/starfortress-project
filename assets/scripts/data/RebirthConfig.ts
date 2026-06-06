@@ -48,7 +48,7 @@ export const REBIRTH_CONFIG: RebirthConfig = {
             description: '所有塔攻击永久 +5%',
             maxLevel: 10,
             effectPerLevel: 0.05,
-            shardCostPerLevel: [0, 10, 20, 40, 80, 160, 320, 640, 1280, 2560],
+            shardCostPerLevel: [10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120],
         },
         {
             id: 'perm_production',
@@ -56,7 +56,7 @@ export const REBIRTH_CONFIG: RebirthConfig = {
             description: '经营产出永久 +5%',
             maxLevel: 10,
             effectPerLevel: 0.05,
-            shardCostPerLevel: [0, 10, 20, 40, 80, 160, 320, 640, 1280, 2560],
+            shardCostPerLevel: [10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120],
         },
         {
             id: 'perm_orbital',
@@ -64,7 +64,7 @@ export const REBIRTH_CONFIG: RebirthConfig = {
             description: '开局获得 1 次轨道炮',
             maxLevel: 3,
             effectPerLevel: 1,
-            shardCostPerLevel: [0, 50, 150],
+            shardCostPerLevel: [50, 150, 400],
         },
         {
             id: 'perm_offline',
@@ -72,7 +72,7 @@ export const REBIRTH_CONFIG: RebirthConfig = {
             description: '离线收益上限 +30 分钟',
             maxLevel: 5,
             effectPerLevel: 30,
-            shardCostPerLevel: [0, 20, 50, 120, 300],
+            shardCostPerLevel: [20, 50, 120, 300, 750],
         },
         {
             id: 'perm_rogue_quality',
@@ -80,7 +80,7 @@ export const REBIRTH_CONFIG: RebirthConfig = {
             description: '肉鸽选项品质小幅提升',
             maxLevel: 5,
             effectPerLevel: 0.1,
-            shardCostPerLevel: [0, 30, 80, 200, 500],
+            shardCostPerLevel: [30, 80, 200, 500, 1200],
         },
     ],
 };

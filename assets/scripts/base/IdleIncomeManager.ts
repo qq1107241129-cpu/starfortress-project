@@ -7,15 +7,18 @@
  * 2. 启动时计算离线收益并通知 UI
  * 3. 领取离线收益后保存存档和新时间戳
  *
- * 收益公式：
- * - 在线收益 = 矿场产出 × 工厂在线倍率
+ * 收益公式（含永久技能加成）：
+ * - 在线收益 = 矿场产出 × 工厂在线倍率 × (1 + 永久经营加成)
  * - 离线收益 = 在线收益 × 离线倍率 × 离线分钟数（有上限）
+ * - 离线上限 = 基础上限 + 工厂加成 + 永久离线扩展加成
  */
 
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { SaveManager } from '../core/SaveManager';
 import { BuildingManager } from './BuildingManager';
+import { RebirthManager } from './RebirthManager';
 import {
+    ECONOMY_CONFIG,
     calculateOnlineIncomePerMinute,
     calculateOfflineIncome,
 } from '../data/EconomyConfig';
@@ -36,6 +39,7 @@ export class IdleIncomeManager {
     private _eventBus: EventBus;
     private _saveManager: SaveManager;
     private _buildingManager: BuildingManager;
+    private _rebirthManager: RebirthManager;
     private _pendingOfflineReward: OfflineRewardInfo | null = null;
     private _onlineAccumulator: number = 0;
     private _initialized: boolean = false;
@@ -44,6 +48,7 @@ export class IdleIncomeManager {
         this._eventBus = EventBus.getInstance();
         this._saveManager = SaveManager.getInstance();
         this._buildingManager = BuildingManager.getInstance();
+        this._rebirthManager = RebirthManager.getInstance();
     }
 
     static getInstance(): IdleIncomeManager {
@@ -72,17 +77,26 @@ export class IdleIncomeManager {
             const factoryLevel = this._buildingManager.getBuildingLevel('building_factory');
             const result = calculateOfflineIncome(mineOutput, factoryLevel, offlineMinutes);
 
+            // 永久技能「离线扩展」：每级 +30 分钟离线上限
+            const permOfflineBonus = this._rebirthManager.getPermanentOfflineBonusMinutes();
+            const effectiveMaxMinutes = (result.maxMinutes ?? 0) + permOfflineBonus;
+            const effectiveCappedMinutes = Math.min(offlineMinutes, effectiveMaxMinutes);
+
+            // 重新计算离线收益（基于有效封顶分钟数）
+            const onlineRate = calculateOnlineIncomePerMinute(mineOutput, factoryLevel);
+            const effectiveIncome = Math.floor(onlineRate * ECONOMY_CONFIG.offlineIncomeMultiplier * effectiveCappedMinutes);
+
             this._pendingOfflineReward = {
-                income: result.income,
-                cappedMinutes: result.cappedMinutes,
-                maxMinutes: result.maxMinutes,
+                income: effectiveIncome,
+                cappedMinutes: effectiveCappedMinutes,
+                maxMinutes: effectiveMaxMinutes,
                 rawOfflineMinutes: offlineMinutes,
             };
 
             console.log(
                 `[IdleIncomeManager] 离线 ${offlineMinutes.toFixed(1)} 分钟，` +
-                `上限 ${result.maxMinutes} 分钟，` +
-                `可领取 ${result.income} 经营币`
+                `基础上限 ${result.maxMinutes} 分钟 + 永久加成 ${permOfflineBonus} 分钟 = 有效上限 ${effectiveMaxMinutes} 分钟，` +
+                `可领取 ${effectiveIncome} 经营币`
             );
 
             this._eventBus.emit(BATTLE_EVENTS.OFFLINE_REWARD_READY, this._pendingOfflineReward);
@@ -104,7 +118,11 @@ export class IdleIncomeManager {
         // 由调用方（GameBootstrap 或 GameManager）决定是否调用
         const mineOutput = this._buildingManager.getBuildingEffect('building_mine');
         const factoryLevel = this._buildingManager.getBuildingLevel('building_factory');
-        const incomePerMinute = calculateOnlineIncomePerMinute(mineOutput, factoryLevel);
+        const baseIncomePerMinute = calculateOnlineIncomePerMinute(mineOutput, factoryLevel);
+
+        // 永久技能「资源增产」：每级 +5% 经营产出
+        const permProductionBonus = this._rebirthManager.getPermanentProductionBonus();
+        const incomePerMinute = baseIncomePerMinute * (1 + permProductionBonus);
         const incomePerSecond = incomePerMinute / 60;
 
         this._onlineAccumulator += incomePerSecond * deltaTime;
@@ -155,11 +173,13 @@ export class IdleIncomeManager {
     }
 
     /**
-     * 获取当前在线收益速率（经营币/分钟）
+     * 获取当前在线收益速率（经营币/分钟，含永久技能加成）
      */
     getOnlineIncomePerMinute(): number {
         const mineOutput = this._buildingManager.getBuildingEffect('building_mine');
         const factoryLevel = this._buildingManager.getBuildingLevel('building_factory');
-        return calculateOnlineIncomePerMinute(mineOutput, factoryLevel);
+        const baseIncome = calculateOnlineIncomePerMinute(mineOutput, factoryLevel);
+        const permProductionBonus = this._rebirthManager.getPermanentProductionBonus();
+        return baseIncome * (1 + permProductionBonus);
     }
 }

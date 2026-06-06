@@ -197,4 +197,36 @@ export class SaveManager {
             console.warn('[SaveManager] 清除存档失败:', e);
         }
     }
+
+    /**
+     * 星核重构重置：重置普通资源和进度，保留永久内容
+     * 保留：rebirthToken、permanentSkillLevels、highestStage、towerLevels、settings
+     * 重置：battleCoin、baseCoin、建筑等级、currentStage、lastOfflineTimestamp
+     *
+     * 注意：此方法只重置内存状态，不调用 save()。
+     * 调用方（BaseManager）需在所有状态更新完成后统一调用 save()。
+     */
+    resetForRebirth(preservedRebirthToken: number, preservedPermanentSkills: Record<string, number>): void {
+        const defaults = getDefaultSaveData();
+        if (!this._currentSave) {
+            this._currentSave = defaults;
+        }
+
+        // 保留永久字段和用户设置
+        const preservedHighestStage = this._currentSave.highestStage;
+        const preservedTowerLevels = { ...this._currentSave.towerLevels };
+        const preservedSettings = { ...this._currentSave.settings };
+
+        // 重置为默认值，同时保留永久内容和用户设置
+        this._currentSave = {
+            ...defaults,
+            rebirthToken: preservedRebirthToken,
+            permanentSkillLevels: preservedPermanentSkills,
+            highestStage: preservedHighestStage,
+            towerLevels: preservedTowerLevels,
+            settings: preservedSettings,
+        };
+
+        console.log('[SaveManager] 星核重构重置完成（内存状态）');
+    }
 }

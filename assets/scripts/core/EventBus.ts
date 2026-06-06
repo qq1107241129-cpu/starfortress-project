@@ -94,4 +94,7 @@ export const BATTLE_EVENTS = {
     IDLE_INCOME_TICK: 'idle:income_tick',
     OFFLINE_REWARD_READY: 'idle:offline_reward_ready',
     OFFLINE_REWARD_CLAIMED: 'idle:offline_reward_claimed',
+    // 星核重构事件
+    REBIRTH_COMPLETE: 'rebirth:complete',
+    PERMANENT_SKILL_UPGRADE: 'rebirth:skill_upgrade',
 } as const;

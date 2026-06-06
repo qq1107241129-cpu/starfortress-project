@@ -135,7 +135,10 @@ export class GameBootstrap extends Component {
         this._baseManager = BaseManager.getInstance();
         await this._baseManager.init();
 
-        // 7. 初始化 IdleIncomeManager（计算离线收益）
+        // 7. 初始化 RebirthManager（星核重构，通过 BaseManager 已初始化）
+        console.log('[GameBootstrap] RebirthManager 已随 BaseManager 初始化');
+
+        // 8. 初始化 IdleIncomeManager（计算离线收益）
         console.log('[GameBootstrap] 初始化 IdleIncomeManager');
         this._idleIncomeManager = IdleIncomeManager.getInstance();
         const saveData = this._baseManager.getSaveManager().getSave();

@@ -1,5 +1,39 @@
 # CHANGELOG
 
+## 2026-06-06 010-rebirth-system 完成
+
+### Added
+
+- 新增 `assets/scripts/base/RebirthManager.ts`：星核重构管理器，管理转生条件判断、星核碎片计算、转生执行、永久技能升级和加成读取。
+- 新增 `assets/scripts/ui/RebirthUI.ts`：星核重构 UI 组件，显示转生条件、预计碎片、确认弹窗和永久技能列表。
+
+### Changed
+
+- 更新 `assets/scripts/core/SaveManager.ts`：新增 `resetForRebirth()` 方法，重置普通资源但保留永久内容（星核碎片、永久技能、历史最高关卡、塔等级）。
+- 更新 `assets/scripts/core/EventBus.ts`：新增星核重构事件（REBIRTH_COMPLETE、PERMANENT_SKILL_UPGRADE）。
+- 更新 `assets/scripts/base/BaseManager.ts`：集成 RebirthManager 初始化；新增转生条件检查、执行转生、永久技能升级和加成读取接口。
+- 更新 `assets/scripts/bootstrap/GameBootstrap.ts`：补充 RebirthManager 初始化日志。
+- 更新 `assets/scripts/base/IdleIncomeManager.ts`：集成永久技能「资源增产」到在线收益计算（乘以 1 + getPermanentProductionBonus()）；集成永久技能「离线扩展」到离线收益上限（叠加 getPermanentOfflineBonusMinutes()）。
+- 更新 `docs/GAME_DESIGN.md`：新增第 20 节「星核重构系统」，包含转生条件、碎片计算公式、重置规则、永久技能列表和验收标准。
+- 更新 `docs/TECH_DESIGN.md`：补充 RebirthManager 职责描述，更新模块结构图和存档字段。
+
+### Fixed
+
+- 修复 `resetForRebirth()` 未保留用户设置（settings）：星核重构时 `settings` 被 `...defaults` 覆盖为空对象，导致用户/本地设置丢失。现已将 `settings` 加入保留列表。
+- 修复 RebirthUI 永久技能升级按钮匿名回调无法解绑：改为存储绑定回调引用 `_skillUpgradeCallbacks`，onDestroy 中逐个解绑。
+
+### Notes
+
+- 转生条件：基地核心 10 级 + 通关第 10 关（配置驱动）。
+- 星核碎片公式：最高关卡×10 + 基地等级×5 + 总建筑等级×2 + 总战力×0.01。
+- 5 个永久技能：战术强化（塔攻击+5%/级）、资源增产（经营+5%/级）、轨道支援（开局轨道炮+1/级）、离线扩展（离线上限+30分钟/级）、命运干预（肉鸽品质+10%/级）。
+- 转生后保留：星核碎片、永久技能、历史最高关卡、塔等级。
+- 转生后重置：战斗金币、经营币、建筑等级（基地核心除外）。
+- 永久技能集成状态：
+  - ✅ 已接入：「资源增产」— IdleIncomeManager 在线收益计算已乘以 (1 + getPermanentProductionBonus())。
+  - ✅ 已接入：「离线扩展」— IdleIncomeManager 离线收益上限已叠加 getPermanentOfflineBonusMinutes()。
+  - 🔲 预留接口（未接入战斗系统）：「战术强化」getPermanentAttackBonus()、「轨道支援」getPermanentOrbitalCharges()、「命运干预」getPermanentRogueQualityBonus()。
+
 ## 2026-06-06 009-idle-offline-reward 完成
 
 ### Added
