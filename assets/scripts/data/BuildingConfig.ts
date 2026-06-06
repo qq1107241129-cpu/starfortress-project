@@ -3,6 +3,9 @@
  * 定义 MVP 5 个建筑的属性
  */
 
+/** 升级消耗资源类型 */
+export type CostType = 'baseCoin' | 'battleCoin';
+
 export interface BuildingLevelConfig {
     level: number;
     upgradeCost: number;
@@ -14,6 +17,8 @@ export interface BuildingConfig {
     name: string;
     description: string;
     type: 'base' | 'lab' | 'mine' | 'reactor' | 'factory';
+    /** 升级消耗的资源类型 */
+    costType: CostType;
     baseEffect: number;
     levels: BuildingLevelConfig[];
 }
@@ -24,6 +29,7 @@ export const BUILDING_CONFIGS: BuildingConfig[] = [
         name: '基地核心',
         description: '主等级，影响解锁和星核重构条件',
         type: 'base',
+        costType: 'battleCoin',
         baseEffect: 1,
         levels: [
             { level: 1, upgradeCost: 0, effectValue: 1 },
@@ -43,6 +49,7 @@ export const BUILDING_CONFIGS: BuildingConfig[] = [
         name: '研究所',
         description: '提升塔攻击、射速、科技和肉鸽品质',
         type: 'lab',
+        costType: 'baseCoin',
         baseEffect: 1.0,
         levels: [
             { level: 1, upgradeCost: 0, effectValue: 1.0 },
@@ -62,6 +69,7 @@ export const BUILDING_CONFIGS: BuildingConfig[] = [
         name: '矿场',
         description: '产出经营币',
         type: 'mine',
+        costType: 'baseCoin',
         baseEffect: 10,
         levels: [
             { level: 1, upgradeCost: 0, effectValue: 10 },
@@ -81,6 +89,7 @@ export const BUILDING_CONFIGS: BuildingConfig[] = [
         name: '能源反应堆',
         description: '提升主动技能次数或初始能量',
         type: 'reactor',
+        costType: 'battleCoin',
         baseEffect: 1,
         levels: [
             { level: 1, upgradeCost: 0, effectValue: 1 },
@@ -95,6 +104,7 @@ export const BUILDING_CONFIGS: BuildingConfig[] = [
         name: '工厂',
         description: '提升在线收益倍率和离线收益上限',
         type: 'factory',
+        costType: 'baseCoin',
         baseEffect: 1.0,
         levels: [
             { level: 1, upgradeCost: 0, effectValue: 1.0 },

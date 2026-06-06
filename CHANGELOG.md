@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 2026-06-06 008-base-building-system 完成
+
+### Added
+
+- 新增 `assets/scripts/core/SaveManager.ts`：存档管理器，通过 Platform adapter 读写存档，支持默认值合并和版本迁移预留。
+- 新增 `assets/scripts/base/BuildingManager.ts`：建筑管理器，管理 5 个 MVP 建筑的等级、升级、消耗和属性加成。
+- 新增 `assets/scripts/base/BaseManager.ts`：基地总管理器，协调 SaveManager 和 BuildingManager，管理资源和建筑效果查询。
+- 新增 `assets/scripts/ui/BuildingUI.ts`：建筑 UI 组件，显示建筑列表、等级、效果和升级按钮。
+
+### Changed
+
+- 更新 `assets/scripts/data/BuildingConfig.ts`：BuildingConfig 新增 `costType` 字段（`'baseCoin' | 'battleCoin'`），明确每个建筑升级消耗的资源类型。
+- 更新 `docs/GAME_DESIGN.md`：新增第 18 节「基地经营建筑系统」。
+
+### Fixed
+
+- BuildingUI 自动初始化 BaseManager：onLoad 时检测未初始化则自动调用 `init()`，确保建筑列表可刷新。
+- 升级消耗资源类型按 BuildingConfig.costType 配置决定：基地核心和能源反应堆消耗战斗金币，研究所/矿场/工厂消耗经营币。
+- BuildingManager 清理未使用的 `BUILDING_LEVEL_KEYS` 常量和 `_saveManager` 字段。
+- BuildingManager.reset() 注释与代码行为一致：保留基地核心等级，重置其他建筑。
+- BaseManager.init() 增加重复初始化保护。
+
+### Notes
+
+- 建筑升级资源类型：基地核心(battleCoin)、研究所(baseCoin)、矿场(baseCoin)、能源反应堆(battleCoin)、工厂(baseCoin)。
+- 建筑等级持久化通过 SaveManager，存储使用 Platform adapter（Web 环境 localStorage）。
+- 建筑效果以数值形式暴露给其他系统，本次未集成到战斗系统。
+- BuildingUI 需要在 Cocos Creator 编辑器中挂载到场景才能运行。
+- 未实现居民区、商店等 MVP 外建筑。
+- 未接入广告、支付或服务器。
+
 ## 2026-06-05 007-rogue-choice-and-skills 完成
 
 ### Added

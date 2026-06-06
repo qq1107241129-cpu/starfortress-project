@@ -449,3 +449,71 @@ MVP 选项方向：
 4. 轨道炮能造成伤害。
 5. 全屏冻结能暂停敌人移动。
 6. 每局最多触发 3 次肉鸽选择。
+
+## 18. 基地经营建筑系统（008-base-building-system）
+
+### 18.1 系统概述
+
+基地经营建筑系统管理 5 个 MVP 建筑的等级、升级、消耗和属性加成。建筑等级通过 SaveManager 持久化，建筑效果以数值形式暴露给其他系统读取。
+
+### 18.2 模块职责
+
+- **BaseManager**：基地总管理器。协调 SaveManager 和 BuildingManager，管理资源（经营币、战斗金币），协调建筑升级与存档保存，暴露建筑效果查询接口。
+- **BuildingManager**：建筑管理器。管理 5 个建筑的等级缓存、升级逻辑、效果查询，从 SaveManager 加载初始数据。
+- **SaveManager**：存档管理器。通过 Platform adapter 进行存档读写，支持默认值合并和版本迁移预留。
+- **BuildingUI**：建筑 UI 组件。显示建筑列表、等级、效果和升级按钮。
+
+### 18.3 五个 MVP 建筑
+
+| 建筑 | id | 效果 | 消耗资源 | 最高等级 |
+|------|-----|------|---------|---------|
+| 基地核心 | building_base | 主等级，影响解锁和星核重构条件 | 战斗金币 | 10 |
+| 研究所 | building_lab | 塔属性倍率（×1.00 ~ ×1.50） | 经营币 | 10 |
+| 矿场 | building_mine | 经营币产出（10 ~ 200/分钟） | 经营币 | 10 |
+| 能源反应堆 | building_reactor | 主动技能次数加成（+1 ~ +5） | 战斗金币 | 5 |
+| 工厂 | building_factory | 在线收益倍率（×1.00 ~ ×1.50） | 经营币 | 5 |
+
+### 18.4 升级规则
+
+- 建筑等级从 1 开始。
+- 升级消耗资源类型由 BuildingConfig.costType 配置决定：
+  - `battleCoin`（战斗金币）：基地核心、能源反应堆
+  - `baseCoin`（经营币）：研究所、矿场、工厂
+- 升级后立即生效，存档自动保存。
+- 升级条件：建筑未满级 + 对应资源足够。
+- 星核重构后：基地核心等级保留，其他建筑重置为 1 级。
+
+### 18.5 存档字段
+
+存档通过 Platform.instance.getStorage / setStorage 读写，Web 环境使用 localStorage。
+
+关键字段：
+
+- `baseCoreLevel`：基地核心等级
+- `labLevel`：研究所等级
+- `mineLevel`：矿场等级
+- `reactorLevel`：能源反应堆等级
+- `factoryLevel`：工厂等级
+- `battleCoin`：战斗金币
+- `baseCoin`：经营币
+
+### 18.6 建筑效果查询接口
+
+其他系统通过 BaseManager 查询建筑效果：
+
+- `getBaseCoreLevel()`：获取基地核心等级
+- `getLabEffectMultiplier()`：获取研究所倍率
+- `getMineIncomePerMinute()`：获取矿场产出
+- `getReactorSkillBonus()`：获取技能次数加成
+- `getFactoryOnlineMultiplier()`：获取工厂在线收益倍率
+- `getFactoryLevel()`：获取工厂等级
+- `getTotalBuildingLevels()`：获取所有建筑等级总和（星核碎片计算用）
+
+### 18.7 验收标准
+
+1. 建筑可显示。
+2. 建筑可升级。
+3. 升级消耗对应配置资源（战斗金币或经营币，由 BuildingConfig.costType 决定）。
+4. 升级后产出或属性提升。
+5. 建筑数据可保存和读取。
+6. 只包含 MVP 五个建筑。
