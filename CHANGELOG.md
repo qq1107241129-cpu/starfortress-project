@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## 2026-06-06 009-idle-offline-reward 完成
+
+### Added
+
+- 新增 `assets/scripts/base/IdleIncomeManager.ts`：放置收益管理器，在线时每帧累加经营币，启动时计算离线收益，提供领取接口。
+- 新增 `assets/scripts/ui/OfflineRewardUI.ts`：离线收益弹窗组件，显示离线时长、收益金额和领取按钮，广告翻倍预留入口。
+
+### Changed
+
+- 更新 `assets/scripts/data/EconomyConfig.ts`：新增 `calculateOnlineIncomePerMinute(mineOutput, factoryLevel)` 函数，在线收益公式改为「矿场产出 × 工厂在线倍率 × baseCoinMultiplier」；`calculateOfflineIncome` 新增 `mineOutput` 参数，返回值新增 `maxMinutes` 字段。
+- 更新 `assets/scripts/core/EventBus.ts`：新增放置收益事件（IDLE_INCOME_TICK、OFFLINE_REWARD_READY、OFFLINE_REWARD_CLAIMED）。
+- 更新 `assets/scripts/bootstrap/GameBootstrap.ts`：接入 BaseManager、IdleIncomeManager 初始化；调整初始化顺序，EventBus 初始化后再注册事件监听；新增 `_listenersRegistered` 防重复注册；非战斗状态驱动在线收益计时；监听 IDLE_INCOME_TICK 累加经营币；定期保存（每 30 秒）；退出时先保存资源再更新离线时间戳。
+- 更新 `assets/scripts/base/BaseManager.ts`：新增 `getSaveManager()` 方法；清理未使用的 `SaveData` 导入。
+- 更新 `assets/scripts/ui/OfflineRewardUI.ts`：修复领取按钮和广告翻倍按钮未绑定点击事件；在 onLoad 中注册 click 监听，在 onDestroy 中解绑。
+- 更新 `docs/GAME_DESIGN.md`：新增第 19 节「放置收益系统」。
+- 更新 `docs/TECH_DESIGN.md`：补充 IdleIncomeManager 职责描述。
+
+### Notes
+
+- 在线收益依赖矿场建筑 effectValue（经营币/分钟），工厂等级提供在线倍率加成。
+- 离线收益公式：在线收益 × 0.3 × 离线分钟数（上限 60 + (工厂等级-1) × 15 分钟）。
+- Web 调试使用本地时间计算离线时长，小游戏平台通过 platform adapter 的 storage 存储时间戳。
+- 广告翻倍按钮默认隐藏，广告不可用时领取基础收益。
+- 未接入真实广告、服务器校时或复杂反作弊。
+
 ## 2026-06-06 008-base-building-system 完成
 
 ### Added

@@ -517,3 +517,48 @@ MVP 选项方向：
 4. 升级后产出或属性提升。
 5. 建筑数据可保存和读取。
 6. 只包含 MVP 五个建筑。
+
+## 19. 放置收益系统（009-idle-offline-reward）
+
+### 19.1 系统概述
+
+放置收益让玩家离开游戏后仍有期待。MVP 中在线收益高于离线收益，离线收益约为在线收益的 30%，并有时间上限。工厂等级提高离线收益上限。
+
+### 19.2 模块职责
+
+- **IdleIncomeManager**：放置收益管理器。在线时每帧累加经营币，启动时计算离线收益，提供领取接口。
+- **EconomyConfig**：经济配置。定义在线收益、离线倍率、离线上限和工厂加成。
+- **OfflineRewardUI**：离线收益弹窗。显示离线时长、收益金额和领取按钮。
+
+### 19.3 收益公式
+
+- **在线收益**（经营币/分钟）= 矿场 effectValue × 工厂在线倍率 × baseCoinMultiplier
+- **工厂在线倍率** = 1 + (工厂等级 - 1) × 0.1
+- **离线收益** = 在线收益 × offlineIncomeMultiplier × 离线分钟数（有上限）
+- **离线上限**（分钟）= offlineIncomeCapMinutes + (工厂等级 - 1) × factoryOfflineBonusPerLevel
+
+### 19.4 经济配置默认值
+
+| 配置项 | 默认值 | 说明 |
+| --- | --- | --- |
+| baseOnlineIncome | 10 | 基础在线收益（兜底值） |
+| offlineIncomeMultiplier | 0.3 | 离线收益倍率（30%） |
+| offlineIncomeCapMinutes | 60 | 离线时间上限（分钟） |
+| factoryOfflineBonusPerLevel | 15 | 每级工厂增加离线上限（分钟） |
+| battleCoinMultiplier | 1.0 | 战斗金币全局倍率 |
+| baseCoinMultiplier | 1.0 | 经营币全局倍率 |
+
+### 19.5 事件通信
+
+- `IDLE_INCOME_TICK`：在线收益每累积 1 经营币时触发，携带 `{ amount }`。
+- `OFFLINE_REWARD_READY`：离线收益就绪时触发，携带 `{ income, cappedMinutes, maxMinutes, rawOfflineMinutes }`。
+- `OFFLINE_REWARD_CLAIMED`：离线收益领取后触发，携带 `{ amount }`。
+
+### 19.6 验收标准
+
+1. 在线能持续产出经营币。
+2. 关闭后重新进入能结算离线收益。
+3. 离线收益有上限。
+4. 工厂升级能提高上限。
+5. 收益能保存。
+6. 广告不可用不影响领取基础收益。

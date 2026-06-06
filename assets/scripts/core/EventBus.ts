@@ -90,4 +90,8 @@ export const BATTLE_EVENTS = {
     // 战斗暂停/恢复（用于肉鸽选择期间）
     BATTLE_FORCE_PAUSE: 'battle:force_pause',
     BATTLE_FORCE_RESUME: 'battle:force_resume',
+    // 放置收益事件
+    IDLE_INCOME_TICK: 'idle:income_tick',
+    OFFLINE_REWARD_READY: 'idle:offline_reward_ready',
+    OFFLINE_REWARD_CLAIMED: 'idle:offline_reward_claimed',
 } as const;

@@ -176,7 +176,7 @@ flowchart LR
 - `SkillManager`：主动技能次数和释放。
 - `RogueChoiceManager`：局内 3 选 1 强化。
 - `BuildingManager`：建筑等级、升级、效果汇总。
-- `IdleIncomeManager`：在线收益、离线收益和上限。
+- `IdleIncomeManager`：在线收益计时（每帧累加经营币）、离线收益计算（基于离线时长和工厂等级）、离线收益上限、离线收益领取。
 - `RebirthManager`：星核重构条件、碎片计算、重置与保留。
 
 ## 9. 配置系统设计

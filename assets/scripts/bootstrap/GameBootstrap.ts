@@ -7,15 +7,15 @@
  * 3. 初始化 EventBus
  * 4. 初始化 TimeManager
  * 5. 初始化 BattleManager
- * 6. 启动第 1 关测试战斗
- * 7. 输出调试信息
- * 8. 监听战斗结束
+ * 6. 初始化 BaseManager、IdleIncomeManager（放置收益）
+ * 7. 启动第 1 关测试战斗
+ * 8. 输出调试信息
+ * 9. 监听战斗结束和放置收益事件
  *
  * 注意：
  * - 不把大量战斗逻辑塞进 GameBootstrap
  * - 不硬编码大量核心数值
  * - 不直接调用平台 API
- * - 不实现 007 之后的功能
  */
 
 import { _decorator, Component, Label } from 'cc';
@@ -24,6 +24,8 @@ import { ConfigManager } from '../core/ConfigManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { TimeManager } from '../core/TimeManager';
 import { BattleManager } from '../battle/BattleManager';
+import { BaseManager } from '../base/BaseManager';
+import { IdleIncomeManager } from '../base/IdleIncomeManager';
 
 const { ccclass, property } = _decorator;
 
@@ -48,30 +50,55 @@ export class GameBootstrap extends Component {
     towerCountLabel: Label | null = null;
 
     private _battleManager: BattleManager | null = null;
+    private _baseManager: BaseManager | null = null;
+    private _idleIncomeManager: IdleIncomeManager | null = null;
     private _eventBus: EventBus | null = null;
     private _isBattleRunning: boolean = false;
     private _boundCallbacks: Array<{ event: string; callback: (...args: any[]) => void }> = [];
+    private _saveAccumulator: number = 0;
+    /** 在线收益自动保存间隔（秒） */
+    private readonly SAVE_INTERVAL: number = 30;
+
+    private _systemsReady: boolean = false;
+    private _listenersRegistered: boolean = false;
 
     onLoad() {
         console.log('[GameBootstrap] onLoad - 开始初始化');
-        this._initSystems();
-        this._setupEventListeners();
-        console.log('[GameBootstrap] 初始化完成');
+        // Cocos Creator 不会等待 async onLoad，用 .then() 驱动后续流程
+        this._initSystems().then(() => {
+            // EventBus 已在 _initSystems 中初始化，此时注册监听才有效
+            this._setupEventListeners();
+            this._systemsReady = true;
+            console.log('[GameBootstrap] 所有系统初始化完成');
+            this._startBattle();
+        }).catch((e) => {
+            console.error('[GameBootstrap] 初始化失败:', e);
+        });
     }
 
     start() {
-        console.log('[GameBootstrap] start - 准备启动战斗');
-        this._startBattle();
+        console.log('[GameBootstrap] start');
     }
 
     update(deltaTime: number) {
+        if (!this._systemsReady) return;
+
         if (this._isBattleRunning && this._battleManager) {
             this._battleManager.update(deltaTime);
             this._updateUI();
+        } else if (!this._isBattleRunning && this._idleIncomeManager) {
+            // 非战斗状态：驱动在线收益计时
+            this._idleIncomeManager.update(deltaTime);
+            // 定期保存在线收益
+            this._saveAccumulator += deltaTime;
+            if (this._saveAccumulator >= this.SAVE_INTERVAL) {
+                this._saveAccumulator = 0;
+                this._baseManager?.save();
+            }
         }
     }
 
-    private _initSystems() {
+    private async _initSystems() {
         // 1. 初始化 Platform WebMock
         console.log('[GameBootstrap] 初始化 Platform WebMock');
         const platform = Platform.instance;
@@ -102,11 +129,27 @@ export class GameBootstrap extends Component {
         // 5. 初始化 BattleManager
         console.log('[GameBootstrap] 初始化 BattleManager');
         this._battleManager = BattleManager.getInstance();
+
+        // 6. 初始化 BaseManager（加载存档、初始化建筑）
+        console.log('[GameBootstrap] 初始化 BaseManager');
+        this._baseManager = BaseManager.getInstance();
+        await this._baseManager.init();
+
+        // 7. 初始化 IdleIncomeManager（计算离线收益）
+        console.log('[GameBootstrap] 初始化 IdleIncomeManager');
+        this._idleIncomeManager = IdleIncomeManager.getInstance();
+        const saveData = this._baseManager.getSaveManager().getSave();
+        this._idleIncomeManager.init(saveData.lastOfflineTimestamp);
     }
 
     private _setupEventListeners() {
-        if (!this._eventBus) return;
+        if (this._listenersRegistered) return;
+        if (!this._eventBus) {
+            console.warn('[GameBootstrap] _setupEventListeners: EventBus 未初始化');
+            return;
+        }
         const eb = this._eventBus;
+        this._listenersRegistered = true;
 
         const bind = (event: string, callback: (...args: any[]) => void) => {
             eb.on(event, callback);
@@ -171,6 +214,13 @@ export class GameBootstrap extends Component {
             // 每 10 秒输出一次
             if (Math.floor(data.currentTime) % 10 === 0) {
                 console.log(`[GameBootstrap] 时间: ${data.currentTime.toFixed(1)}s, 剩余: ${data.remainingTime.toFixed(1)}s`);
+            }
+        });
+
+        // 监听在线收益发放：累加经营币到 BaseManager
+        bind(BATTLE_EVENTS.IDLE_INCOME_TICK, (data: { amount: number }) => {
+            if (this._baseManager) {
+                this._baseManager.addBaseCoin(data.amount);
             }
         });
     }
@@ -278,6 +328,10 @@ export class GameBootstrap extends Component {
 
     onDestroy() {
         console.log('[GameBootstrap] onDestroy');
+        // 退出时先保存当前资源（包括在线收益），再更新离线时间戳
+        // 顺序不能反：先 save 确保 baseCoin 持久化，再更新时间戳避免重复结算离线收益
+        this._baseManager?.save();
+        this._baseManager?.updateOfflineTimestamp();
         // 只解绑本实例注册的事件监听，不调用 EventBus.clear() 以免破坏其他系统
         if (this._eventBus) {
             for (const { event, callback } of this._boundCallbacks) {

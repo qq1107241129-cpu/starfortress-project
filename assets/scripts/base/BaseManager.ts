@@ -9,7 +9,7 @@
  * 4. 暴露建筑效果给其他系统
  */
 
-import { SaveManager, SaveData } from '../core/SaveManager';
+import { SaveManager } from '../core/SaveManager';
 import { BuildingManager, BuildingState } from './BuildingManager';
 
 export class BaseManager {
@@ -54,6 +54,13 @@ export class BaseManager {
      */
     isInitialized(): boolean {
         return this._initialized;
+    }
+
+    /**
+     * 获取 SaveManager 实例（供 IdleIncomeManager 读取时间戳等）
+     */
+    getSaveManager(): SaveManager {
+        return this._saveManager;
     }
 
     // ==================== 资源管理 ====================
