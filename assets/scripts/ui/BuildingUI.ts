@@ -206,14 +206,28 @@ export class BuildingUI extends Component {
     // ==================== 按钮事件 ====================
 
     /**
-     * 升级按钮点击（由 UI 按钮绑定）
-     * @param buildingIndex 建筑索引（0-4）
+     * 升级按钮点击（由 Cocos Button Click Events 调用）
+     * Cocos Button 回调签名：(event?: Event, customEventData?: string)
+     * customEventData 为建筑索引字符串 "0"~"4"
      */
-    async onUpgradeButtonClick(buildingIndex: number): Promise<void> {
+    async onUpgradeButtonClick(_event?: any, customEventData?: string): Promise<void> {
         if (!this._baseManager) return;
 
+        if (typeof customEventData !== 'string' || customEventData.trim() === '') {
+            console.warn(`[BuildingUI] 未提供建筑索引 customEventData`);
+            return;
+        }
+
+        const parsed = Number(customEventData);
+        if (!Number.isInteger(parsed) || parsed < 0 || parsed > 4) {
+            console.warn(`[BuildingUI] 无效的建筑索引: "${customEventData}"`);
+            return;
+        }
+
+        const buildingIndex = parsed;
+
         const states = this._baseManager.getAllBuildingStates();
-        if (buildingIndex < 0 || buildingIndex >= states.length) return;
+        if (buildingIndex >= states.length) return;
 
         const state = states[buildingIndex];
         const success = await this._baseManager.upgradeBuilding(state.config.id);
