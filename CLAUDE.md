@@ -408,8 +408,7 @@ PROJECT_MEMORY.md 是否更新：
 - ...
 
 请用户执行：
-git status
-git diff
+
 ```
 
 ---
