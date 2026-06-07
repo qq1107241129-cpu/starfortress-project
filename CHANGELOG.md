@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## 2026-06-07 012-build-wechat-douyin-taptap 构建链路配置
+
+### Added
+
+- 配置微信小游戏构建目标（wechatgame）
+- 配置抖音小游戏构建目标（bytedance）
+- 配置 TapTap 小游戏构建目标（cocos-play）
+- 更新 `docs/PUBLISH_MATRIX.md` 添加构建步骤和体积检查说明
+- 添加源码体积估算：TypeScript 脚本约 300KB，assets 目录约 875KB
+
+### Changed
+
+- 更新 `settings/v2/packages/builder.json` 添加构建任务配置（Battle.scene UUID 修正为 3a1a0eba-8136-47cf-82d1-febcf32362c0）
+
+### Notes
+
+- 已配置，待实际 Web/微信/抖音/TapTap 工具验证
+- Web 预览使用 WebMockPlatform，待实际运行验证
+- 平台 API 调用仅存在于 `assets/scripts/platform/` 目录
+- 所有平台适配器代码中有降级处理（代码审查确认，非平台实测）
+- 业务代码未直接调用 wx、tt、tap、TapSDK
+- 各平台构建产物待实际构建和开发者工具验证
+- 主包实际体积待构建报告确认
+
 ## 2026-06-07 011.5-battle-visual-demo 最小可视化战斗 Demo
 
 ### Added
@@ -374,7 +398,7 @@
 ### Changed
 
 - docs: regenerate project starter package and unify execution agent workflow.
-- 统一将执行角色命名为“执行 Agent”，明确可使用 DeepSeek、MiMo 或其他代码模型。
+- 统一将执行角色命名为"执行 Agent"，明确可使用 DeepSeek、MiMo 或其他代码模型。
 - 重整 PRD、MVP 设计、技术结构图、素材规范、AI 占位素材提示词、AI 协作流程、审查清单、项目记忆和任务提示词。
 
 ### Added
@@ -390,6 +414,6 @@
 ### Added
 
 - 初始化《星垒计划 / Starfortress Project》项目文档体系。
-- 新增 PRD、玩法设计、技术设计、平台适配、发布矩阵、美术规范、AI 素材提示词、审查清单与合规文档。
+- 新增 PRD、玩法设计、技术设计、平台适配、发布矩阵、美术规范、AI 占位素材提示词、审查清单与合规文档。
 - 新增 `TASKS/001` 至 `TASKS/012` 的首批任务拆分。
 - 明确 Codex / 执行 Agent 分工与平台 API 适配约束。

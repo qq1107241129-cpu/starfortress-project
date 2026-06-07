@@ -1,3 +1,58 @@
 {
-  "__version__": "1.3.9"
+  "__version__": "1.3.9",
+  "log": {
+    "level": 4
+  },
+  "buildTasks": [
+    {
+      "platform": "wechatgame",
+      "scenes": [
+        {
+          "url": "db://assets/scenes/Battle.scene",
+          "uuid": "3a1a0eba-8136-47cf-82d1-febcf32362c0"
+        }
+      ],
+      "debug": true,
+      "sourceMaps": false,
+      "packageName": "com.starfortress.minigame",
+      "remoteServerAddress": "",
+      "orientation": "portrait",
+      "appid": "",
+      "subPackage": "",
+      "subpackageList": [],
+      "appidIsRequired": false
+    },
+    {
+      "platform": "bytedance",
+      "scenes": [
+        {
+          "url": "db://assets/scenes/Battle.scene",
+          "uuid": "3a1a0eba-8136-47cf-82d1-febcf32362c0"
+        }
+      ],
+      "debug": true,
+      "sourceMaps": false,
+      "packageName": "com.starfortress.minigame",
+      "remoteServerAddress": "",
+      "orientation": "portrait",
+      "appid": "",
+      "subPackage": "",
+      "subpackageList": [],
+      "appidIsRequired": false
+    },
+    {
+      "platform": "cocos-play",
+      "scenes": [
+        {
+          "url": "db://assets/scenes/Battle.scene",
+          "uuid": "3a1a0eba-8136-47cf-82d1-febcf32362c0"
+        }
+      ],
+      "debug": true,
+      "sourceMaps": false,
+      "packageName": "com.starfortress.minigame",
+      "remoteServerAddress": "",
+      "orientation": "portrait"
+    }
+  ]
 }
