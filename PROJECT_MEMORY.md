@@ -170,6 +170,7 @@ Platform.instance.showRewardAd()
 -> 009-idle-offline-reward
 -> 010-rebirth-system
 -> 011-ui-flow
+-> 011.5-battle-visual-demo
 -> 012-build-wechat-douyin-taptap
 ```
 

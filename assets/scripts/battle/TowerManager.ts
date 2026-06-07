@@ -8,6 +8,7 @@ import { ProjectileManager } from './ProjectileManager';
 import { EnemyController } from './EnemyController';
 import { getTowerConfig } from '../data/TowerConfig';
 import { RogueUpgradeConfig } from '../data/SkillConfig';
+import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 
 /** 固定塔位定义 */
 export interface TowerSlot {
@@ -21,10 +22,12 @@ export class TowerManager {
     private _towers: Map<string, TowerController> = new Map();
     private _slots: TowerSlot[];
     private _projectileManager: ProjectileManager;
+    private _eventBus: EventBus;
 
     constructor(slots: TowerSlot[]) {
         this._slots = slots.map(s => ({ ...s, towerId: null }));
         this._projectileManager = new ProjectileManager();
+        this._eventBus = EventBus.getInstance();
     }
 
     /**
@@ -44,6 +47,15 @@ export class TowerManager {
         const tower = new TowerController(towerConfigId, config, level, slot.position);
         this._towers.set(tower.getId(), tower);
         slot.towerId = tower.getId();
+
+        // 发射塔放置事件
+        this._eventBus.emit(BATTLE_EVENTS.TOWER_PLACED, {
+            towerId: tower.getId(),
+            configId: towerConfigId,
+            slotId: slotId,
+            position: slot.position,
+            level: level,
+        });
 
         return true;
     }
@@ -81,6 +93,7 @@ export class TowerManager {
     private _executeAttack(tower: TowerController, target: EnemyController): void {
         const towerPos = tower.getPosition();
         const attack = tower.getAttack();
+        const targetPos = target.getPosition();
 
         switch (tower.getType()) {
             case 'machinegun':
@@ -119,6 +132,15 @@ export class TowerManager {
                 );
                 break;
         }
+
+        // 发射攻击事件（用于可视化）
+        this._eventBus.emit(BATTLE_EVENTS.TOWER_ATTACK, {
+            towerId: tower.getId(),
+            towerType: tower.getType(),
+            towerPosition: towerPos,
+            targetId: target.getId(),
+            targetPosition: targetPos,
+        });
     }
 
     /**

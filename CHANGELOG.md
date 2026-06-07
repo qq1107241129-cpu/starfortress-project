@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## 2026-06-07 011.5-battle-visual-demo 最小可视化战斗 Demo
+
+### Added
+
+- 新增 `assets/scripts/battle/BattleVisualManager.ts`：战斗可视化管理器，监听战斗事件，将逻辑对象映射为可见节点，管理塔、敌人、攻击特效的显示。使用绑定回调方案确保 EventBus 正确解绑。
+- 新增 `assets/scripts/battle/EnemyView.ts`：敌人可视化组件，使用 Graphics 绘制圆形敌人和血条，根据敌人类型设置不同颜色。
+- 新增 `assets/scripts/battle/TowerView.ts`：防御塔可视化组件，使用 Graphics 绘制矩形防御塔，显示攻击闪烁反馈，根据塔类型设置不同颜色。
+- 新增 `assets/scripts/battle/AttackEffectView.ts`：攻击特效可视化组件，使用 Graphics 绘制攻击线和命中特效。
+
+### Changed
+
+- 更新 `assets/scripts/core/EventBus.ts`：新增 `TOWER_PLACED` 和 `TOWER_ATTACK` 事件，用于可视化层监听。
+- 更新 `assets/scripts/battle/TowerManager.ts`：在 `placeTower()` 中发射 `TOWER_PLACED` 事件，在 `_executeAttack()` 中发射 `TOWER_ATTACK` 事件。
+
+### Notes
+
+- 战斗可视化层只负责显示，不修改战斗逻辑和数值。
+- 敌人使用 Graphics 绘制圆形：普通黄色、Boss 红色、快速橙色、重甲灰色、分裂绿色。
+- 塔使用 Graphics 绘制矩形：机枪蓝、炮塔橙、冰塔浅蓝、电塔紫色。
+- 攻击时显示攻击线特效和塔闪烁反馈。
+- 敌人血条实时更新，死亡后节点自动销毁。
+- 路径使用 Graphics 绘制线条和节点。
+- 空槽位使用 Graphics 绘制矩形，放置塔后隐藏。
+- BattleVisualManager 使用绑定回调方案确保 EventBus.on/off 正确匹配。
+- 未修改平台 adapter、未引入新依赖、未修改战斗数值。
+
 ## 2026-06-07 011-ui-flow 修复主流程链路
 
 ### Fixed

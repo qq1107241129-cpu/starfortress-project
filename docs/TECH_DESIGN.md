@@ -65,7 +65,11 @@ assets/
    │  ├─ ProjectileManager.ts
    │  ├─ SkillManager.ts
    │  ├─ RogueChoiceManager.ts
-   │  └─ BattleSettlement.ts
+   │  ├─ BattleSettlement.ts
+   │  ├─ BattleVisualManager.ts  (011.5 新增)
+   │  ├─ EnemyView.ts           (011.5 新增)
+   │  ├─ TowerView.ts           (011.5 新增)
+   │  └─ AttackEffectView.ts    (011.5 新增)
    ├─ base/
    │  ├─ BaseManager.ts
    │  ├─ BuildingManager.ts
@@ -185,6 +189,82 @@ flowchart LR
 - `BuildingManager`：建筑等级、升级、效果汇总。
 - `IdleIncomeManager`：在线收益计时（每帧累加经营币）、离线收益计算（基于离线时长和工厂等级）、离线收益上限、离线收益领取。
 - `RebirthManager`：星核重构条件判断、碎片计算、转生执行（保留永久内容）、永久技能等级管理和加成读取。通过 `resetForRebirth()` 与 SaveManager 协作重置存档。
+- `BattleVisualManager`：战斗可视化管理器（011.5 新增），监听战斗事件，将逻辑对象映射为可见节点，管理塔、敌人、攻击特效的显示。不修改战斗逻辑和数值。
+
+## 8.1 战斗可视化层设计（011.5）
+
+### 设计原则
+
+- 可视化层只负责显示，不修改战斗逻辑和数值
+- 通过监听 EventBus 事件获取战斗状态
+- 读取逻辑对象的只读状态（位置、血量等）
+- 根据逻辑对象 ID 维护节点映射
+
+### 模块职责
+
+- `BattleVisualManager`：主入口，管理所有可视化节点
+  - 监听 `BATTLE_START` 初始化场景
+  - 监听 `ENEMY_SPAWN` / `ENEMY_DEATH` 管理敌人节点
+  - 监听 `TOWER_PLACED` 管理塔节点
+  - 监听 `TOWER_ATTACK` 显示攻击特效
+  - 在 `update()` 中同步敌人位置和血量
+- `EnemyView`：敌人显示组件
+  - 用简单方块表示敌人
+  - 根据敌人类型设置不同颜色
+  - 显示血条
+- `TowerView`：塔显示组件
+  - 用简单方块表示塔
+  - 根据塔类型设置不同颜色
+  - 攻击时播放闪烁反馈
+- `AttackEffectView`：攻击特效组件
+  - 显示塔到敌人的攻击线
+  - 淡出效果
+
+### 事件扩展
+
+新增事件（`EventBus.ts`）：
+
+```typescript
+TOWER_PLACED: 'tower:placed'   // 塔放置时发出
+TOWER_ATTACK: 'tower:attack'   // 塔攻击时发出
+```
+
+事件数据结构：
+
+```typescript
+// TOWER_PLACED
+{
+  towerId: string;
+  configId: string;
+  slotId: string;
+  position: { x: number; y: number };
+  level: number;
+}
+
+// TOWER_ATTACK
+{
+  towerId: string;
+  towerType: string;
+  towerPosition: { x: number; y: number };
+  targetId: string;
+  targetPosition: { x: number; y: number };
+}
+```
+
+### 场景结构
+
+Battle.scene 中需要创建以下节点层级（需在 Cocos Creator 中手动设置）：
+
+```txt
+Canvas
+└─ BattleVisualRoot
+   ├─ TowerLayer     (塔和槽位)
+   ├─ EnemyLayer     (敌人)
+   ├─ EffectLayer    (攻击特效)
+   └─ PathLayer      (路径点)
+```
+
+将 `BattleVisualManager` 组件挂载到 `BattleVisualRoot` 节点，并绑定各 Layer 节点。
 
 ## 9. 配置系统设计
 

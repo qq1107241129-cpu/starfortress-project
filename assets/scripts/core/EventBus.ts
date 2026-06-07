@@ -97,4 +97,7 @@ export const BATTLE_EVENTS = {
     // 星核重构事件
     REBIRTH_COMPLETE: 'rebirth:complete',
     PERMANENT_SKILL_UPGRADE: 'rebirth:skill_upgrade',
+    // 可视化事件（011.5-battle-visual-demo）
+    TOWER_PLACED: 'tower:placed',
+    TOWER_ATTACK: 'tower:attack',
 } as const;
