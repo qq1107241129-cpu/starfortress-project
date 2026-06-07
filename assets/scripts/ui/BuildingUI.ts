@@ -14,6 +14,7 @@
 import { _decorator, Component, Node, Label, Button } from 'cc';
 import { BaseManager } from '../base/BaseManager';
 import { BuildingState } from '../base/BuildingManager';
+import { GameManager } from '../core/GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -48,14 +49,39 @@ export class BuildingUI extends Component {
     @property(Label)
     battleCoinLabel: Label | null = null;
 
+    // ==================== 返回按钮 ====================
+    @property(Node)
+    backButton: Node | null = null;
+
     // ==================== 内部状态 ====================
     private _baseManager: BaseManager | null = null;
+    private _gameManager: GameManager | null = null;
+    private _unsubStateChange: (() => void) | null = null;
+    private _boundOnBack: (() => void) | null = null;
 
     // ==================== 生命周期 ====================
 
     onLoad(): void {
         // onLoad 保持同步，仅获取实例引用
         this._baseManager = BaseManager.getInstance();
+        this._gameManager = GameManager.getInstance();
+
+        // 绑定返回按钮
+        if (this.backButton) {
+            this._boundOnBack = () => this._onBack();
+            this.backButton.on(Node.EventType.TOUCH_END, this._boundOnBack);
+        }
+
+        // 默认隐藏
+        this.node.active = false;
+
+        // 监听状态变化：building 状态时显示，其他状态隐藏
+        this._unsubStateChange = this._gameManager.onStateChange((state) => {
+            this.node.active = (state === 'building');
+            if (state === 'building') {
+                this.refreshUI();
+            }
+        });
     }
 
     start(): void {
@@ -80,7 +106,15 @@ export class BuildingUI extends Component {
     }
 
     onDestroy(): void {
+        if (this.backButton && this._boundOnBack) {
+            this.backButton.off(Node.EventType.TOUCH_END, this._boundOnBack);
+        }
+        if (this._unsubStateChange) {
+            this._unsubStateChange();
+            this._unsubStateChange = null;
+        }
         this._baseManager = null;
+        this._gameManager = null;
     }
 
     // ==================== UI 刷新 ====================
@@ -257,5 +291,12 @@ export class BuildingUI extends Component {
         if (this.buildingPanel) {
             this.buildingPanel.active = false;
         }
+    }
+
+    /**
+     * 返回主界面
+     */
+    private _onBack(): void {
+        this._gameManager?.returnToMain();
     }
 }

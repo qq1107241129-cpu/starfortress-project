@@ -26,13 +26,13 @@ export class TimeManager {
 
     /**
      * 开始战斗计时
+     * 注意：BATTLE_START 事件由 BattleManager.startBattle() 统一发出
      */
     startBattleTimer(duration: number): void {
         this._battleTime = 0;
         this._battleDuration = duration;
         this._isBattleRunning = true;
         this._lastUpdateTime = Date.now();
-        this._eventBus.emit(BATTLE_EVENTS.BATTLE_START, { duration });
     }
 
     /**
@@ -54,10 +54,10 @@ export class TimeManager {
 
     /**
      * 停止战斗计时
+     * 注意：BATTLE_END 事件由 BattleManager._endBattle() 或 returnToIdle() 统一发出
      */
     stopBattleTimer(): void {
         this._isBattleRunning = false;
-        this._eventBus.emit(BATTLE_EVENTS.BATTLE_END);
     }
 
     /**

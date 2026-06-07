@@ -1,6 +1,6 @@
 /**
  * 战斗 UI
- * 管理战斗界面的技能按钮和肉鸽选择面板
+ * 管理战斗界面的技能按钮、肉鸽选择面板、时间/生命/资源提示
  *
  * 使用方式：
  * 1. 在 Cocos Creator 中创建 Canvas 节点
@@ -8,12 +8,14 @@
  * 3. 创建技能按钮节点并绑定到 orbitalCannonButton / freezeButton
  * 4. 创建肉鸽选择面板节点并绑定到 rogueChoicePanel
  * 5. 创建 3 个选择按钮节点并绑定到 rogueChoiceButtons
+ * 6. 绑定时间、生命、资源显示 Label（可选）
  */
 
 import { _decorator, Component, Node, Label, Button } from 'cc';
 import { BattleManager } from '../battle/BattleManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { RogueUpgradeConfig } from '../data/SkillConfig';
+import { GameManager } from '../core/GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -45,8 +47,28 @@ export class BattleUI extends Component {
     @property(Label)
     rogueChoiceTitleLabel: Label | null = null;
 
+    // ==================== 战斗信息显示（可选绑定） ====================
+    @property(Label)
+    timeLabel: Label | null = null;
+
+    @property(Label)
+    baseHealthLabel: Label | null = null;
+
+    @property(Label)
+    battleCoinLabel: Label | null = null;
+
+    @property(Label)
+    baseCoinLabel: Label | null = null;
+
+    @property(Node)
+    pauseButton: Node | null = null;
+
+    @property(Node)
+    returnMainButton: Node | null = null;
+
     // ==================== 内部状态 ====================
     private _battleManager: BattleManager | null = null;
+    private _gameManager: GameManager | null = null;
     private _eventBus: EventBus | null = null;
     private _currentChoices: RogueUpgradeConfig[] = [];
 
@@ -59,6 +81,10 @@ export class BattleUI extends Component {
     private _boundOnOrbitalCannonClick: (() => void) | null = null;
     private _boundOnFreezeClick: (() => void) | null = null;
     private _rogueChoiceButtonListeners: Array<{ node: Node; handler: () => void }> = [];
+    private _boundOnPause: (() => void) | null = null;
+    private _boundOnReturnMain: (() => void) | null = null;
+    private _boundOnSettlement: ((data: any) => void) | null = null;
+    private _unsubStateChange: (() => void) | null = null;
 
     // ==================== 生命周期 ====================
 
@@ -69,15 +95,44 @@ export class BattleUI extends Component {
 
         // 初始隐藏肉鸽选择面板
         this._hideRogueChoicePanel();
+
+        // 默认隐藏战斗 UI（主界面状态）
+        this.node.active = false;
     }
 
     start(): void {
         // 获取 BattleManager 实例
         this._battleManager = BattleManager.getInstance();
+        this._gameManager = GameManager.getInstance();
         this._updateSkillUI();
+        this._setupExtraButtons();
+
+        // 监听状态变化：battle 状态时显示，其他状态隐藏
+        if (this._gameManager) {
+            this._unsubStateChange = this._gameManager.onStateChange((state) => {
+                this.node.active = (state === 'battle');
+                if (state === 'battle') {
+                    this._updateSkillUI();
+                }
+            });
+        }
+    }
+
+    /**
+     * 每帧刷新战斗信息（倒计时、基地生命）
+     */
+    update(_deltaTime: number): void {
+        if (this.node.active && this._battleManager) {
+            this.updateBattleInfo();
+        }
     }
 
     onDestroy(): void {
+        // 解绑状态监听
+        if (this._unsubStateChange) {
+            this._unsubStateChange();
+            this._unsubStateChange = null;
+        }
         // 解绑 EventBus 事件
         if (this._eventBus) {
             if (this._boundOnRogueChoiceTrigger) {
@@ -88,6 +143,10 @@ export class BattleUI extends Component {
             }
             if (this._boundOnSkillUse) {
                 this._eventBus.off(BATTLE_EVENTS.SKILL_USE, this._boundOnSkillUse);
+            }
+            if (this._boundOnSettlement) {
+                this._eventBus.off(BATTLE_EVENTS.BATTLE_SETTLEMENT, this._boundOnSettlement);
+                this._boundOnSettlement = null;
             }
         }
 
@@ -105,8 +164,17 @@ export class BattleUI extends Component {
         }
         this._rogueChoiceButtonListeners = [];
 
+        // 解绑暂停/返回按钮
+        if (this.pauseButton && this._boundOnPause) {
+            this.pauseButton.off(Node.EventType.TOUCH_END, this._boundOnPause);
+        }
+        if (this.returnMainButton && this._boundOnReturnMain) {
+            this.returnMainButton.off(Node.EventType.TOUCH_END, this._boundOnReturnMain);
+        }
+
         this._eventBus = null;
         this._battleManager = null;
+        this._gameManager = null;
     }
 
     // ==================== 事件监听 ====================
@@ -122,6 +190,12 @@ export class BattleUI extends Component {
         this._eventBus.on(BATTLE_EVENTS.ROGUE_CHOICE_TRIGGER, this._boundOnRogueChoiceTrigger);
         this._eventBus.on(BATTLE_EVENTS.SKILL_CHARGE_CHANGE, this._boundOnSkillChargeChange);
         this._eventBus.on(BATTLE_EVENTS.SKILL_USE, this._boundOnSkillUse);
+
+        // 监听战斗结算，隐藏战斗 UI（由 SettlementUI 接管）
+        this._boundOnSettlement = () => {
+            this.node.active = false;
+        };
+        this._eventBus.on(BATTLE_EVENTS.BATTLE_SETTLEMENT, this._boundOnSettlement);
     }
 
     private _setupButtonListeners(): void {
@@ -194,6 +268,59 @@ export class BattleUI extends Component {
 
     private _onSkillUse(_data: { skillId: string; remainingCharges: number }): void {
         this._updateSkillUI();
+    }
+
+    // ==================== 额外按钮设置 ====================
+
+    private _setupExtraButtons(): void {
+        if (this.pauseButton) {
+            this._boundOnPause = () => this._onPause();
+            this.pauseButton.on(Node.EventType.TOUCH_END, this._boundOnPause);
+        }
+        if (this.returnMainButton) {
+            this._boundOnReturnMain = () => this._onReturnMain();
+            this.returnMainButton.on(Node.EventType.TOUCH_END, this._boundOnReturnMain);
+        }
+    }
+
+    private _onPause(): void {
+        if (!this._battleManager) return;
+        if (this._battleManager.isPlaying()) {
+            this._battleManager.pauseBattle();
+            console.log('[BattleUI] 战斗暂停');
+        } else if (this._battleManager.isPaused()) {
+            this._battleManager.resumeBattle();
+            console.log('[BattleUI] 战斗恢复');
+        }
+    }
+
+    private _onReturnMain(): void {
+        if (!this._battleManager || !this._gameManager) return;
+        // 结束战斗并返回主界面
+        if (this._battleManager.isPlaying() || this._battleManager.isPaused()) {
+            this._battleManager.returnToIdle();
+        }
+        this._gameManager.returnToMain();
+    }
+
+    /**
+     * 更新战斗信息显示（每帧由外部调用或通过 update）
+     */
+    updateBattleInfo(): void {
+        if (!this._battleManager) return;
+
+        const info = this._battleManager.getBattleInfo();
+
+        if (this.timeLabel) {
+            const remaining = Math.max(0, info.remainingTime);
+            const minutes = Math.floor(remaining / 60);
+            const seconds = Math.floor(remaining % 60);
+            this.timeLabel.string = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        if (this.baseHealthLabel) {
+            this.baseHealthLabel.string = `基地: ${info.baseHealth}/${info.baseHealthMax}`;
+        }
     }
 
     // ==================== UI 更新 ====================

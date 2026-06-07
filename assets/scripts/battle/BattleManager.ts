@@ -150,6 +150,9 @@ export class BattleManager {
         // 更新状态
         this._state = 'playing';
 
+        // 通知外部战斗已开始（GameBootstrap 依赖此事件设置 _isBattleRunning 和放置塔）
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_START, { stageId });
+
         return true;
     }
 
@@ -223,6 +226,9 @@ export class BattleManager {
         // 停止计时
         this._timeManager.stopBattleTimer();
 
+        // 通知外部战斗已结束（GameBootstrap 依赖此事件恢复 _isBattleRunning）
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_END);
+
         // 计算结算数据
         if (this._battleSettlement) {
             const baseState = this._stageManager.getBaseState();
@@ -249,6 +255,8 @@ export class BattleManager {
      * 返回空闲状态
      */
     returnToIdle(): void {
+        if (this._state === 'idle') return;
+        const wasPlaying = this._state === 'playing' || this._state === 'paused';
         this._state = 'idle';
         this._enemySpawner?.clear();
         this._towerManager?.clear();
@@ -256,6 +264,12 @@ export class BattleManager {
         this._battleSettlement = null;
         this._enemySpawner = null;
         this._towerManager = null;
+        // 如果是玩家主动中断战斗（暂停/进行中），需要停止计时并发出 BATTLE_END
+        // 如果是战斗已结束（victory/defeat），_endBattle() 已经发出过 BATTLE_END
+        if (wasPlaying) {
+            this._timeManager.stopBattleTimer();
+            this._eventBus.emit(BATTLE_EVENTS.BATTLE_END);
+        }
     }
 
     /**

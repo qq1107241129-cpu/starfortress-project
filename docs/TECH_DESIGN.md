@@ -124,32 +124,38 @@ GameBootstrap.onLoad()
   → EventBus.getInstance()
   → TimeManager.getInstance()
   → BattleManager.getInstance()
+  → BaseManager.init()（加载存档）
+  → IdleIncomeManager.init()（计算离线收益）
+  → 显示主界面（GameManager 状态 = 'main'）
 
-GameBootstrap.start()
+主界面点击「开始战斗」
+  → GameManager.enterBattle(0)
   → BattleManager.startBattleByIndex(0)
-  → 自动放置测试塔
-  → 战斗循环开始
+  → BattleManager 发出 BATTLE_START 事件
+  → GameBootstrap 监听 BATTLE_START，自动放置测试塔（使用存档塔等级）
+  → GameManager 状态 = 'battle'
 
 GameBootstrap.update(deltaTime)
-  → BattleManager.update(deltaTime)
-  → 更新 UI
+  → 战斗中：BattleManager.update(deltaTime)
+  → 非战斗：IdleIncomeManager.update(deltaTime)
 ```
 
 GameBootstrap 职责：
 
 1. 初始化所有 Manager 单例
-2. 启动第 1 关测试战斗
-3. 自动放置测试塔
+2. 监听 BATTLE_START 事件，自动放置测试塔（读取 SaveManager.towerLevels）
+3. 驱动 BattleManager.update() 或 IdleIncomeManager.update()
 4. 输出调试日志
-5. 更新 UI 显示
+5. 定期保存存档
 
 注意：
 
-- GameBootstrap 只负责启动和连接系统
+- GameBootstrap 不自动启动战斗，由主界面按钮触发
+- GameManager 管理流程状态（main / battle / settlement / building / towerUpgrade / rebirth / settings）
+- UI 面板通过 GameManager.onStateChange() 回调自动显示/隐藏
 - 不把大量战斗逻辑塞进 GameBootstrap
 - 不硬编码大量核心数值
 - 不直接调用平台 API
-- 不实现 007 之后的功能
 
 ## 7. 数据流图
 

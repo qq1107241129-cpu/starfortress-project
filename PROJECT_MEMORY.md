@@ -135,6 +135,18 @@ Platform.instance.showRewardAd()
 - 第一阶段不做复杂商业化。
 - TapTap Android APK 只做第二阶段规划，不进入 MVP 实现。
 
+## UI 流程架构
+
+- `GameManager` 管理游戏流程状态：main / battle / settlement / building / towerUpgrade / rebirth / settings。
+- UI 面板通过 `GameManager.onStateChange()` 回调自动显示/隐藏。
+- 战斗结算由 `BattleManager` 通过 `EventBus.emit(BATTLE_SETTLEMENT)` 触发，`GameManager` 自动切换到 settlement 状态。
+- 主界面 → 战斗 → 结算 → 主界面 为 MVP 核心路径。
+- GameBootstrap 不自动启动战斗，由主界面按钮触发 `GameManager.enterBattle(0)`。
+- GameBootstrap 监听 `BATTLE_START` 事件放置测试塔，塔等级从 `SaveManager.towerLevels` 读取。
+- GameBootstrap 监听 `BATTLE_END` 事件恢复 `_isBattleRunning` 标志，确保 IdleIncomeManager 正常运行。
+- BattleManager 在 `startBattle()` 时发出 `BATTLE_START`，在 `_endBattle()` 和 `returnToIdle()` 时发出 `BATTLE_END`。
+- 所有 UI 组件在 onDestroy 中解绑事件、按钮回调和 onStateChange 取消函数。
+
 ## 执行 Agent 可切换规则
 
 - Codex：规划 + 审查。

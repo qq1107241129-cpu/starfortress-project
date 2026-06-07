@@ -1,5 +1,75 @@
 # CHANGELOG
 
+## 2026-06-07 011-ui-flow 修复主流程链路
+
+### Fixed
+
+- 修复 GameBootstrap 自动启动战斗：移除 onLoad 中的 `_startBattle()` 调用，改为主界面按钮触发 `GameManager.enterBattle(0)`。
+- 修复 BattleManager 未发出 BATTLE_START/BATTLE_END 事件：`startBattle()` 末尾发出 `BATTLE_START`，`_endBattle()` 和 `returnToIdle()` 发出 `BATTLE_END`，GameBootstrap 依赖这些事件正确设置 `_isBattleRunning`。
+- 修复 BATTLE_START/BATTLE_END 重复发出：移除 `TimeManager.startBattleTimer()` 和 `stopBattleTimer()` 中的事件发出，统一由 `BattleManager` 发出；`returnToIdle()` 仅在战斗进行中/暂停时发出 `BATTLE_END`，避免与 `_endBattle()` 重复。
+- 修复战斗结算奖励未入账：GameBootstrap 监听 `BATTLE_SETTLEMENT` 事件，调用 `BaseManager.addBattleCoin()` 和 `addBaseCoin()` 发放奖励并保存存档。
+- 修复 GameBootstrap 放置塔使用固定 level=1：改为从 `SaveManager.towerLevels` 读取已保存的塔等级。
+- 修复 GameManager.enterBattle() 在战斗已结束时启动失败：进入战斗前检查 `isEnded()`，自动调用 `returnToIdle()` 回到 idle 状态。
+- 修复 BuildingUI 未接入 GameManager 状态管理：新增 `onStateChange` 监听，`building` 状态时显示面板并刷新。
+- 修复 BuildingUI 进入后无法返回主界面：新增 `backButton` 属性，点击调用 `GameManager.returnToMain()`。
+- 修复 RebirthUI 未接入 GameManager 状态管理：新增 `onStateChange` 监听，`rebirth` 状态时显示面板并刷新；`showRebirthPanel()` 增加状态守卫，防止旧 RebirthOpenButton 绕过 GameManager 直接调用。
+- 修复 RebirthUI 进入后无法返回主界面：新增 `backButton` 属性，点击后隐藏确认弹窗并调用 `GameManager.returnToMain()`。
+- 修复 BattleUI 不随状态显示/隐藏：新增 `onStateChange` 监听，`battle` 状态时显示，其他状态隐藏；新增 `update()` 方法自动刷新倒计时和基地生命 Label。
+- 修复 SettlementUI 继续按钮可能重复点击：点击后清空 `_currentResult` 防止重入；新增 `onStateChange` 监听，非 `settlement` 状态时隐藏。
+
+### Changed
+
+- 更新 `docs/TECH_DESIGN.md`：修正启动流程描述，GameBootstrap 不再自动启动战斗，改为主界面触发；补充 UI 面板通过 `GameManager.onStateChange()` 自动显示/隐藏的说明。
+
+### Notes
+
+- 主界面 → 战斗 → 结算 → 主界面 核心路径已完整接通。
+- 建筑升级、塔升级、星核重构、设置入口均通过 GameManager 状态管理自动显示/隐藏。
+- 塔升级后下次战斗自动使用存档中的塔等级。
+- 所有 UI 组件在 onDestroy 中正确解绑 onStateChange 回调。
+- BattleUI 的 `update()` 每帧调用 `updateBattleInfo()` 刷新倒计时和基地生命，不使用全局 find。
+- 未修改平台 adapter、未新增平台广告/分享、未引入新依赖。
+
+## 2026-06-06 011-ui-flow 完成
+
+### Added
+
+- 新增 `assets/scripts/core/GameManager.ts`：游戏流程状态管理器，管理主界面/战斗/结算/建筑/塔升级/转生/设置状态切换，提供状态变化回调接口。
+- 新增 `assets/scripts/ui/MainUI.ts`：主界面 UI 组件，显示资源（经营币、战斗金币、星核碎片、最高关卡），提供开始战斗、建筑、塔升级、星核重构、设置入口按钮。
+- 新增 `assets/scripts/ui/SettlementUI.ts`：战斗结算 UI 组件，显示胜负结果、星级评定、击杀数、奖励金额，提供继续和返回主界面按钮。
+- 新增 `assets/scripts/ui/TowerUpgradeUI.ts`：塔升级 UI 组件，显示 4 种 MVP 塔列表、等级、攻击/射速/射程属性和升级按钮，升级消耗战斗金币并持久化到存档。
+- 新增 `assets/scripts/ui/SettingsUI.ts`：设置 UI 组件，提供音效/震动开关和存档重置功能。
+
+### Changed
+
+- 更新 `assets/scripts/ui/BattleUI.ts`：新增时间倒计时、基地生命显示 Label；新增暂停和返回主界面按钮；战斗结算后自动隐藏 UI；新增 `updateBattleInfo()` 方法供外部调用刷新战斗信息。
+- 更新 `docs/GAME_DESIGN.md`：新增第 21 节「MVP 主流程 UI」，包含流程状态、模块职责、竖屏布局目标和验收标准。
+- 更新 `docs/ART_GUIDE.md`：新增第 10 节「竖屏 UI 布局规范」，包含设计分辨率、界面分区、字体规范、按钮规范和占位资源规范。
+
+### Fixed
+
+- 修复 TowerUpgradeUI `@property([Label])` 语法错误：改为 `@property({ type: [Label] })` 合法写法。
+- 修复 MainUI 调用不存在的 `getShards()`：改为 `RebirthManager.getRebirthTokens()`。
+- 修复 GameManager.enterBattle 未接通 BattleManager：改为直接调用 `BattleManager.startBattleByIndex(stageIndex)`，移除无人监听的 `'game:start_battle'` 字符串事件。
+- 修复 TowerUpgradeUI 只打印占位日志：改为实际读取 TowerConfig、扣除战斗金币、更新塔等级并持久化到 SaveManager。
+- 修复 BattleUI 的 BATTLE_SETTLEMENT 监听未保存回调引用：改为 `_boundOnSettlement` 字段保存引用，onDestroy 中正确解绑。
+- 修复 SettingsUI 的 `onStateChange()` 返回值未保存：改为 `_unsubStateChange` 字段保存取消函数，onDestroy 中调用。
+- 修复 GameBootstrap 启动时无条件自动开始战斗：GameManager.enterBattle 由主界面按钮触发，不再自动启动。
+
+### Notes
+
+- GameManager.enterBattle 直接调用 BattleManager.startBattleByIndex，战斗启动成功后切换状态。
+- MainUI 在 onLoad 中异步初始化 BaseManager，确保资源数据就绪后刷新显示。
+- SettlementUI 监听 BATTLE_SETTLEMENT 事件自动显示，战斗结算数据由 BattleSettlement 提供。
+- TowerUpgradeUI 读取 TowerConfig 配置显示 4 种 MVP 塔，升级消耗战斗金币，塔等级持久化到 SaveManager.towerLevels。
+- BattleUI 的暂停按钮支持暂停/恢复切换，返回按钮通过 GameManager.returnToMain() 结束战斗并返回。
+- 所有 UI 组件在 onDestroy 中正确解绑 EventBus 事件、按钮回调和 onStateChange 取消函数。
+- UI 脚本只包含逻辑和接口，实际节点绑定需在 Cocos Creator 编辑器中完成。
+- 设置界面的音效/震动开关使用 SaveManager.settings 持久化，格式为 `{ sound: 'true'/'false', vibration: 'true'/'false' }`。
+- 设置界面的存档重置为 MVP 调试用途，后续需加确认弹窗。
+- 未实现营销落地页、商城、排行榜、好友系统、皮肤或平台广告分享。
+- **场景挂载需人工操作**：需在 Cocos Creator 编辑器中为 Battle.scene 创建 MainUI、SettlementUI、TowerUpgradeUI、SettingsUI 节点并挂载组件、绑定按钮和 Label。
+
 ## 2026-06-06 010-rebirth-system 完成
 
 ### Added

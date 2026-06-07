@@ -69,8 +69,7 @@ export class GameBootstrap extends Component {
             // EventBus 已在 _initSystems 中初始化，此时注册监听才有效
             this._setupEventListeners();
             this._systemsReady = true;
-            console.log('[GameBootstrap] 所有系统初始化完成');
-            this._startBattle();
+            console.log('[GameBootstrap] 所有系统初始化完成，等待主界面操作');
         }).catch((e) => {
             console.error('[GameBootstrap] 初始化失败:', e);
         });
@@ -163,6 +162,8 @@ export class GameBootstrap extends Component {
         bind(BATTLE_EVENTS.BATTLE_START, (data: any) => {
             console.log('[GameBootstrap] 战斗开始', data);
             this._isBattleRunning = true;
+            // 战斗开始后自动放置测试塔（使用存档中的塔等级）
+            this._placeTestTowers();
         });
 
         // 监听战斗结束
@@ -171,9 +172,10 @@ export class GameBootstrap extends Component {
             this._isBattleRunning = false;
         });
 
-        // 监听战斗结算
+        // 监听战斗结算：发放奖励并保存
         bind(BATTLE_EVENTS.BATTLE_SETTLEMENT, (data: any) => {
             console.log('[GameBootstrap] 战斗结算:', data);
+            this._creditSettlementRewards(data);
             this._showSettlement(data);
         });
 
@@ -257,7 +259,11 @@ export class GameBootstrap extends Component {
         const slots = towerManager.getSlots();
         console.log(`[GameBootstrap] 可用槽位数量: ${slots.length}`);
 
-        // 放置测试塔
+        // 从存档读取塔等级
+        const saveData = this._baseManager?.getSaveManager().getSave();
+        const towerLevels: Record<string, number> = saveData?.towerLevels ?? {};
+
+        // 放置测试塔（使用存档中的塔等级，默认 1 级）
         const testTowers = [
             { slotId: 'slot_1', towerId: 'tower_machinegun' },
             { slotId: 'slot_2', towerId: 'tower_cannon' },
@@ -266,9 +272,10 @@ export class GameBootstrap extends Component {
         ];
 
         for (const testTower of testTowers) {
-            const success = towerManager.placeTower(testTower.slotId, testTower.towerId, 1);
+            const level = towerLevels[testTower.towerId] ?? 1;
+            const success = towerManager.placeTower(testTower.slotId, testTower.towerId, level);
             if (success) {
-                console.log(`[GameBootstrap] 放置塔成功: ${testTower.towerId} at ${testTower.slotId}`);
+                console.log(`[GameBootstrap] 放置塔成功: ${testTower.towerId} at ${testTower.slotId} Lv.${level}`);
             } else {
                 console.warn(`[GameBootstrap] 放置塔失败: ${testTower.towerId} at ${testTower.slotId}`);
             }
@@ -327,6 +334,29 @@ export class GameBootstrap extends Component {
         if (this.debugLabel) {
             this.debugLabel.string = `结算: ${data.result} - ${data.starRating}星`;
         }
+    }
+
+    /**
+     * 发放战斗结算奖励到 BaseManager
+     * 在 BATTLE_SETTLEMENT 事件中调用，确保奖励只发放一次
+     */
+    private _creditSettlementRewards(data: any) {
+        if (!this._baseManager) return;
+
+        const battleCoinReward = data.battleCoinReward || 0;
+        const baseCoinReward = data.baseCoinReward || 0;
+
+        if (battleCoinReward > 0) {
+            this._baseManager.addBattleCoin(battleCoinReward);
+            console.log(`[GameBootstrap] 发放战斗金币: +${battleCoinReward}`);
+        }
+        if (baseCoinReward > 0) {
+            this._baseManager.addBaseCoin(baseCoinReward);
+            console.log(`[GameBootstrap] 发放经营币: +${baseCoinReward}`);
+        }
+
+        // 保存存档，确保奖励持久化
+        this._baseManager.save();
     }
 
     onDestroy() {

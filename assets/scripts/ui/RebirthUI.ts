@@ -11,6 +11,7 @@
 import { _decorator, Component, Node, Label, Button } from 'cc';
 import { BaseManager } from '../base/BaseManager';
 import { RebirthStatus, PermanentSkillState } from '../base/RebirthManager';
+import { GameManager } from '../core/GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -49,6 +50,10 @@ export class RebirthUI extends Component {
     @property(Node)
     skillPanel: Node | null = null;
 
+    // ==================== 返回按钮 ====================
+    @property(Node)
+    backButton: Node | null = null;
+
     @property([Node])
     skillSlots: Node[] = [];
 
@@ -69,16 +74,33 @@ export class RebirthUI extends Component {
 
     // ==================== 内部状态 ====================
     private _baseManager: BaseManager | null = null;
+    private _gameManager: GameManager | null = null;
+    private _unsubStateChange: (() => void) | null = null;
     private _pendingRebirthStatus: RebirthStatus | null = null;
     private _skillUpgradeCallbacks: Array<() => void> = [];
+    private _boundOnBack: (() => void) | null = null;
 
     onLoad(): void {
         this._baseManager = BaseManager.getInstance();
+        this._gameManager = GameManager.getInstance();
 
         // 默认隐藏面板
         if (this.rebirthPanel) this.rebirthPanel.active = false;
         if (this.confirmPanel) this.confirmPanel.active = false;
         if (this.skillPanel) this.skillPanel.active = false;
+
+        // 默认隐藏节点
+        this.node.active = false;
+
+        // 监听状态变化：rebirth 状态时显示，其他状态隐藏
+        this._unsubStateChange = this._gameManager.onStateChange((state) => {
+            this.node.active = (state === 'rebirth');
+            if (state === 'rebirth') {
+                this.showRebirthPanel();
+            } else {
+                this.hideRebirthPanel();
+            }
+        });
 
         // 绑定按钮事件
         if (this.rebirthButton) {
@@ -89,6 +111,12 @@ export class RebirthUI extends Component {
         }
         if (this.confirmNoButton) {
             this.confirmNoButton.node.on('click', this._onConfirmNo, this);
+        }
+
+        // 绑定返回按钮
+        if (this.backButton) {
+            this._boundOnBack = () => this._onBack();
+            this.backButton.on(Node.EventType.TOUCH_END, this._boundOnBack);
         }
 
         // 绑定永久技能升级按钮（保存引用以便 onDestroy 解绑）
@@ -104,6 +132,10 @@ export class RebirthUI extends Component {
     }
 
     onDestroy(): void {
+        if (this._unsubStateChange) {
+            this._unsubStateChange();
+            this._unsubStateChange = null;
+        }
         if (this.rebirthButton) {
             this.rebirthButton.node.off('click', this._onRebirthClick, this);
         }
@@ -112,6 +144,9 @@ export class RebirthUI extends Component {
         }
         if (this.confirmNoButton) {
             this.confirmNoButton.node.off('click', this._onConfirmNo, this);
+        }
+        if (this.backButton && this._boundOnBack) {
+            this.backButton.off(Node.EventType.TOUCH_END, this._boundOnBack);
         }
 
         // 解绑永久技能升级按钮
@@ -122,15 +157,23 @@ export class RebirthUI extends Component {
             }
         }
         this._skillUpgradeCallbacks = [];
+        this._baseManager = null;
+        this._gameManager = null;
     }
 
     // ==================== 面板显示 ====================
 
     /**
      * 显示转生面板
+     * 仅在 GameManager 状态为 'rebirth' 时允许显示，防止旧按钮绕过状态管理
      */
     showRebirthPanel(): void {
         if (!this._baseManager) return;
+        // 防止旧 RebirthOpenButton 绕过 GameManager 直接调用
+        if (!this._gameManager || this._gameManager.getState() !== 'rebirth') {
+            console.warn('[RebirthUI] 忽略非 rebirth 状态的 showRebirthPanel 调用');
+            return;
+        }
         if (!this._baseManager.isInitialized()) {
             console.warn('[RebirthUI] BaseManager 未初始化');
             return;
@@ -282,5 +325,15 @@ export class RebirthUI extends Component {
             this._refreshRebirthPanel();
             this._refreshSkillPanel();
         }
+    }
+
+    /**
+     * 返回主界面（隐藏确认弹窗后返回）
+     */
+    private _onBack(): void {
+        // 如果确认弹窗正在显示，先隐藏
+        if (this.confirmPanel) this.confirmPanel.active = false;
+        this._pendingRebirthStatus = null;
+        this._gameManager?.returnToMain();
     }
 }
