@@ -1,10 +1,12 @@
 # Starfortress Project 当前交接状态
 
-生成时间：2026-06-06
+生成时间：2026-06-08
 
-本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为“不确定，需要人工确认”。
+本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
 
-## 1. 项目名称、技术栈、目标平台
+---
+
+## 1. 项目基本信息
 
 - 项目中文名：《星垒计划》
 - 项目英文名：Starfortress Project
@@ -12,7 +14,7 @@
 - 技术栈：Cocos Creator 3.8.x + TypeScript
 - 当前 `package.json` 标记 Creator 版本：3.8.8
 - 屏幕方向：竖屏
-- 目标平台：
+- 当前目标平台：
   - Web 预览
   - 微信小游戏
   - 抖音小游戏
@@ -20,325 +22,600 @@
 - 第二阶段可选平台：
   - TapTap Android APK
   - Android / iOS 原生包
+- 当前阶段：MVP 开发
 
-## 2. 当前 Git 分支状态
+### 012 完成状态
 
-- 当前分支：`feature/007-rogue-choice-and-skills`
-- 当前 HEAD：`640c159 更新文档`
-- `develop` 与 `origin/develop` 当前也指向 `640c159 更新文档`
-- 当前工作区存在未提交改动。
+- 012 已完成的是平台构建链路配置
+- 012 不代表小游戏提审质量达标
+- 012 不代表 Web demo 已经可玩
+- 012 不代表当前版本已经达到可玩或提审质量
 
-当前 `git status --short --branch --untracked-files=all` 结果要点：
+### 可视化战斗状态
+
+- 011.5-battle-visual-demo 已完成
+- 战斗可视化层已实现（BattleVisualManager、EnemyView、TowerView、AttackEffectView）
+- 是否可玩需要人工在 Web 预览中确认
+
+**关键判断：任务完成不等于玩法闭环完成；012 构建完成也不代表当前版本已经达到可玩或提审质量。**
+
+---
+
+## 2. 当前 Git 状态
+
+- 当前分支：`develop`
+- 当前 HEAD：`a2021ce chore: configure minigame build targets`
+- develop 与 origin/develop 同步
+- 工作区干净，无未提交改动
+- 无 staged 内容
+- 无 untracked 文件
 
 ```txt
-## feature/007-rogue-choice-and-skills
- M CHANGELOG.md
- M assets/scripts/battle/BattleManager.ts
- M assets/scripts/battle/EnemyController.ts
- A assets/scripts/battle/RogueChoiceManager.ts
- A assets/scripts/battle/SkillManager.ts
- M assets/scripts/battle/TowerController.ts
- M assets/scripts/battle/TowerManager.ts
- M assets/scripts/core/EventBus.ts
- M assets/scripts/data/SkillConfig.ts
- A assets/scripts/ui/BattleUI.ts
- M docs/GAME_DESIGN.md
-?? assets/scripts/battle/RogueChoiceManager.ts.meta
-?? assets/scripts/battle/SkillManager.ts.meta
-?? assets/scripts/ui.meta
-?? assets/scripts/ui/BattleUI.ts.meta
+git status --short --branch --untracked-files=all 结果：
+## develop...origin/develop
+（无其他输出）
 ```
-
-当前未见 staged 内容；提交前需要人工重新执行 `git status`、`git diff`、`git diff --cached` 确认。
-
-## 3. 已完成任务：001 到当前任务
-
-已提交并在 `CHANGELOG.md` 中记录完成的任务：
-
-1. `001-project-init`
-   - 完成项目文档、MVP 范围、任务拆分、审查标准初始化。
-   - 无业务代码和 Cocos 场景改动。
-
-2. `002-platform-adapter`
-   - 完成 `assets/scripts/platform/` 平台适配层。
-   - 包含 `IPlatform.ts`、`Platform.ts`、`WebMockPlatform.ts`、`WechatPlatform.ts`、`DouyinPlatform.ts`、`TapTapMiniPlatform.ts`。
-   - 平台 API 只允许在 platform 目录内出现。
-
-3. `003-core-data-config`
-   - 完成核心数据配置。
-   - 包含塔、敌人、关卡、建筑、技能、转生、经济配置，以及 `ConfigManager.ts`。
-
-4. `004-battle-prototype`
-   - 完成战斗原型基础模块。
-   - 包含 `BattleManager`、`StageManager`、`TimeManager`、`BattleSettlement`、事件总线等基础能力。
-
-5. `005-tower-system`
-   - 完成 MVP 塔系统。
-   - 包含 `TowerController`、`TowerManager`、`ProjectileManager`。
-   - 当前投射物为逻辑层数据，无 Cocos 节点或 Prefab。
-
-6. `006-enemy-wave-system`
-   - 完成敌人与波次系统。
-   - 包含敌人生成、波次事件、击杀奖励衔接。
-
-7. `006.5-foundation-playable-integration`
-   - 完成 Cocos 工程结构补齐和最小可玩战斗集成。
-   - 新增 `GameBootstrap.ts` 和可信的 `assets/scenes/Battle.scene`。
-   - `CHANGELOG.md` 记录 001~006 集成验收通过。
-
-当前任务：
-
-8. `007-rogue-choice-and-skills`
-   - 当前处于进行中状态。
-   - 工作区已有 007 代码和文档改动，但最近一次 Codex 审查结论为“不通过”。
-   - `CHANGELOG.md` 工作区 diff 中写了“007 完成”，但这只是未提交改动，且当前不能视为已通过。
-
-## 4. 当前正在进行的任务
-
-当前任务文件：`TASKS/007-rogue-choice-and-skills.md`
-
-任务目标：
-
-- 实现局内肉鸽强化选择。
-- 实现每局 3 次 3 选 1。
-- 实现塔属性强化。
-- 实现 2 个主动技能：轨道炮、全屏冻结。
-- 在战斗 UI 暴露技能按钮和肉鸽选择面板入口。
-
-当前工作区已有 007 相关文件：
-
-- `assets/scripts/battle/RogueChoiceManager.ts`
-- `assets/scripts/battle/RogueChoiceManager.ts.meta`
-- `assets/scripts/battle/SkillManager.ts`
-- `assets/scripts/battle/SkillManager.ts.meta`
-- `assets/scripts/ui.meta`
-- `assets/scripts/ui/BattleUI.ts`
-- `assets/scripts/ui/BattleUI.ts.meta`
-- `assets/scripts/battle/BattleManager.ts`
-- `assets/scripts/battle/EnemyController.ts`
-- `assets/scripts/battle/TowerController.ts`
-- `assets/scripts/battle/TowerManager.ts`
-- `assets/scripts/core/EventBus.ts`
-- `assets/scripts/data/SkillConfig.ts`
-- `docs/GAME_DESIGN.md`
-- `CHANGELOG.md`
-
-当前已知阻塞点：
-
-- `assets/scenes/Battle.scene` 当前没有 007 的 `BattleUI` 挂载痕迹；只检出 `GameBootstrap` 和调试 Label。
-- `BattleUI.ts` 中事件监听使用 `bind(this)` 注册和解绑，`onDestroy()` 无法移除同一引用。
-- `SkillManager.ts` 中轨道炮在无存活敌人时可能仍消耗技能次数。
-- `rogue_electric_bounce` 配置描述为“电塔弹射次数 +1”，但当前类型是 `tower_attack`，实际效果与文案不一致。
-- 007 是否已在 Web 预览中验证：不确定，需要人工确认。
-
-## 5. 001~006.5 当前是否跑通
-
-- `CHANGELOG.md` 中 `006.5-foundation-playable-integration` 记录：001~006 集成验收通过。
-- 记录内容包括：
-  - Platform adapter 在 WebMock 环境下降级正常。
-  - ConfigManager 能读取 MVP 配置。
-  - 战斗原型能初始化、开始、计时、结束和结算。
-  - 塔系统能创建塔、搜索目标、攻击敌人。
-  - 敌人和波次系统能读取关卡配置并按波次刷怪。
-  - 本地预览 Console 验证通过。
-- 本次交接整理未重新启动 Cocos Creator，也未重新运行 Web 预览。
-- 当前工作区叠加了未提交的 007 改动，因此 001~006.5 在当前工作区是否仍完全跑通：不确定，需要人工确认。
-
-## 6. Cocos Creator 工程壳迁移状态
-
-当前仓库已经具备 Cocos Creator 3.8.x 工程基本结构：
-
-- `package.json` 存在。
-- `tsconfig.json` 存在。
-- `assets/` 存在。
-- `settings/` 存在，当前包含 `settings/v2`。
-- `.creator/` 存在。
-- `assets/scenes/` 存在。
-- `assets/scripts/` 存在。
-- `.gitignore` 明确不忽略 `*.meta`。
-
-当前本地存在但不应提交的 Cocos 生成目录：
-
-- `library/`
-- `temp/`
-- `profiles/`
-
-`.gitignore` 当前忽略：
-
-- `library/`
-- `temp/`
-- `local/`
-- `logs/`
-- `build/`
-- `profiles/`
-- `native/`
-- `node_modules/`
-
-注意：
-
-- `.meta` 文件必须提交。
-- 不要提交 `library/`、`temp/`、`build/`、`local/`、`profiles/`、`native/`。
-
-## 7. Battle.scene 当前状态
-
-当前场景文件：
-
-- `assets/scenes/Battle.scene`
-- `assets/scenes/Battle.scene.meta`
-
-当前读取到的场景状态：
-
-- `Battle.scene` 存在，大小约 36 KB。
-- `Battle.scene.meta` 存在。
-- 场景包含 `Canvas`。
-- 场景包含 `GameBootstrap`。
-- 场景包含调试 Label：
-  - `DebugInfoLabel`
-  - `TimerLabel`
-  - `BaseHpLabel`
-  - `StageLabel`
-  - `EnemyCountLabel`
-  - `TowerCountLabel`
-- 当前 `git diff -- assets/scenes/Battle.scene` 无输出，说明 007 当前没有修改场景文件。
-- 当前未检出 `BattleUI`、`RogueChoiceManager` 或 `SkillManager` 的场景挂载痕迹。
-
-结论：
-
-- `Battle.scene` 当前可作为 006.5 的最小战斗启动场景。
-- `Battle.scene` 当前不能证明已完成 007 UI 挂载。
-- 007 继续推进时，应由 Cocos Creator 编辑器挂载 `BattleUI` 并保存场景，不应手写 `.scene` JSON。
-
-## 8. GameBootstrap 当前状态
-
-当前文件：
-
-- `assets/scripts/bootstrap/GameBootstrap.ts`
-- `assets/scripts/bootstrap/GameBootstrap.ts.meta`
-
-当前读取到的职责：
-
-- `GameBootstrap` 是 Cocos `Component`。
-- 已声明并绑定调试 Label 属性：
-  - `debugLabel`
-  - `stageLabel`
-  - `timeLabel`
-  - `baseHpLabel`
-  - `enemyCountLabel`
-  - `towerCountLabel`
-- `start()` 中会启动战斗。
-- `update(deltaTime)` 中会推进 `BattleManager.update(deltaTime)` 并刷新调试 Label。
-- `_startBattle()` 调用 `BattleManager.startBattleByIndex(0)` 启动第 1 关测试战斗。
-- `onDestroy()` 存在，按 `CHANGELOG.md` 记录，不再调用 `EventBus.clear()`，只解绑自身事件监听。
-
-当前注意事项：
-
-- 不要恢复 `EventBus.clear()`。
-- 007 如需 UI 接入，应避免破坏 `GameBootstrap` 已有 001~006.5 集成能力。
-
-## 9. 平台 adapter 规则
-
-平台规则来自 `CLAUDE.md`、`PROJECT_MEMORY.md`、`docs/PLATFORM.md` 和 `docs/TECH_DESIGN.md`：
-
-- 所有平台能力必须通过 `Platform.instance`。
-- 业务代码禁止直接调用：
-  - `wx`
-  - `tt`
-  - `tap`
-  - `TapSDK`
-- 平台 API 只能出现在 `assets/scripts/platform/` 目录。
-- 平台能力不可用时必须降级，不能导致核心玩法崩溃。
-- MVP 只预留广告和分享接口，不真实接入广告刷新或商业化。
-
-平台适配层文件：
-
-- `assets/scripts/platform/IPlatform.ts`
-- `assets/scripts/platform/Platform.ts`
-- `assets/scripts/platform/WebMockPlatform.ts`
-- `assets/scripts/platform/WechatPlatform.ts`
-- `assets/scripts/platform/DouyinPlatform.ts`
-- `assets/scripts/platform/TapTapMiniPlatform.ts`
-
-## 10. 当前禁止事项
-
-全项目禁止事项：
-
-- 不要越权修改当前任务未授权文件。
-- 不要顺手重构无关代码。
-- 不要删除已有功能。
-- 不要自动提交 Git。
-- 不要直接调用平台 API。
-- 不要引入不必要依赖。
-- 不要破坏 Cocos Creator 工程结构。
-- 不要忽略或遗漏 `.meta` 文件。
-- 不要提交 Cocos 生成缓存目录。
-
-当前 007 禁止事项：
-
-- 不新增 MVP 外主动技能。
-- 不做复杂技能树。
-- 不做广告刷新肉鸽选项的真实接入。
-- 不实现完整美术特效。
-- 不接平台 API。
-- 不实现 008 或后续任务内容。
-
-第一阶段持续禁止：
-
-- 不接服务器。
-- 不接支付。
-- 不做 TapTap Android APK 原生 SDK。
-- 不做复杂商业化。
-
-## 11. 后续任务顺序
-
-根据 `PROJECT_MEMORY.md` 和 `TASKS/` 当前文件，任务顺序如下：
-
-1. `001-project-init`：已完成
-2. `002-platform-adapter`：已完成
-3. `003-core-data-config`：已完成
-4. `004-battle-prototype`：已完成
-5. `005-tower-system`：已完成
-6. `006-enemy-wave-system`：已完成
-7. `006.5-foundation-playable-integration`：已完成
-8. `007-rogue-choice-and-skills`：进行中，当前未通过审查
-9. `008-base-building-system`：未开始
-10. `009-idle-offline-reward`：未开始
-11. `010-rebirth-system`：未开始
-12. `011-ui-flow`：未开始
-13. `012-build-wechat-douyin-taptap`：未开始
-
-下一任务分支建议在 007 审查通过并合并后创建：
-
-```bash
-git checkout -b feature/008-base-building-system
-```
-
-## 12. 下一步建议
-
-建议先完成 007 修复，不要进入 008：
-
-1. 用 Cocos Creator 3.8.x 打开当前项目。
-2. 确认新增 007 脚本的 `.meta` 文件已由 Cocos 生成并纳入 Git。
-3. 在 `Battle.scene` 中挂载 `BattleUI`。
-4. 绑定技能按钮、肉鸽选择面板、选项按钮和文本。
-5. 修复 `BattleUI.onDestroy()` 事件解绑问题。
-6. 修复轨道炮无目标时仍消耗次数的问题。
-7. 修复 `rogue_electric_bounce` 配置与实际效果不一致的问题。
-8. Web 预览验证：
-   - 第 1 关可以启动。
-   - 45 秒、90 秒、135 秒可以触发最多 3 次肉鸽选择。
-   - 3 选 1 选择后立即生效。
-   - 主动技能按钮可点击。
-   - 轨道炮能造成伤害。
-   - 全屏冻结能暂停敌人移动。
-9. 验证完成后再更新或保留 `CHANGELOG.md` 中 007 完成记录。
-10. 重新提交给 Codex 审查。
-
-## 13. 新会话启动提示词
 
 ```txt
-你是《星垒计划 / Starfortress Project》的 Codex 协作助手。
+git diff --name-status 结果：
+（无输出）
+```
 
-请先读取：
+```txt
+git diff --stat 结果：
+（无输出）
+```
+
+```txt
+git diff --cached --name-status 结果：
+（无输出）
+```
+
+### 本地分支列表
+
+```txt
+* develop
+  feature/002-platform-adapter
+  feature/003-core-data-config
+  feature/004-battle-prototype
+  feature/005-tower-system
+  feature/006-enemy-wave-system
+  feature/0065-foundation-playable-integration
+  feature/0065-playable-scene-bootstrap
+  feature/007-rogue-choice-and-skills
+  feature/008-base-building-system
+  feature/009-idle-offline-reward
+  feature/010-rebirth-system
+  feature/011-ui-flow
+  feature/0115-battle-visual-demo
+  feature/012-build-wechat-douyin-taptap
+  fix/008-building-ui-binding
+  fix/cocos-project-migration
+  main
+```
+
+### 分支状态判断
+
+1. 当前在 develop ✓
+2. 不在 docs/update-current-state
+3. 有 feature 分支残留（002~012），建议后续清理
+4. 无未提交代码改动 ✓
+5. 无未跟踪文件 ✓
+6. 无 staged 内容 ✓
+7. 所有 .meta 文件已提交 ✓
+8. 不应提交的目录未被提交 ✓
+
+### 结论
+
+当前工作区干净，可以视为稳定交接状态。
+
+---
+
+## 3. 任务完成状态总览
+
+| 任务编号 | 任务名 | 状态 | 审查通过 | 合入 develop | 核心产物 | 当前风险 | 人工确认 |
+|---------|--------|------|---------|-------------|---------|---------|---------|
+| 001 | project-init | 已完成 | ✓ | ✓ | 项目文档体系 | 无 | 不需要 |
+| 002 | platform-adapter | 已完成 | ✓ | ✓ | IPlatform/Platform/4个适配器 | 无 | 不需要 |
+| 003 | core-data-config | 已完成 | ✓ | ✓ | 8个Config + ConfigManager | 无 | 不需要 |
+| 004 | battle-prototype | 已完成 | ✓ | ✓ | BattleManager/StageManager/TimeManager/EnemySpawner/EnemyController/BattleSettlement/EventBus | 无 | 不需要 |
+| 005 | tower-system | 已完成 | ✓ | ✓ | TowerManager/TowerController/ProjectileManager | 无 | 不需要 |
+| 006 | enemy-wave-system | 已完成 | ✓ | ✓ | EnemySpawner增强/BattleSettlement增强 | 无 | 不需要 |
+| 006.5 | foundation-playable-integration | 已完成 | ✓ | ✓ | GameBootstrap/Battle.scene | 无 | 需要确认Web预览 |
+| 007 | rogue-choice-and-skills | 已完成 | ✓ | ✓ | RogueChoiceManager/SkillManager/BattleUI | 无 | 需要确认Web预览 |
+| 008 | base-building-system | 已完成 | ✓ | ✓ | SaveManager/BuildingManager/BaseManager/BuildingUI | 无 | 需要确认UI |
+| 009 | idle-offline-reward | 已完成 | ✓ | ✓ | IdleIncomeManager/OfflineRewardUI | 无 | 需要确认UI |
+| 010 | rebirth-system | 已完成 | ✓ | ✓ | RebirthManager/RebirthUI | 无 | 需要确认UI |
+| 011 | ui-flow | 已完成 | ✓ | ✓ | GameManager/MainUI/SettlementUI/TowerUpgradeUI/SettingsUI | 无 | 需要确认UI |
+| 011.5 | battle-visual-demo | 已完成 | ✓ | ✓ | BattleVisualManager/EnemyView/TowerView/AttackEffectView | 需要确认可视化效果 | 需要Web预览确认 |
+| 012 | build-wechat-douyin-taptap | 已完成 | ✓ | ✓ | builder.json构建配置 | 未实机验证 | 需要工具实测 |
+
+### 012 特别说明
+
+- 012 完成的是平台构建链路配置
+- 不代表小游戏提审质量达标
+- 不代表 Web demo 已经可玩
+- 可视化战斗和可玩闭环仍需单独确认
+
+---
+
+## 4. 当前建议新增任务
+
+### 013-playable-battle-visual-demo
+
+**建议状态**：建议新增
+
+**为什么需要**：
+
+1. 现有战斗逻辑可能已经跑通
+2. 但塔、怪、子弹、攻击反馈可能没有完整画出来
+3. 玩家无法只靠画面理解战斗
+4. 012 已完成后仍需要补可玩 demo
+5. 完成 013 后再考虑重新构建平台包或提审
+
+**注意**：仓库已存在 011.5-battle-visual-demo 任务，可能已覆盖部分需求。需要人工确认 011.5 的可视化效果是否完整。
+
+如果 011.5 已经完整实现可视化，则 013 可能不需要。如果 011.5 效果不完整，则需要 013 补充。
+
+---
+
+## 5. 当前玩法可玩性评估
+
+| 项目 | 状态 | 说明 |
+|------|------|------|
+| 1. 主界面是否存在 | 已确认 | MainUIRoot 节点存在于 Battle.scene |
+| 2. 开始战斗按钮是否存在 | 已确认 | MainUI.ts 有 startBattleButton 属性 |
+| 3. 点击开始战斗后是否进入战斗 | 需要人工确认 | 未重新运行 Web 预览验证 |
+| 4. 战斗逻辑是否运行 | 需要人工确认 | BattleManager/EnemySpawner/TowerManager 代码存在 |
+| 5. 战斗倒计时是否运行 | 需要人工确认 | TimeManager 代码存在 |
+| 6. 敌人逻辑是否生成 | 需要人工确认 | EnemySpawner 代码存在 |
+| 7. 塔逻辑是否存在 | 需要人工确认 | TowerManager/TowerController 代码存在 |
+| 8. 投射物逻辑是否存在 | 需要人工确认 | ProjectileManager 代码存在 |
+| 9. 玩家是否能看到敌人节点 | 需要人工确认 | EnemyView/BattleVisualManager 代码存在 |
+| 10. 玩家是否能看到塔节点 | 需要人工确认 | TowerView/BattleVisualManager 代码存在 |
+| 11. 玩家是否能看到投射物或攻击反馈 | 需要人工确认 | AttackEffectView 代码存在 |
+| 12. 敌人死亡是否有视觉消失 | 需要人工确认 | BattleVisualManager 有移除逻辑 |
+| 13. 战斗结束是否有结算 UI | 需要人工确认 | SettlementPanel 节点存在，SettlementUI 代码存在 |
+| 14. 结算资源是否进入基地系统 | 需要人工确认 | BattleSettlement/BaseManager 代码存在 |
+| 15. 基地升级是否可用 | 需要人工确认 | BuildingPanel 节点存在，BuildingUI 代码存在 |
+| 16. 下一局是否能体现成长 | 需要人工确认 | SaveManager/TowerUpgradeUI 代码存在 |
+| 17. 离线收益是否可见可领 | 需要人工确认 | OfflineRewardPanel 节点存在，OfflineRewardUI 代码存在 |
+| 18. 转生系统是否可见可用 | 需要人工确认 | RebirthUIRoot 节点存在，RebirthUI 代码存在 |
+| 19. Web 预览是否完整验收过 | 不确定 | 未重新运行 Web 预览 |
+| 20. 当前是否可以称为"可玩 demo" | 不确定 | 需要人工确认上述所有项 |
+
+---
+
+## 6. Cocos 场景与 UI 状态
+
+### 6.1 场景文件
+
+- `assets/scenes/Battle.scene` 存在
+- `assets/scenes/Battle.scene.meta` 存在
+- 由 Cocos Creator 保存（从格式判断）
+- 未发现手写 JSON 风险
+
+### 6.2 Canvas 下主要节点
+
+从 Battle.scene 检索到的主要节点：
+
+```txt
+Canvas
+├── Camera
+├── GameBootstrap
+├── UILayer
+│   ├── DebugInfoLabel
+│   ├── TimerLabel
+│   ├── BaseHpLabel
+│   ├── StageLabel
+│   ├── EnemyCountLabel
+│   └── TowerCountLabel
+├── BattleUIRoot
+│   ├── OrbitalCannonButton
+│   ├── FreezeButton
+│   ├── RogueChoicePanel
+│   │   ├── RogueChoiceTitleLabel
+│   │   ├── RogueChoiceButton1
+│   │   ├── RogueChoiceButton2
+│   │   └── RogueChoiceButton3
+│   └── ...（其他战斗UI元素）
+├── OfflineRewardPanel
+│   ├── Background
+│   ├── OfflineTimeLabel
+│   ├── RewardAmountLabel
+│   ├── CapInfoLabel
+│   ├── ClaimButton
+│   └── AdDoubleButton
+├── BuildingPanel
+├── RebirthUIRoot
+├── MainUIRoot
+├── SettlementPanel
+├── TowerUpgradePanel
+├── SettingsUI
+└── BattleVisualRoot
+```
+
+### 6.3 UI 面板状态
+
+| 面板 | 用途 | 存在 | 挂组件 | 需默认隐藏 | 画面混乱风险 | 需人工确认 |
+|------|------|------|--------|-----------|-------------|-----------|
+| MainUIRoot | 主界面入口 | ✓ | MainUI.ts | 否（默认显示） | 低 | 确认Layout |
+| BattleUIRoot | 战斗UI（技能/肉鸽） | ✓ | BattleUI.ts | 是（战斗时显示） | 中 | 确认Layout |
+| BuildingPanel | 建筑升级 | ✓ | BuildingUI.ts | 是（进入时显示） | 中 | 确认Layout |
+| TowerUpgradePanel | 塔升级 | ✓ | TowerUpgradeUI.ts | 是（进入时显示） | 中 | 确认Layout |
+| RebirthUIRoot | 转生系统 | ✓ | RebirthUI.ts | 是（进入时显示） | 中 | 确认Layout |
+| SettlementPanel | 战斗结算 | ✓ | SettlementUI.ts | 是（结算时显示） | 中 | 确认Layout |
+| SettingsUI | 设置 | ✓ | SettingsUI.ts | 是（进入时显示） | 中 | 确认Layout |
+| OfflineRewardPanel | 离线收益 | ✓ | OfflineRewardUI.ts | 是（有离线收益时显示） | 中 | 确认Layout |
+
+### 6.4 BattleVisualRoot 状态
+
+- BattleVisualRoot 节点存在 ✓
+- 是否挂载 BattleVisualManager：需要人工确认
+- 是否绑定 TowerLayer：需要人工确认
+- 是否绑定 EnemyLayer：需要人工确认
+- 是否绑定 EffectLayer：需要人工确认
+- 是否绑定 PathLayer：需要人工确认
+- 运行时创建塔/怪/特效：从代码逻辑看应该可以，需要人工确认
+
+### 6.5 当前 UI 混乱风险
+
+**当前多个面板可能同时 active，导致 Cocos Scene / 运行画面中按钮和 Label 混杂。建议人工在 Cocos Creator 中设置默认显隐：只保留主界面默认显示，其余面板按流程显示。**
+
+---
+
+## 7. 核心系统状态
+
+### 7.1 Bootstrap / 启动流程
+
+**GameBootstrap 职责**：
+
+- 初始化系统
+- 接入 BattleManager
+- 接入 BaseManager
+- 接入 IdleIncomeManager
+- 接入 UI 主流程
+- 接入 BattleVisualManager（通过事件监听）
+
+**当前已知风险**：
+
+- 未重新运行 Web 预览，不确定启动流程是否正常
+
+### 7.2 EventBus
+
+**当前职责**：模块间通信
+
+**主要事件类型**：
+
+- 战斗事件：BATTLE_START、BATTLE_END、BATTLE_SETTLEMENT、BATTLE_RESULT、ENEMY_SPAWN、ENEMY_DEATH、ENEMY_REACH_BASE、BASE_HEALTH_CHANGE、STAGE_WAVE_START、STAGE_BOSS_SPAWN、TIME_UPDATE
+- UI 事件：无独立UI事件，通过GameManager状态管理
+- 肉鸽事件：ROGUE_CHOICE_TRIGGER、ROGUE_CHOICE_SELECT、ROGUE_CHOICE_COMPLETE、BATTLE_FORCE_PAUSE、BATTLE_FORCE_RESUME
+- 技能事件：SKILL_USE、SKILL_CHARGE_CHANGE、SKILL_ORBITAL_CANNON、SKILL_FREEZE
+- 基地事件：REBIRTH_COMPLETE、PERMANENT_SKILL_UPGRADE
+- 离线收益事件：IDLE_INCOME_TICK、OFFLINE_REWARD_READY、OFFLINE_REWARD_CLAIMED
+- 可视化事件：TOWER_PLACED、TOWER_ATTACK
+
+**事件解绑风险**：各组件在 onDestroy 中解绑，风险较低
+
+### 7.3 Platform Adapter
+
+**platform 目录文件**：
+
+- `IPlatform.ts`
+- `Platform.ts`
+- `WebMockPlatform.ts`
+- `WechatPlatform.ts`
+- `DouyinPlatform.ts`
+- `TapTapMiniPlatform.ts`
+
+**合规性**：
+
+- 不存在业务代码直接调用 wx / tt / tap / TapSDK
+- 符合平台 API 只在 platform 目录内的规则
+
+### 7.4 Config / 数据配置
+
+**配置文件状态**：
+
+| 配置 | 文件 | 状态 |
+|------|------|------|
+| ConfigManager | core/ConfigManager.ts | ✓ |
+| TowerConfig | data/TowerConfig.ts | ✓ |
+| EnemyConfig | data/EnemyConfig.ts | ✓ |
+| StageConfig | data/StageConfig.ts | ✓ |
+| BuildingConfig | data/BuildingConfig.ts | ✓ |
+| SkillConfig | data/SkillConfig.ts | ✓ |
+| EconomyConfig | data/EconomyConfig.ts | ✓ |
+| RebirthConfig | data/RebirthConfig.ts | ✓ |
+
+**已知问题**：
+
+- 007 审查时发现 `rogue_electric_bounce` 配置与实际效果不一致，需要确认是否已修复
+- 资源消耗类型需要确认是否按 BuildingConfig 正确配置
+
+### 7.5 Battle / 战斗逻辑
+
+**核心模块**：
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| BattleManager | battle/BattleManager.ts | 战斗流程管理 |
+| StageManager | battle/StageManager.ts | 关卡管理 |
+| TimeManager | core/TimeManager.ts | 时间管理 |
+| EnemySpawner | battle/EnemySpawner.ts | 敌人生成 |
+| EnemyController | battle/EnemyController.ts | 敌人控制 |
+| TowerManager | battle/TowerManager.ts | 塔管理 |
+| TowerController | battle/TowerController.ts | 塔控制 |
+| ProjectileManager | battle/ProjectileManager.ts | 投射物管理 |
+
+**当前状态**：
+
+- 是逻辑层对象
+- 是否创建 Cocos 节点：需要通过 BattleVisualManager 确认
+- 当前是否看得到敌人、塔、投射物：需要人工 Web 预览确认
+
+### 7.6 Battle Visual / 战斗可视化
+
+**已实现文件**：
+
+| 文件 | 职责 |
+|------|------|
+| BattleVisualManager | 战斗可视化管理器，监听事件创建/销毁节点 |
+| EnemyView | 敌人可视化组件，Graphics绘制圆形+血条 |
+| TowerView | 塔可视化组件，Graphics绘制矩形+闪烁反馈 |
+| AttackEffectView | 攻击特效组件，Graphics绘制攻击线 |
+
+**层级结构**（从代码推断）：
+
+- TowerLayer：塔和槽位
+- EnemyLayer：敌人
+- EffectLayer：攻击特效
+- PathLayer：路径点
+
+**已知风险**：
+
+- 未重新运行 Web 预览验证可视化效果
+- 场景中 BattleVisualRoot 是否正确绑定需要人工确认
+
+### 7.7 Rogue / Skills
+
+**核心模块**：
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| RogueChoiceManager | battle/RogueChoiceManager.ts | 肉鸽选择管理 |
+| SkillManager | battle/SkillManager.ts | 主动技能管理 |
+| BattleUI | ui/BattleUI.ts | 战斗UI（技能按钮/肉鸽面板） |
+
+**功能状态**：
+
+- 轨道炮：实现，有UI入口
+- 全屏冻结：实现，有UI入口
+- 肉鸽 3 选 1：实现，有UI入口
+- 次数限制：实现
+- 无目标消耗次数风险：007 审查时发现，需要确认是否已修复
+
+### 7.8 Base Building / 基地建筑
+
+**核心模块**：
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| BaseManager | base/BaseManager.ts | 基地总管理 |
+| BuildingManager | base/BuildingManager.ts | 建筑管理 |
+| BuildingUI | ui/BuildingUI.ts | 建筑UI |
+| SaveManager | core/SaveManager.ts | 存档管理 |
+
+**功能状态**：
+
+- 建筑列表：5个MVP建筑
+- 建筑升级：实现
+- 资源类型：baseCoin / battleCoin
+- 消耗是否按 BuildingConfig：应该按配置
+- BuildingUI 场景绑定状态：BuildingPanel 节点存在，需要人工确认绑定
+
+### 7.9 Idle / Offline Reward
+
+**核心模块**：
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| IdleIncomeManager | base/IdleIncomeManager.ts | 放置收益管理 |
+| OfflineRewardUI | ui/OfflineRewardUI.ts | 离线收益UI |
+| EconomyConfig | data/EconomyConfig.ts | 经济配置 |
+
+**功能状态**：
+
+- 在线收益：实现
+- 离线收益：实现
+- 离线时长上限：实现
+- 领取逻辑：实现
+- 是否接入 GameBootstrap：已接入
+- 是否已 UI 验证：需要人工确认
+
+### 7.10 Rebirth
+
+**核心模块**：
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| RebirthManager | base/RebirthManager.ts | 转生管理 |
+| RebirthUI | ui/RebirthUI.ts | 转生UI |
+
+**功能状态**：
+
+- 转生条件：基地核心10级 + 通关第10关
+- 转生奖励：星核碎片
+- 重置范围：战斗金币、经营币、建筑等级（基地核心除外）
+- 是否接入主界面：RebirthUIRoot 节点存在
+- 是否已验证：需要人工确认
+
+### 7.11 UI Flow
+
+**UI 面板列表**：
+
+- MainUIRoot：主界面
+- BattleUIRoot：战斗UI
+- BuildingPanel：建筑升级
+- TowerUpgradePanel：塔升级
+- RebirthUIRoot：转生
+- SettlementPanel：战斗结算
+- SettingsUI：设置
+- OfflineRewardPanel：离线收益
+
+**流程状态**：
+
+- 开始战斗流程：实现
+- 返回主界面流程：实现
+- UI 显隐管理：通过 GameManager 状态管理
+- 当前面板是否杂乱：可能同时显示，需要人工确认
+- 是否需要 Layout 整理：需要人工在 Cocos Creator 中确认
+
+### 7.12 Platform Build
+
+**012 完成状态**：
+
+- Web 构建：已配置，待实测
+- 微信小游戏构建：已配置，待 AppID/微信开发者工具实测
+- 抖音小游戏构建：已配置，待 AppID/抖音开发者工具实测
+- TapTap 小游戏构建：已配置，待转换工具实测
+
+**是否只是构建链路**：是
+
+**是否已实机验证**：否
+
+**是否已提审**：否
+
+**是否建议可玩 demo 完成后重新构建**：是
+
+---
+
+## 8. 当前主要问题和风险
+
+1. **任务完成不等于可玩闭环完成**：001~012 都已完成，但实际可玩性需要人工验证。
+
+2. **012 构建完成不等于提审质量达标**：只是配置了构建目标，未实机验证。
+
+3. **当前可能仍缺少完整战斗可视化**：011.5 已实现，但效果需要人工确认。
+
+4. **当前 UI 面板可能同时显示**：导致画面混乱，需要人工在 Cocos Creator 中设置默认显隐。
+
+5. **Cocos 场景绑定必须人工确认**：从 scene 文件可以看到节点名，但组件绑定和属性赋值需要打开 Cocos Creator 确认。
+
+6. **新增脚本 .meta 必须提交**：当前所有 .meta 已提交，后续新增脚本时注意。
+
+7. **Battle.scene 不得手写 JSON**：必须通过 Cocos Creator 编辑器保存。
+
+8. **Web 预览结果必须人工确认**：未重新运行 Web 预览，不确定当前状态。
+
+9. **平台包可能需要在可玩 demo 完成后重新构建**：012 只是配置，实际构建需要人工操作。
+
+10. **如果 Scene 中有 Missing Script**：必须先修复，当前未确认是否有 Missing Script。
+
+11. **如果 UI active 状态错误**：运行画面会混乱，需要人工确认。
+
+12. **如果可视化层直接改战斗逻辑**：后续风险高，当前代码分离良好。
+
+13. **如果继续平台提审**：会暴露 demo 不可玩的问题。
+
+---
+
+## 9. 当前禁止事项
+
+- 不自动提交 Git
+- 不手写 Battle.scene JSON
+- 不提交 Cocos 缓存目录（library/、temp/、build/、profiles/、native/）
+- 不提交 node_modules
+- 不直接调用平台 API（wx/tt/tap/TapSDK）
+- 不接服务器
+- 不接支付
+- 不做正式平台提审
+- 不引入不必要依赖
+- 不重写战斗系统
+- 不越权做后续任务
+- 不在 develop 上直接做未审查功能
+- 不把"未验证"写成"已通过"
+
+---
+
+## 10. 下一步建议
+
+根据当前仓库状态：
+
+1. **不回滚 012**：保留 012 作为构建链路成果。
+
+2. **暂停平台提审**：当前 demo 可玩性未确认，不适合提审。
+
+3. **人工确认 011.5 可视化效果**：
+   - 用 Cocos Creator 3.8.x 打开项目
+   - 运行 Web 预览
+   - 确认能否看到塔、敌人、攻击反馈、死亡消失
+   - 确认战斗结算是否正常
+
+4. **如果 011.5 效果不完整**：新建 `TASKS/013-playable-battle-visual-demo.md` 补充可视化。
+
+5. **如果 011.5 效果完整**：新建 `TASKS/013-playable-loop-integration.md` 完善可玩闭环。
+
+6. **最后重新构建平台包**：准备提审。
+
+建议任务顺序：
+
+```txt
+013-playable-loop-integration（战斗结算资源 → 回基地升级 → 再战斗变强）
+014-demo-polish-and-first-run（首次体验调优、默认资源、UI显隐、调试Label清理）
+最后重新构建平台包，准备提审
+```
+
+---
+
+## 11. 建议的 013 任务摘要
+
+如果需要新增可视化任务：
+
+```txt
+任务名：013-playable-battle-visual-demo
+
+目标：让玩家在 Web 预览中肉眼看到塔打怪的完整过程。
+
+验收：
+主界面 -> 开始战斗 -> 可见塔 -> 可见敌人 -> 敌人移动 -> 攻击反馈 -> 敌人死亡 -> 结算
+
+禁止：
+不做平台构建，不接 SDK，不重写战斗系统，不做正式美术，不引入新依赖。
+```
+
+如果 011.5 已完整实现，则建议：
+
+```txt
+任务名：013-playable-loop-integration
+
+目标：让玩家体验完整的"打怪 → 结算 → 升级 → 再打变强"循环。
+
+验收：
+战斗结算 → 资源入账 → 回基地 → 升级塔/建筑 → 再次战斗 → 感受到变强
+
+禁止：
+不做平台构建，不接 SDK，不引入新依赖。
+```
+
+---
+
+## 12. 给下一位执行 Agent 的提示词
+
+```txt
+你是《星垒计划 / Starfortress Project》的执行工程师，角色为执行 Agent。
+
+当前仓库路径：
+D:\project\starfortress-project
+
+当前分支：
+develop
+
+当前建议任务：
+1. 先人工运行 Web 预览，确认 011.5 可视化效果
+2. 根据效果决定是否需要 013 补充任务
+
+需要先读取：
 1. CLAUDE.md
 2. PROJECT_MEMORY.md
 3. CHANGELOG.md
@@ -347,71 +624,32 @@ git checkout -b feature/008-base-building-system
 6. docs/REVIEW_CHECKLIST.md
 7. 当前 TASKS 文件
 
-当前仓库位于：
-D:\project\starfortress-project
-
-当前分支应为：
-feature/007-rogue-choice-and-skills
-
-当前任务：
-TASKS/007-rogue-choice-and-skills.md
-
-请先确认 git status 和当前未提交改动。不要依赖聊天记忆，不要自动提交 Git。
-
-当前重点：
-007 仍在进行中，之前审查未通过。请只围绕 007 修复，不要实现 008 或后续任务。
-```
-
-## 14. 执行 Agent 提示词模板
-
-```txt
-你是《星垒计划 / Starfortress Project》的执行工程师，角色为执行 Agent。
-
-请先读取：
-1. CLAUDE.md
-2. PROJECT_MEMORY.md
-3. CHANGELOG.md
-4. docs/handoff/CURRENT_STATE.md
-5. 当前任务文件：TASKS/007-rogue-choice-and-skills.md
-
-当前目标：
-修复并完成 007-rogue-choice-and-skills。
+需要先执行：
+git status --short --branch --untracked-files=all
+git log --oneline -10
 
 严格要求：
-1. 只修复 007，不要实现 008 或后续任务。
-2. 不要接服务器。
-3. 不要接支付。
-4. 不要真实接入广告刷新。
-5. 不要接 TapTap Android APK 原生 SDK。
-6. 不要直接调用 wx、tt、tap、TapSDK。
-7. 不要破坏 Cocos Creator 工程结构。
-8. 不要手写 .scene JSON；场景挂载必须通过 Cocos Creator 编辑器完成。
-9. 不要自动提交 Git。
+1. 只做当前任务
+2. 不自动提交 Git
+3. 不手写 .scene JSON
+4. 不接平台 API
+5. 不引入依赖
+6. Cocos 场景绑定必须通过 Cocos Creator 编辑器完成
 
-必须处理：
-1. 确认新增脚本 .meta 已生成并纳入 Git。
-2. 在 Cocos Creator 中把 BattleUI 挂载到 Battle.scene，并绑定技能按钮、肉鸽面板、选项按钮和文本。
-3. 修复 BattleUI.onDestroy() 事件解绑失败问题。
-4. 修复轨道炮无存活敌人时仍消耗技能次数的问题。
-5. 修复 rogue_electric_bounce 配置与实际效果不一致的问题。
-6. 完成 Web 预览验证后再更新 CHANGELOG.md。
-
-完成后输出：
-1. 修改文件列表
-2. 每个文件修改原因
-3. Web 预览验证方式
-4. 是否影响平台 adapter
-5. 是否影响主包体积
-6. 是否还有风险
-7. 提醒人工执行：
-   git status
-   git diff --name-status
-   git diff --stat
-   git diff
-   git diff --cached --name-status
+Web 预览验收标准：
+1. 主界面显示正常
+2. 点击开始战斗进入战斗
+3. 能看到塔节点
+4. 能看到敌人节点和移动
+5. 能看到攻击反馈
+6. 敌人死亡后节点消失
+7. 战斗结算正常显示
+8. 结算资源正确入账
 ```
 
-## 15. Codex 审查提示词模板
+---
+
+## 13. 给 Codex 审查员的提示词
 
 ```txt
 你是《星垒计划 / Starfortress Project》的代码审查员。
@@ -419,9 +657,7 @@ TASKS/007-rogue-choice-and-skills.md
 请审查执行 Agent 当前产生的改动，不要直接修改代码。
 
 当前任务文件：
-TASKS/007-rogue-choice-and-skills.md
-
-请基于当前仓库状态进行审查，不要只依赖粘贴摘要。
+根据实际任务确定 TASKS/xxx.md
 
 审查前必须读取：
 1. CLAUDE.md
@@ -437,35 +673,42 @@ TASKS/007-rogue-choice-and-skills.md
 1. 是否符合当前 TASKS 任务
 2. 是否只完成了当前任务
 3. 是否存在越权修改
-4. 是否实现了不属于当前任务的内容
-5. 是否实现了 008 或后续任务内容
-6. 是否修改了当前任务禁止修改的文件
-7. 是否破坏 Cocos Creator 项目结构
-8. 新增 Cocos 脚本是否有 .meta
-9. Battle.scene 是否通过 Cocos Creator 编辑器挂载 BattleUI
-10. GameBootstrap 既有 001~006.5 能力是否被破坏
-11. 是否直接调用 wx、tt、tap、TapSDK
-12. 平台 API 是否只出现在允许目录
-13. 是否引入不必要依赖
-14. 是否影响主包体积
-15. 是否有明显性能风险
-16. TypeScript 类型是否清晰
-17. 是否符合 MVP 缩范围原则
-18. 是否更新 CHANGELOG.md
-19. 是否需要更新 PROJECT_MEMORY.md
-20. 是否可以进入提交
+4. git status 是否干净
+5. git diff 是否符合预期
+6. 新增 .meta 是否存在
+7. Battle.scene 是否手写 JSON 风险
+8. Cocos 场景绑定是否正确
+9. Web 预览结果是否正常
+10. 是否能进入下一任务
 
 请输出：
 1. 审查结论：通过 / 不通过
 2. 必须修复项
 3. 建议优化项
-4. 平台风险
-5. 包体风险
-6. 性能风险
-7. 是否允许提交
-8. 建议本次提交应包含哪些文件
-9. 建议本次提交不应包含哪些文件
-10. 如果不通过，给执行 Agent 的修复提示词
-11. 如果通过，请给出下一步 Git 命令
+4. 是否允许提交
+5. 如果不通过，给最小修复提示词
+6. 如果通过，给提交建议
+
+提交建议格式：
+git add [文件列表]
+git commit -m "feat(xxx): 描述"
 ```
 
+---
+
+## 14. 不确定内容说明
+
+以下内容未实际验证，需要人工确认：
+
+1. Web 预览是否能正常运行
+2. 战斗可视化效果是否完整
+3. UI 面板默认显隐是否正确
+4. BattleVisualManager 组件绑定是否正确
+5. 各 UI 面板 Layout 是否合理
+6. 是否存在 Missing Script
+7. 平台构建是否能正常生成产物
+8. 实际可玩性是否达标
+
+---
+
+*本文档基于仓库文件和 git 命令输出生成，未运行 Web 预览，未打开 Cocos Creator。*
