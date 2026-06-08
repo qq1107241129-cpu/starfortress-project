@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## 2026-06-08 013.1-UILayer改动 修复初始界面 UI 混乱
+
+### Added
+
+- 新增 `assets/scripts/ui/UILayerController.ts`：UILayer 显隐控制器，监听 GameManager 状态变化，战斗状态时显示 UILayer（调试 Label），非战斗状态时隐藏。
+
+### Changed
+
+- 更新 `assets/scripts/battle/BattleVisualManager.ts`：新增 GameManager 状态监听，默认隐藏节点，battle 状态时显示。确保 BattleVisualRoot 不会在主界面时显示。
+
+### Notes
+
+- UILayer 默认隐藏，开始战斗后显示
+- BattleVisualRoot 默认隐藏，开始战斗后显示
+- 所有 UI 面板通过 GameManager.onStateChange 统一管理显隐
+- 不修改 .scene 文件，需要用户在 Cocos Creator 中手动设置节点默认 active 状态
+- UILayerController 需要用户在 Cocos Creator 中挂载到 UILayer 节点
+
+### 需要用户在 Cocos Creator 中完成
+
+1. 确认以下节点默认 active 为 false：
+   - UILayer
+   - BattleUIRoot
+   - BattleVisualRoot
+   - SettlementPanel
+   - BuildingPanel
+   - TowerUpgradePanel
+   - RebirthUIRoot
+   - SettingsUI
+2. 确认 MainUIRoot 默认 active 为 true
+3. ~~将 UILayerController 组件挂载到 UILayer 节点~~ ✅ 已完成（2026-06-08）
+4. OfflineRewardPanel 默认隐藏，由 OfflineRewardUI 通过事件控制显示
+
 ## 2026-06-07 012-build-wechat-douyin-taptap 构建链路配置
 
 ### Added

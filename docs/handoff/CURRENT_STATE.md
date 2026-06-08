@@ -37,77 +37,50 @@
 - 战斗可视化层已实现（BattleVisualManager、EnemyView、TowerView、AttackEffectView）
 - 是否可玩需要人工在 Web 预览中确认
 
+### 013.1 UILayer 改动状态
+
+- 013.1-UILayer改动 任务1 已完成
+- UILayerController 已创建并挂载到 UILayer 节点
+- BattleVisualManager 已添加 GameManager 状态监听
+- UILayer 默认隐藏，战斗状态时显示，非战斗状态时隐藏
+- BattleVisualRoot 默认隐藏，战斗状态时显示
+
 **关键判断：任务完成不等于玩法闭环完成；012 构建完成也不代表当前版本已经达到可玩或提审质量。**
 
 ---
 
 ## 2. 当前 Git 状态
 
-- 当前分支：`develop`
-- 当前 HEAD：`a2021ce chore: configure minigame build targets`
-- develop 与 origin/develop 同步
-- 工作区干净，无未提交改动
-- 无 staged 内容
-- 无 untracked 文件
+- 当前分支：`feature/013-playable-battle-visual-demo`
+- 工作区有未提交改动（013.1-UILayer改动）
+- 已修改文件：CHANGELOG.md、CLAUDE.md、Battle.scene、BattleVisualManager.ts、CURRENT_STATE.md
+- 新增文件：UILayerController.ts、UILayerController.ts.meta
 
 ```txt
 git status --short --branch --untracked-files=all 结果：
-## develop...origin/develop
-（无其他输出）
-```
-
-```txt
-git diff --name-status 结果：
-（无输出）
-```
-
-```txt
-git diff --stat 结果：
-（无输出）
-```
-
-```txt
-git diff --cached --name-status 结果：
-（无输出）
-```
-
-### 本地分支列表
-
-```txt
-* develop
-  feature/002-platform-adapter
-  feature/003-core-data-config
-  feature/004-battle-prototype
-  feature/005-tower-system
-  feature/006-enemy-wave-system
-  feature/0065-foundation-playable-integration
-  feature/0065-playable-scene-bootstrap
-  feature/007-rogue-choice-and-skills
-  feature/008-base-building-system
-  feature/009-idle-offline-reward
-  feature/010-rebirth-system
-  feature/011-ui-flow
-  feature/0115-battle-visual-demo
-  feature/012-build-wechat-douyin-taptap
-  fix/008-building-ui-binding
-  fix/cocos-project-migration
-  main
+## feature/013-playable-battle-visual-demo
+ M CHANGELOG.md
+ M CLAUDE.md
+ M assets/scenes/Battle.scene
+ M assets/scripts/battle/BattleVisualManager.ts
+ M docs/handoff/CURRENT_STATE.md
+?? TASKS/013.1-UILayer改动.md
+?? assets/scripts/ui/UILayerController.ts
+?? assets/scripts/ui/UILayerController.ts.meta
 ```
 
 ### 分支状态判断
 
-1. 当前在 develop ✓
-2. 不在 docs/update-current-state
-3. 有 feature 分支残留（002~012），建议后续清理
-4. 无未提交代码改动 ✓
-5. 无未跟踪文件 ✓
-6. 无 staged 内容 ✓
-7. 所有 .meta 文件已提交 ✓
-8. 不应提交的目录未被提交 ✓
+1. 当前在 feature/013-playable-battle-visual-demo ✓
+2. 有未提交改动（013.1-UILayer改动）
+3. 有未跟踪文件（UILayerController.ts、UILayerController.ts.meta、TASKS/013.1-UILayer改动.md）
+4. 无 staged 内容 ✓
+5. 所有新增 .meta 文件存在 ✓
+6. 不应提交的目录未被提交 ✓
 
 ### 结论
 
-当前工作区干净，可以视为稳定交接状态。
+当前有 013.1 未提交改动，UILayerController 已挂载到 UILayer 节点（人工确认）。建议确认 Web 预览效果后提交。
 
 ---
 
@@ -129,6 +102,7 @@ git diff --cached --name-status 结果：
 | 011 | ui-flow | 已完成 | ✓ | ✓ | GameManager/MainUI/SettlementUI/TowerUpgradeUI/SettingsUI | 无 | 需要确认UI |
 | 011.5 | battle-visual-demo | 已完成 | ✓ | ✓ | BattleVisualManager/EnemyView/TowerView/AttackEffectView | 需要确认可视化效果 | 需要Web预览确认 |
 | 012 | build-wechat-douyin-taptap | 已完成 | ✓ | ✓ | builder.json构建配置 | 未实机验证 | 需要工具实测 |
+| 013.1 | UILayer改动 | 已完成 | - | - | UILayerController/BattleVisualManager状态监听 | 无 | 已确认挂载 |
 
 ### 012 特别说明
 
@@ -203,7 +177,7 @@ git diff --cached --name-status 结果：
 Canvas
 ├── Camera
 ├── GameBootstrap
-├── UILayer
+├── UILayer（默认隐藏，开始战斗后显示）
 │   ├── DebugInfoLabel
 │   ├── TimerLabel
 │   ├── BaseHpLabel
@@ -237,16 +211,17 @@ Canvas
 
 ### 6.3 UI 面板状态
 
-| 面板 | 用途 | 存在 | 挂组件 | 需默认隐藏 | 画面混乱风险 | 需人工确认 |
-|------|------|------|--------|-----------|-------------|-----------|
-| MainUIRoot | 主界面入口 | ✓ | MainUI.ts | 否（默认显示） | 低 | 确认Layout |
-| BattleUIRoot | 战斗UI（技能/肉鸽） | ✓ | BattleUI.ts | 是（战斗时显示） | 中 | 确认Layout |
-| BuildingPanel | 建筑升级 | ✓ | BuildingUI.ts | 是（进入时显示） | 中 | 确认Layout |
-| TowerUpgradePanel | 塔升级 | ✓ | TowerUpgradeUI.ts | 是（进入时显示） | 中 | 确认Layout |
-| RebirthUIRoot | 转生系统 | ✓ | RebirthUI.ts | 是（进入时显示） | 中 | 确认Layout |
-| SettlementPanel | 战斗结算 | ✓ | SettlementUI.ts | 是（结算时显示） | 中 | 确认Layout |
-| SettingsUI | 设置 | ✓ | SettingsUI.ts | 是（进入时显示） | 中 | 确认Layout |
-| OfflineRewardPanel | 离线收益 | ✓ | OfflineRewardUI.ts | 是（有离线收益时显示） | 中 | 确认Layout |
+| 面板 | 用途 | 存在 | 挂组件 | 默认状态 | 显示时机 | 需人工确认 |
+|------|------|------|--------|---------|---------|-----------|
+| UILayer | 战斗信息层 | ✓ | 无（包含调试Label） | 隐藏 | 开始战斗后显示 | 确认Layout |
+| MainUIRoot | 主界面入口 | ✓ | MainUI.ts | 显示 | 游戏启动时 | 确认Layout |
+| BattleUIRoot | 战斗UI（技能/肉鸽） | ✓ | BattleUI.ts | 隐藏 | 战斗开始后 | 确认Layout |
+| BuildingPanel | 建筑升级 | ✓ | BuildingUI.ts | 隐藏 | 进入建筑界面时 | 确认Layout |
+| TowerUpgradePanel | 塔升级 | ✓ | TowerUpgradeUI.ts | 隐藏 | 进入塔升级界面时 | 确认Layout |
+| RebirthUIRoot | 转生系统 | ✓ | RebirthUI.ts | 隐藏 | 进入转生界面时 | 确认Layout |
+| SettlementPanel | 战斗结算 | ✓ | SettlementUI.ts | 隐藏 | 战斗结算时 | 确认Layout |
+| SettingsUI | 设置 | ✓ | SettingsUI.ts | 隐藏 | 进入设置界面时 | 确认Layout |
+| OfflineRewardPanel | 离线收益 | ✓ | OfflineRewardUI.ts | 隐藏 | 有离线收益时 | 确认Layout |
 
 ### 6.4 BattleVisualRoot 状态
 
@@ -260,7 +235,19 @@ Canvas
 
 ### 6.5 当前 UI 混乱风险
 
-**当前多个面板可能同时 active，导致 Cocos Scene / 运行画面中按钮和 Label 混杂。建议人工在 Cocos Creator 中设置默认显隐：只保留主界面默认显示，其余面板按流程显示。**
+**UILayer 默认隐藏，开始战斗后显示**：这是正确的设计，战斗 UI 元素（倒计时、基地血量、敌人数量等）只在战斗状态下显示。
+
+**其他面板显隐状态需要人工确认**：
+- MainUIRoot：应默认显示（主界面入口）
+- BattleUIRoot：应默认隐藏，战斗开始后显示
+- BuildingPanel：应默认隐藏，进入建筑界面时显示
+- TowerUpgradePanel：应默认隐藏，进入塔升级界面时显示
+- RebirthUIRoot：应默认隐藏，进入转生界面时显示
+- SettlementPanel：应默认隐藏，战斗结算时显示
+- SettingsUI：应默认隐藏，进入设置界面时显示
+- OfflineRewardPanel：应默认隐藏，有离线收益时显示
+
+建议人工在 Cocos Creator 中确认各面板的默认 active 状态是否正确。
 
 ---
 

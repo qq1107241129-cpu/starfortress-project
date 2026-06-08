@@ -6,6 +6,7 @@
 
 import { _decorator, Component, Node, Graphics, Color, UITransform } from 'cc';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
+import { GameManager, GameFlowState } from '../core/GameManager';
 import { BattleManager } from './BattleManager';
 import { EnemyView } from './EnemyView';
 import { TowerView } from './TowerView';
@@ -29,6 +30,8 @@ export class BattleVisualManager extends Component {
 
     private _eventBus: EventBus | null = null;
     private _battleManager: BattleManager | null = null;
+    private _gameManager: GameManager | null = null;
+    private _unsubStateChange: (() => void) | null = null;
 
     // 敌人视图映射：enemyId -> EnemyView
     private _enemyViews: Map<string, EnemyView> = new Map();
@@ -53,6 +56,15 @@ export class BattleVisualManager extends Component {
     onLoad(): void {
         this._eventBus = EventBus.getInstance();
         this._battleManager = BattleManager.getInstance();
+        this._gameManager = GameManager.getInstance();
+
+        // 默认隐藏（与 Cocos Creator 编辑器中设置一致）
+        this.node.active = false;
+
+        // 监听状态变化：battle 状态时显示，其他状态隐藏
+        this._unsubStateChange = this._gameManager.onStateChange((state: GameFlowState) => {
+            this.node.active = (state === 'battle');
+        });
 
         // 确保层级节点存在
         this._ensureLayers();
@@ -405,6 +417,11 @@ export class BattleVisualManager extends Component {
     }
 
     onDestroy(): void {
+        // 取消状态监听
+        if (this._unsubStateChange) {
+            this._unsubStateChange();
+            this._unsubStateChange = null;
+        }
         // 取消事件监听（使用保存的绑定回调引用）
         if (this._eventBus) {
             if (this._boundOnBattleStart) {
@@ -439,5 +456,9 @@ export class BattleVisualManager extends Component {
         this._boundOnTowerAttack = null;
 
         this._clearAll();
+
+        this._eventBus = null;
+        this._battleManager = null;
+        this._gameManager = null;
     }
 }
