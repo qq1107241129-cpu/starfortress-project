@@ -45,6 +45,29 @@
 - UILayer 默认隐藏，战斗状态时显示，非战斗状态时隐藏
 - BattleVisualRoot 默认隐藏，战斗状态时显示
 
+### 013.2 战斗布局重新设计状态
+
+- 013.2-battle-layout-redesign 已实现
+- **坐标系已修正**：从横屏(1920×1080)改为 BattleVisualRoot 本地坐标系
+- 基地 100×100 正方形居中 (0, 0)（本地坐标原点）
+- 8 个塔位围绕基地，距离 110 像素
+- 战斗区域：半宽 420，半高 650（竖屏纵向更大）
+- 敌人从随机方向进攻
+- 战斗开始后暂停，玩家放置 4 个塔后自动恢复
+- 小怪白色，Boss 红色
+- 不同敌人类型有不同像素形状
+- 修复了 StageManager 重复 getPath() 方法 bug
+- **修复了塔位放置流程**：
+  - 移除 GameBootstrap 自动放置测试塔（此前 slot_1~slot_4 被自动占据）
+  - BATTLE_START 不再重复发出（_resumeFromPlacement 改用 BATTLE_PLACEMENT_COMPLETE）
+  - GameManager 先 setState('battle') 再 startBattle（节点在 BATTLE_START 前激活）
+  - 塔位选择面板支持动态创建（场景未绑定时自动创建）
+  - **触摸坐标换算修复**：改用 Camera.screenToWorld() 做 screen→world 转换
+  - **动态面板按钮触摸修复**：改用系统级触摸 + 手动碰撞检测
+  - **Web 预览鼠标点击修复**：BattleVisualManager 与 BattleUI 动态面板同时监听 MOUSE_DOWN；坐标换算优先使用 getUILocation() 的 UI 世界坐标，Canvas Camera 仅作兜底
+  - **BattleUI 激活时序修复**：BattleUI 的 GameManager 状态监听前移到 onLoad，避免 onLoad 内设置 active=false 后 start 未及时执行，导致 battle 状态无法激活 UI
+  - **节点级点击兜底**：动态槽位节点、动态塔选择按钮、取消按钮同时挂 TOUCH_END，配合系统级输入双路径处理
+
 **关键判断：任务完成不等于玩法闭环完成；012 构建完成也不代表当前版本已经达到可玩或提审质量。**
 
 ---
@@ -103,6 +126,7 @@ git status --short --branch --untracked-files=all 结果：
 | 011.5 | battle-visual-demo | 已完成 | ✓ | ✓ | BattleVisualManager/EnemyView/TowerView/AttackEffectView | 需要确认可视化效果 | 需要Web预览确认 |
 | 012 | build-wechat-douyin-taptap | 已完成 | ✓ | ✓ | builder.json构建配置 | 未实机验证 | 需要工具实测 |
 | 013.1 | UILayer改动 | 已完成 | - | - | UILayerController/BattleVisualManager状态监听 | 无 | 已确认挂载 |
+| 013.2 | 战斗布局重新设计 | 已完成 | - | - | 基地居中/8塔位/随机敌人/像素形状 | 需要Web预览验证 | 需要确认UI |
 
 ### 012 特别说明
 

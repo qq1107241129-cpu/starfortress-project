@@ -3,7 +3,7 @@
  * 管理战斗流程：开始、暂停、结算
  */
 
-import { StageManager } from './StageManager';
+import { StageManager, TOWER_SLOT_POSITIONS } from './StageManager';
 import { EnemySpawner } from './EnemySpawner';
 import { BattleSettlement } from './BattleSettlement';
 import { TowerManager, TowerSlot } from './TowerManager';
@@ -42,6 +42,12 @@ export class BattleManager {
     private _configManager: ConfigManager;
     /** 是否因肉鸽选择而暂停 */
     private _isForcePaused: boolean = false;
+    /** 是否因塔位选择而暂停 */
+    private _isPlacementPaused: boolean = false;
+    /** 已放置的塔数量 */
+    private _placedTowerCount: number = 0;
+    /** 需要放置的塔数量 */
+    private readonly REQUIRED_TOWER_COUNT: number = 4;
 
     constructor() {
         this._stageManager = new StageManager();
@@ -114,22 +120,20 @@ export class BattleManager {
             return false;
         }
 
-        // 初始化敌人生成器
-        const path = this._stageManager.getPath();
-        this._enemySpawner = new EnemySpawner(stageConfig, path);
+        // 初始化敌人生成器（使用随机路径）
+        this._enemySpawner = new EnemySpawner(stageConfig, this._stageManager);
 
         // 初始化结算系统
         this._battleSettlement = new BattleSettlement(stageConfig);
         this._battleSettlement.reset();
 
-        // 初始化塔管理器（使用默认槽位，后续可从关卡配置加载）
-        const defaultSlots: TowerSlot[] = [
-            { id: 'slot_1', position: { x: 200, y: 300 }, towerId: null },
-            { id: 'slot_2', position: { x: 400, y: 200 }, towerId: null },
-            { id: 'slot_3', position: { x: 400, y: 400 }, towerId: null },
-            { id: 'slot_4', position: { x: 600, y: 300 }, towerId: null },
-        ];
-        this._towerManager = new TowerManager(defaultSlots);
+        // 初始化塔管理器（使用新的 8 个塔位）
+        const slots: TowerSlot[] = TOWER_SLOT_POSITIONS.map(pos => ({
+            id: pos.id,
+            position: { x: pos.x, y: pos.y },
+            towerId: null
+        }));
+        this._towerManager = new TowerManager(slots);
 
         // 初始化肉鸽选择管理器
         this._rogueChoiceManager.reset();
@@ -140,20 +144,68 @@ export class BattleManager {
 
         // 重置强制暂停状态
         this._isForcePaused = false;
+        this._isPlacementPaused = true; // 开始时暂停，等待玩家放置塔
+        this._placedTowerCount = 0;
 
         // 开始计时
         this._timeManager.startBattleTimer(stageConfig.duration);
 
-        // 开始生成敌人
-        this._enemySpawner.start();
-
         // 更新状态
         this._state = 'playing';
 
-        // 通知外部战斗已开始（GameBootstrap 依赖此事件设置 _isBattleRunning 和放置塔）
-        this._eventBus.emit(BATTLE_EVENTS.BATTLE_START, { stageId });
+        // 通知外部战斗已开始
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_START, { stageId, isPlacementPhase: true });
 
         return true;
+    }
+
+    /**
+     * 放置塔（玩家选择后调用）
+     */
+    placeTower(slotId: string, towerConfigId: string, level: number = 1): boolean {
+        console.log(`[BattleManager] placeTower: slotId=${slotId}, towerConfigId=${towerConfigId}, level=${level}`);
+
+        if (!this._towerManager) {
+            console.warn('[BattleManager] placeTower: towerManager is null');
+            return false;
+        }
+
+        const success = this._towerManager.placeTower(slotId, towerConfigId, level);
+        console.log(`[BattleManager] placeTower result: ${success}`);
+
+        if (success) {
+            this._placedTowerCount++;
+            console.log(`[BattleManager] 放置塔 ${this._placedTowerCount}/${this.REQUIRED_TOWER_COUNT}`);
+
+            // 检查是否放够了 4 个塔
+            if (this._placedTowerCount >= this.REQUIRED_TOWER_COUNT) {
+                this._resumeFromPlacement();
+            }
+        }
+        return success;
+    }
+
+    /**
+     * 从放置阶段恢复，开始战斗
+     */
+    private _resumeFromPlacement(): void {
+        this._isPlacementPaused = false;
+        console.log('[BattleManager] 塔放置完成，战斗开始');
+
+        // 开始生成敌人
+        if (this._enemySpawner) {
+            this._enemySpawner.start();
+        }
+
+        // 通知外部放置阶段完成（使用独立事件，避免重复触发 BATTLE_START）
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_PLACEMENT_COMPLETE, { stageId: this._stageManager.getCurrentStage()?.id });
+    }
+
+    /**
+     * 是否处于放置阶段
+     */
+    isPlacementPhase(): boolean {
+        return this._isPlacementPaused;
     }
 
     /**
@@ -195,8 +247,8 @@ export class BattleManager {
     update(deltaTime: number): void {
         if (this._state !== 'playing') return;
 
-        // 如果因肉鸽选择而暂停，跳过战斗逻辑更新
-        if (this._isForcePaused) return;
+        // 如果因肉鸽选择或塔位选择而暂停，跳过战斗逻辑更新
+        if (this._isForcePaused || this._isPlacementPaused) return;
 
         // 更新时间
         this._timeManager.updateBattleTime(deltaTime);
@@ -264,6 +316,8 @@ export class BattleManager {
         this._battleSettlement = null;
         this._enemySpawner = null;
         this._towerManager = null;
+        this._isPlacementPaused = false;
+        this._placedTowerCount = 0;
         // 如果是玩家主动中断战斗（暂停/进行中），需要停止计时并发出 BATTLE_END
         // 如果是战斗已结束（victory/defeat），_endBattle() 已经发出过 BATTLE_END
         if (wasPlaying) {
@@ -312,13 +366,6 @@ export class BattleManager {
      */
     getCurrentStage() {
         return this._stageManager.getCurrentStage();
-    }
-
-    /**
-     * 获取路径
-     */
-    getPath() {
-        return this._stageManager.getPath();
     }
 
     /**

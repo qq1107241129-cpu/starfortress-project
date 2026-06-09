@@ -7,11 +7,12 @@ import { EnemyController } from './EnemyController';
 import { StageConfig } from '../data/StageConfig';
 import { EnemyConfig, getEnemyConfig } from '../data/EnemyConfig';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
+import { StageManager } from './StageManager';
 
 export class EnemySpawner {
     private _stageConfig: StageConfig;
     private _enemies: Map<string, EnemyController> = new Map();
-    private _path: { x: number; y: number }[];
+    private _stageManager: StageManager;
     private _eventBus: EventBus;
     private _currentWaveIndex: number = 0;
     private _waveSpawnTimers: Map<number, number> = new Map();
@@ -19,9 +20,9 @@ export class EnemySpawner {
     private _waveStartedSet: Set<number> = new Set();
     private _bossSpawned: boolean = false;
 
-    constructor(stageConfig: StageConfig, path: { x: number; y: number }[]) {
+    constructor(stageConfig: StageConfig, stageManager: StageManager) {
         this._stageConfig = stageConfig;
-        this._path = path;
+        this._stageManager = stageManager;
         this._eventBus = EventBus.getInstance();
     }
 
@@ -100,11 +101,13 @@ export class EnemySpawner {
     }
 
     /**
-     * 生成单个敌人
+     * 生成单个敌人（使用随机路径）
      */
     private _spawnEnemy(configId: string, config: EnemyConfig): void {
-        const spawnPosition = this._path[0] || { x: 0, y: 0 };
-        const enemy = new EnemyController(configId, config, this._path, spawnPosition);
+        // 获取随机路径
+        const path = this._stageManager.getRandomSpawnPath();
+        const spawnPosition = path[0] || { x: 0, y: 0 };
+        const enemy = new EnemyController(configId, config, path, spawnPosition);
         this._enemies.set(enemy.getId(), enemy);
 
         this._eventBus.emit(BATTLE_EVENTS.ENEMY_SPAWN, {

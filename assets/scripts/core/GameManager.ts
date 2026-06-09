@@ -91,7 +91,7 @@ export class GameManager {
 
     /**
      * 进入战斗（从主界面）
-     * 直接调用 BattleManager.startBattleByIndex 启动战斗
+     * 先切换状态激活 UI 节点，再启动战斗
      * @param stageIndex 关卡索引（0-based）
      */
     enterBattle(stageIndex: number): void {
@@ -99,11 +99,13 @@ export class GameManager {
         if (this._battleManager.isEnded()) {
             this._battleManager.returnToIdle();
         }
+        // 先切换状态，激活 BattleVisualManager / BattleUI 等节点
+        this.setState('battle');
+        // 再启动战斗（会同步发出 BATTLE_START，此时节点已激活）
         const success = this._battleManager.startBattleByIndex(stageIndex);
-        if (success) {
-            this.setState('battle');
-        } else {
+        if (!success) {
             console.warn(`[GameManager] 无法启动战斗: 关卡 ${stageIndex}`);
+            this.setState('main'); // 启动失败时回退到主界面
         }
     }
 

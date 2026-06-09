@@ -1,6 +1,11 @@
 /**
  * 关卡管理器
  * 管理关卡配置、路径、基地状态
+ *
+ * 坐标系说明：
+ * - 使用 BattleVisualRoot 本地坐标系
+ * - 基地中心为 (0, 0)
+ * - 战斗区域为竖屏布局，纵向大于横向
  */
 
 import { StageConfig, getStageConfig, getStageConfigByIndex } from '../data/StageConfig';
@@ -12,10 +17,43 @@ export interface BaseState {
     isDestroyed: boolean;
 }
 
+// ==================== 战斗布局常量 ====================
+
+/** 基地中心坐标（BattleVisualRoot 本地坐标原点） */
+export const BASE_CENTER = { x: 0, y: 0 };
+/** 基地边长 */
+export const BASE_SIZE = 100;
+/** 基地半边长 */
+export const BASE_HALF_SIZE = BASE_SIZE / 2;
+
+/** 塔位尺寸（视觉大小） */
+export const SLOT_SIZE = 48;
+/** 塔位半尺寸 */
+export const SLOT_HALF_SIZE = SLOT_SIZE / 2;
+
+/** 塔位到基地中心的距离 */
+export const SLOT_DISTANCE = 110;
+
+/** 战斗区域半宽（敌人生成范围） */
+export const BATTLE_HALF_WIDTH = 420;
+/** 战斗区域半高（敌人生成范围，竖屏纵向更大） */
+export const BATTLE_HALF_HEIGHT = 650;
+
+/** 8 个塔位坐标（围绕基地，BattleVisualRoot 本地坐标） */
+export const TOWER_SLOT_POSITIONS = [
+    { id: 'slot_1', x: -110, y: 110 },   // 上左
+    { id: 'slot_2', x: 0, y: 110 },      // 上中
+    { id: 'slot_3', x: 110, y: 110 },    // 上右
+    { id: 'slot_4', x: -110, y: 0 },     // 左中
+    { id: 'slot_5', x: 110, y: 0 },      // 右中
+    { id: 'slot_6', x: -110, y: -110 },  // 下左
+    { id: 'slot_7', x: 0, y: -110 },     // 下中
+    { id: 'slot_8', x: 110, y: -110 },   // 下右
+];
+
 export class StageManager {
     private _currentStage: StageConfig | null = null;
     private _baseState: BaseState;
-    private _path: { x: number; y: number }[] = [];
     private _eventBus: EventBus;
 
     constructor() {
@@ -39,7 +77,6 @@ export class StageManager {
 
         this._currentStage = stageConfig;
         this._initBaseState();
-        this._initPath();
 
         return true;
     }
@@ -56,7 +93,6 @@ export class StageManager {
 
         this._currentStage = stageConfig;
         this._initBaseState();
-        this._initPath();
 
         return true;
     }
@@ -80,25 +116,50 @@ export class StageManager {
     }
 
     /**
-     * 初始化路径（临时简单路径）
+     * 获取随机生成路径（从战斗区域边缘到基地边缘）
+     * 使用 BattleVisualRoot 本地坐标系
      */
-    private _initPath(): void {
-        // 临时路径：从屏幕左侧到右侧，中间有转弯
-        // 实际项目中应该从关卡配置或地图数据加载
-        this._path = [
-            { x: -100, y: 300 },   // 起点（屏幕外）
-            { x: 100, y: 300 },    // 第一个点
-            { x: 100, y: 200 },    // 向上
-            { x: 300, y: 200 },    // 向右
-            { x: 300, y: 400 },    // 向下
-            { x: 500, y: 400 },    // 向右
-            { x: 500, y: 300 },    // 向上
-            { x: 700, y: 300 },    // 向右
-            { x: 700, y: 500 },    // 向下
-            { x: 900, y: 500 },    // 向右
-            { x: 900, y: 300 },    // 向上
-            { x: 1100, y: 300 },   // 终点（基地位置）
-        ];
+    getRandomSpawnPath(): { x: number; y: number }[] {
+        // 随机选择一个方向：0=上, 1=下, 2=左, 3=右
+        const direction = Math.floor(Math.random() * 4);
+        let spawnPoint: { x: number; y: number };
+        let targetPoint: { x: number; y: number };
+
+        switch (direction) {
+            case 0: // 从上方生成
+                spawnPoint = {
+                    x: (Math.random() - 0.5) * BATTLE_HALF_WIDTH * 2,
+                    y: BATTLE_HALF_HEIGHT + 50
+                };
+                targetPoint = { x: BASE_CENTER.x, y: BASE_CENTER.y + BASE_HALF_SIZE };
+                break;
+            case 1: // 从下方生成
+                spawnPoint = {
+                    x: (Math.random() - 0.5) * BATTLE_HALF_WIDTH * 2,
+                    y: -(BATTLE_HALF_HEIGHT + 50)
+                };
+                targetPoint = { x: BASE_CENTER.x, y: BASE_CENTER.y - BASE_HALF_SIZE };
+                break;
+            case 2: // 从左方生成
+                spawnPoint = {
+                    x: -(BATTLE_HALF_WIDTH + 50),
+                    y: (Math.random() - 0.5) * BATTLE_HALF_HEIGHT * 2
+                };
+                targetPoint = { x: BASE_CENTER.x - BASE_HALF_SIZE, y: BASE_CENTER.y };
+                break;
+            case 3: // 从右方生成
+                spawnPoint = {
+                    x: BATTLE_HALF_WIDTH + 50,
+                    y: (Math.random() - 0.5) * BATTLE_HALF_HEIGHT * 2
+                };
+                targetPoint = { x: BASE_CENTER.x + BASE_HALF_SIZE, y: BASE_CENTER.y };
+                break;
+            default:
+                spawnPoint = { x: 0, y: BATTLE_HALF_HEIGHT + 50 };
+                targetPoint = { x: BASE_CENTER.x, y: BASE_CENTER.y + BASE_HALF_SIZE };
+        }
+
+        return [spawnPoint, targetPoint];
     }
 
     /**
@@ -136,13 +197,6 @@ export class StageManager {
     }
 
     /**
-     * 获取路径
-     */
-    getPath(): { x: number; y: number }[] {
-        return [...this._path];
-    }
-
-    /**
      * 获取基地生命值百分比
      */
     getBaseHealthPercent(): number {
@@ -174,6 +228,5 @@ export class StageManager {
             maxHealth: 0,
             isDestroyed: false
         };
-        this._path = [];
     }
 }
