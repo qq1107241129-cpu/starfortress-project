@@ -38,11 +38,23 @@ export class TowerManager {
      * @returns 是否放置成功
      */
     placeTower(slotId: string, towerConfigId: string, level: number = 1): boolean {
+        console.log(`[TowerManager] placeTower: slotId=${slotId}, towerConfigId=${towerConfigId}, level=${level}`);
+
         const slot = this._slots.find(s => s.id === slotId);
-        if (!slot || slot.towerId) return false;
+        if (!slot) {
+            console.warn(`[TowerManager] slot not found: ${slotId}`);
+            return false;
+        }
+        if (slot.towerId) {
+            console.warn(`[TowerManager] slot ${slotId} already has tower: ${slot.towerId}`);
+            return false;
+        }
 
         const config = getTowerConfig(towerConfigId);
-        if (!config) return false;
+        if (!config) {
+            console.warn(`[TowerManager] tower config not found: ${towerConfigId}`);
+            return false;
+        }
 
         const tower = new TowerController(towerConfigId, config, level, slot.position);
         this._towers.set(tower.getId(), tower);

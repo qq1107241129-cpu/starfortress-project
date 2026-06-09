@@ -162,8 +162,7 @@ export class GameBootstrap extends Component {
         bind(BATTLE_EVENTS.BATTLE_START, (data: any) => {
             console.log('[GameBootstrap] 战斗开始', data);
             this._isBattleRunning = true;
-            // 战斗开始后自动放置测试塔（使用存档中的塔等级）
-            this._placeTestTowers();
+            // 不再自动放置测试塔，由玩家在放置阶段手动选择放置
         });
 
         // 监听战斗结束
@@ -241,9 +240,7 @@ export class GameBootstrap extends Component {
 
         if (success) {
             console.log('[GameBootstrap] 战斗启动成功');
-
-            // 自动放置一些测试塔
-            this._placeTestTowers();
+            // 不再自动放置测试塔，由玩家在放置阶段手动选择放置
         } else {
             console.error('[GameBootstrap] 战斗启动失败');
         }

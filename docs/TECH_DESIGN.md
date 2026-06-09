@@ -134,10 +134,11 @@ GameBootstrap.onLoad()
 
 主界面点击「开始战斗」
   → GameManager.enterBattle(0)
-  → BattleManager.startBattleByIndex(0)
-  → BattleManager 发出 BATTLE_START 事件
-  → GameBootstrap 监听 BATTLE_START，自动放置测试塔（使用存档塔等级）
   → GameManager 状态 = 'battle'
+  → BattleManager.startBattleByIndex(0)
+  → BattleManager 发出 BATTLE_START 事件并进入塔位放置阶段
+  → 玩家点击空塔位选择 4 种 MVP 塔
+  → 放置满 4 个塔后 BattleManager 开始刷怪
 
 GameBootstrap.update(deltaTime)
   → 战斗中：BattleManager.update(deltaTime)
@@ -147,7 +148,7 @@ GameBootstrap.update(deltaTime)
 GameBootstrap 职责：
 
 1. 初始化所有 Manager 单例
-2. 监听 BATTLE_START 事件，自动放置测试塔（读取 SaveManager.towerLevels）
+2. 监听 BATTLE_START / BATTLE_END 等战斗事件，维护运行状态和调试输出
 3. 驱动 BattleManager.update() 或 IdleIncomeManager.update()
 4. 输出调试日志
 5. 定期保存存档

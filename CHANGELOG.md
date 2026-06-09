@@ -1,5 +1,106 @@
 # CHANGELOG
 
+## 2026-06-10 013.2 Web preview placement click fix
+
+### Fixed
+
+- BattleVisualManager now listens to both global TOUCH_START and MOUSE_DOWN, so tower slots can be clicked in desktop Web Preview with a mouse.
+- BattleUI dynamic tower selection panel now also listens to MOUSE_DOWN, so dynamically created tower/cancel buttons work in desktop Web Preview.
+- UI coordinate conversion now tries EventTouch/EventMouse.getUILocation() as UI world coordinates first, with Canvas camera conversion kept as fallback.
+- Camera lookup now resolves the Canvas-bound camera and `Canvas/Camera` before falling back to `Camera.main`.
+- BattleVisualManager and BattleUI now register global input only while in battle state, avoiding inactive-node callback timing issues.
+- BattleUI now registers GameManager state changes in `onLoad()` instead of `start()`, so setting `BattleUIRoot.active=false` during `onLoad()` cannot prevent the battle state callback from being installed.
+- Dynamically created slot and tower selection nodes now also have node-level `TOUCH_END` fallback handlers.
+
+## 2026-06-09 013.2 塔位放置流程修复
+
+### Fixed
+
+- **修复触摸坐标换算**：BattleVisualManager._screenToLocal() 改用 Camera.screenToWorld() 做 screen→world 转换，再用 UITransform.convertToNodeSpaceAR() 做 world→local 转换。此前直接将屏幕坐标当世界坐标传入，导致碰撞检测始终失败。
+- **修复动态面板按钮触摸**：BattleUI 动态塔选择面板按钮从节点级 TOUCH_END 改为系统级触摸 + 手动碰撞检测。与槽位点击同样的原因——节点级触摸被 UI 层拦截。
+- **BattleUI 新增**：_onDynamicPanelTouchStart()、_screenToPanelLocal()、_getCamera()、_rebuildDynamicButtonBounds() 方法。
+- **BattleVisualManager 新增**：_getCamera() 方法，获取 2D UI Camera。
+
+### 之前已修复
+
+- **修复 GameBootstrap 自动放置测试塔**：移除`BATTLE_START`监听器中的`_placeTestTowers()`调用。此前GameBootstrap在每次战斗开始时自动在slot_1~slot_4放置4个测试塔，导致玩家无法手动放置。同时`_placeTestTowers()`绕过`BattleManager.placeTower()`直接调用`TowerManager.placeTower()`，导致`_placedTowerCount`不同步。
+- **修复 BATTLE_START 重复发出**：`BattleManager._resumeFromPlacement()`改为发出`BATTLE_PLACEMENT_COMPLETE`事件，不再重复发出`BATTLE_START`。
+- **修复 GameManager 状态切换时序**：`enterBattle()`中先调用`setState('battle')`激活UI节点，再调用`startBattleByIndex()`启动战斗。此前`BATTLE_START`在节点激活前发出，导致槽位在未激活节点下创建。
+- **EventBus 新增事件**：`BATTLE_PLACEMENT_COMPLETE`，用于放置阶段完成通知。
+
+### 允许修改范围
+
+- `assets/scripts/bootstrap/GameBootstrap.ts`
+- `assets/scripts/battle/BattleManager.ts`
+- `assets/scripts/core/EventBus.ts`
+- `assets/scripts/core/GameManager.ts`
+- `CHANGELOG.md`
+- `docs/handoff/CURRENT_STATE.md`
+
+## 2026-06-09 013.2 坐标系修正
+
+### Fixed
+
+- 修正坐标系从横屏(1920×1080)改为BattleVisualRoot本地坐标系
+- 基地从200×200改为100×100，中心从(960,540)改为(0,0)
+- 8个塔位改为围绕基地的本地坐标
+- 修复StageManager重复`getPath()`方法bug
+- BattleVisualManager槽位点击改为TOUCH_START事件
+- BattleUI新增动态塔位选择面板创建
+
+## 2026-06-08 013.2-battle-layout-redesign 战斗布局重新设计
+
+### Changed
+
+- 更新 `assets/scripts/battle/StageManager.ts`：定义基地中心坐标(960,540)、8个塔位坐标、新增随机路径生成方法。移除旧的单条路径，改为支持四面八方随机方向。
+- 更新 `assets/scripts/battle/BattleManager.ts`：更新塔位配置为8个新位置，新增放置阶段暂停/恢复功能，新增`placeTower()`和`isPlacementPhase()`方法。
+- 更新 `assets/scripts/battle/EnemySpawner.ts`：修改为使用StageManager的随机路径生成，每个敌人从随机方向进攻。
+- 更新 `assets/scripts/battle/EnemyView.ts`：改为像素风格敌人外观，小怪20×20白色方块，Boss 30×30红色十字形，新增不同形状区分（方块、三角、菱形、十字等）。
+- 更新 `assets/scripts/battle/BattleVisualManager.ts`：新增绘制中央基地(200×200正方形)，移除旧路径显示。
+- 更新 `assets/scripts/ui/BattleUI.ts`：新增塔位选择交互，点击空塔位弹出4种塔选择面板，放置完4个塔后自动恢复战斗。
+
+### Notes
+
+- 基地中心：(960, 540)，1920×1080 竖屏正中央
+- 8个塔位围绕基地：上3个、左右各1个、下3个
+- 敌人从屏幕四边随机方向生成，朝基地移动
+- 战斗开始后暂停，玩家放置4个塔后自动恢复
+- 小怪白色，Boss红色
+- 不同敌人类型有不同像素形状
+
+## 2026-06-08 013.1-UILayer改动 修复初始界面 UI 混乱
+
+### Added
+
+- 新增 `assets/scripts/ui/UILayerController.ts`：UILayer 显隐控制器，监听 GameManager 状态变化，战斗状态时显示 UILayer（调试 Label），非战斗状态时隐藏。
+
+### Changed
+
+- 更新 `assets/scripts/battle/BattleVisualManager.ts`：新增 GameManager 状态监听，默认隐藏节点，battle 状态时显示。确保 BattleVisualRoot 不会在主界面时显示。
+
+### Notes
+
+- UILayer 默认隐藏，开始战斗后显示
+- BattleVisualRoot 默认隐藏，开始战斗后显示
+- 所有 UI 面板通过 GameManager.onStateChange 统一管理显隐
+- 不修改 .scene 文件，需要用户在 Cocos Creator 中手动设置节点默认 active 状态
+- UILayerController 需要用户在 Cocos Creator 中挂载到 UILayer 节点
+
+### 需要用户在 Cocos Creator 中完成
+
+1. 确认以下节点默认 active 为 false：
+   - UILayer
+   - BattleUIRoot
+   - BattleVisualRoot
+   - SettlementPanel
+   - BuildingPanel
+   - TowerUpgradePanel
+   - RebirthUIRoot
+   - SettingsUI
+2. 确认 MainUIRoot 默认 active 为 true
+3. ~~将 UILayerController 组件挂载到 UILayer 节点~~ ✅ 已完成（2026-06-08）
+4. OfflineRewardPanel 默认隐藏，由 OfflineRewardUI 通过事件控制显示
+
 ## 2026-06-07 012-build-wechat-douyin-taptap 构建链路配置
 
 ### Added

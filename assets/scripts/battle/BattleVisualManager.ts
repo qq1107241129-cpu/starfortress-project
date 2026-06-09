@@ -4,12 +4,14 @@
  * 监听战斗事件，将逻辑对象映射为可见节点
  */
 
-import { _decorator, Component, Node, Graphics, Color, UITransform } from 'cc';
+import { _decorator, Component, Node, Graphics, Color, UITransform, input, Input, EventTouch, EventMouse, Vec2, Vec3, Camera, Canvas, find } from 'cc';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
+import { GameManager, GameFlowState } from '../core/GameManager';
 import { BattleManager } from './BattleManager';
 import { EnemyView } from './EnemyView';
 import { TowerView } from './TowerView';
 import { AttackEffectView } from './AttackEffectView';
+import { BASE_CENTER, BASE_SIZE, BASE_HALF_SIZE, SLOT_SIZE, SLOT_HALF_SIZE, TOWER_SLOT_POSITIONS } from './StageManager';
 
 const { ccclass, property } = _decorator;
 
@@ -29,6 +31,8 @@ export class BattleVisualManager extends Component {
 
     private _eventBus: EventBus | null = null;
     private _battleManager: BattleManager | null = null;
+    private _gameManager: GameManager | null = null;
+    private _unsubStateChange: (() => void) | null = null;
 
     // 敌人视图映射：enemyId -> EnemyView
     private _enemyViews: Map<string, EnemyView> = new Map();
@@ -40,6 +44,8 @@ export class BattleVisualManager extends Component {
     private _slotViews: Map<string, Node> = new Map();
 
     private _isInitialized: boolean = false;
+    private _isSystemInputRegistered: boolean = false;
+    private _slotPointerListeners: Array<{ node: Node; handler: () => void }> = [];
 
     // 保存绑定回调引用，用于正确解绑
     private _boundOnBattleStart: ((data: any) => void) | null = null;
@@ -53,34 +59,78 @@ export class BattleVisualManager extends Component {
     onLoad(): void {
         this._eventBus = EventBus.getInstance();
         this._battleManager = BattleManager.getInstance();
+        this._gameManager = GameManager.getInstance();
+
+        // 默认隐藏（与 Cocos Creator 编辑器中设置一致）
+        this.node.active = false;
+
+        // 监听状态变化：battle 状态时显示，其他状态隐藏
+        this._unsubStateChange = this._gameManager.onStateChange((state: GameFlowState) => {
+            const isBattle = state === 'battle';
+            this.node.active = isBattle;
+            if (isBattle) {
+                this._registerSystemInput();
+            } else {
+                this._unregisterSystemInput();
+            }
+        });
 
         // 确保层级节点存在
         this._ensureLayers();
 
         // 注册事件监听
         this._setupEventListeners();
+
+        this._unregisterSystemInput();
     }
 
     /**
      * 确保层级节点存在
+     * 给所有节点添加 UITransform，确保触摸事件能正确传播
+     * 在 Cocos Creator 3.x 中，父节点没有 UITransform 时，子节点收不到触摸事件
      */
     private _ensureLayers(): void {
+        // 确保 BattleVisualRoot 自身有 UITransform（覆盖整个 Canvas 区域）
+        let rootTransform = this.node.getComponent(UITransform);
+        if (!rootTransform) {
+            rootTransform = this.node.addComponent(UITransform);
+        }
+        rootTransform.setContentSize(1080, 1920); // 竖屏设计分辨率
+
         if (!this.towerLayer) {
             this.towerLayer = new Node('TowerLayer');
             this.towerLayer.parent = this.node;
         }
+        this._ensureLayerTransform(this.towerLayer);
+
         if (!this.enemyLayer) {
             this.enemyLayer = new Node('EnemyLayer');
             this.enemyLayer.parent = this.node;
         }
+        this._ensureLayerTransform(this.enemyLayer);
+
         if (!this.effectLayer) {
             this.effectLayer = new Node('EffectLayer');
             this.effectLayer.parent = this.node;
         }
+        this._ensureLayerTransform(this.effectLayer);
+
         if (!this.pathLayer) {
             this.pathLayer = new Node('PathLayer');
             this.pathLayer.parent = this.node;
         }
+        this._ensureLayerTransform(this.pathLayer);
+    }
+
+    /**
+     * 确保层级节点有 UITransform
+     */
+    private _ensureLayerTransform(node: Node): void {
+        let transform = node.getComponent(UITransform);
+        if (!transform) {
+            transform = node.addComponent(UITransform);
+        }
+        transform.setContentSize(1080, 1920);
     }
 
     /**
@@ -108,6 +158,24 @@ export class BattleVisualManager extends Component {
         this._eventBus.on(BATTLE_EVENTS.TOWER_ATTACK, this._boundOnTowerAttack);
     }
 
+    private _registerSystemInput(): void {
+        if (this._isSystemInputRegistered) return;
+
+        input.on(Input.EventType.TOUCH_START, this._onSystemTouchStart, this);
+        input.on(Input.EventType.MOUSE_DOWN, this._onSystemMouseDown, this);
+        this._isSystemInputRegistered = true;
+        console.log('[BattleVisualManager] system input registered');
+    }
+
+    private _unregisterSystemInput(): void {
+        if (!this._isSystemInputRegistered) return;
+
+        input.off(Input.EventType.TOUCH_START, this._onSystemTouchStart, this);
+        input.off(Input.EventType.MOUSE_DOWN, this._onSystemMouseDown, this);
+        this._isSystemInputRegistered = false;
+        console.log('[BattleVisualManager] system input unregistered');
+    }
+
     /**
      * 战斗开始事件处理
      */
@@ -115,8 +183,8 @@ export class BattleVisualManager extends Component {
         console.log('[BattleVisualManager] 战斗开始，初始化可视化');
         this._isInitialized = true;
 
-        // 显示路径
-        this._showPath();
+        // 绘制中央基地
+        this._drawBase();
 
         // 显示空槽位
         this._showEmptySlots();
@@ -249,53 +317,69 @@ export class BattleVisualManager extends Component {
     }
 
     /**
-     * 显示路径（使用 Graphics 绘制）
+     * 绘制中央基地（100×100 正方形，本地坐标原点）
      */
-    private _showPath(): void {
-        if (!this._battleManager || !this.pathLayer) return;
+    private _drawBase(): void {
+        if (!this.pathLayer) return;
 
-        const path = this._battleManager.getPath();
-        if (path.length < 2) return;
-
-        // 清除旧的路径显示
+        // 清除旧的基地显示
         this.pathLayer.removeAllChildren();
 
-        // 创建路径绘制节点
-        const pathDrawNode = new Node('PathDraw');
-        pathDrawNode.parent = this.pathLayer;
+        // 创建基地绘制节点（位于 BattleVisualRoot 本地坐标原点）
+        const baseNode = new Node('Base');
+        baseNode.parent = this.pathLayer;
+        baseNode.setPosition(BASE_CENTER.x, BASE_CENTER.y, 0);
 
-        const graphics = pathDrawNode.addComponent(Graphics);
-        const transform = pathDrawNode.addComponent(UITransform);
-        transform.setContentSize(1200, 800);
+        const graphics = baseNode.addComponent(Graphics);
+        const transform = baseNode.addComponent(UITransform);
+        transform.setContentSize(BASE_SIZE, BASE_SIZE);
 
-        // 绘制路径线
-        graphics.strokeColor = new Color(100, 100, 100, 150);
-        graphics.lineWidth = 4;
-        graphics.moveTo(path[0].x, path[0].y);
-        for (let i = 1; i < path.length; i++) {
-            graphics.lineTo(path[i].x, path[i].y);
-        }
+        // 绘制基地填充（深灰色）
+        graphics.fillColor = new Color(60, 60, 80, 255);
+        graphics.rect(-BASE_HALF_SIZE, -BASE_HALF_SIZE, BASE_SIZE, BASE_SIZE);
+        graphics.fill();
+
+        // 绘制基地边框（亮蓝色）
+        graphics.strokeColor = new Color(100, 200, 255, 255);
+        graphics.lineWidth = 3;
+        graphics.rect(-BASE_HALF_SIZE, -BASE_HALF_SIZE, BASE_SIZE, BASE_SIZE);
         graphics.stroke();
 
-        // 绘制路径点
-        for (let i = 0; i < path.length; i++) {
-            const point = path[i];
-            graphics.fillColor = new Color(150, 150, 150, 200);
-            graphics.circle(point.x, point.y, 8);
-            graphics.fill();
-        }
+        // 绘制基地内部装饰（十字线）
+        graphics.strokeColor = new Color(80, 150, 200, 150);
+        graphics.lineWidth = 1;
+        graphics.moveTo(-BASE_HALF_SIZE * 0.6, 0);
+        graphics.lineTo(BASE_HALF_SIZE * 0.6, 0);
+        graphics.stroke();
+        graphics.moveTo(0, -BASE_HALF_SIZE * 0.6);
+        graphics.lineTo(0, BASE_HALF_SIZE * 0.6);
+        graphics.stroke();
+
+        // 绘制基地中心圆
+        graphics.fillColor = new Color(100, 200, 255, 200);
+        graphics.circle(0, 0, 12);
+        graphics.fill();
     }
 
     /**
-     * 显示空槽位（使用 Graphics 绘制）
+     * 显示空槽位（使用 Graphics 绘制，本地坐标）
+     * 不注册节点级触摸事件，改用系统级触摸 + 手动碰撞检测
      */
     private _showEmptySlots(): void {
-        if (!this._battleManager || !this.towerLayer) return;
+        if (!this._battleManager || !this.towerLayer) {
+            console.warn('[BattleVisualManager] _showEmptySlots: battleManager or towerLayer is null');
+            return;
+        }
 
         const towerManager = this._battleManager.getTowerManager();
-        if (!towerManager) return;
+        if (!towerManager) {
+            console.warn('[BattleVisualManager] _showEmptySlots: towerManager is null');
+            return;
+        }
 
         const slots = towerManager.getSlots();
+        console.log(`[BattleVisualManager] 创建 ${slots.length} 个塔位`);
+        this._clearSlotPointerListeners();
 
         for (const slot of slots) {
             const slotNode = new Node(`Slot_${slot.id}`);
@@ -303,21 +387,220 @@ export class BattleVisualManager extends Component {
             slotNode.setPosition(slot.position.x, slot.position.y, 0);
 
             const transform = slotNode.addComponent(UITransform);
-            transform.setContentSize(50, 50);
+            transform.setContentSize(SLOT_SIZE, SLOT_SIZE);
 
             // 使用 Graphics 绘制矩形槽位
             const graphics = slotNode.addComponent(Graphics);
             graphics.fillColor = new Color(80, 80, 80, 200);
-            graphics.rect(-25, -25, 50, 50);
+            graphics.rect(-SLOT_HALF_SIZE, -SLOT_HALF_SIZE, SLOT_SIZE, SLOT_SIZE);
             graphics.fill();
 
-            // 绘制边框
-            graphics.strokeColor = new Color(120, 120, 120, 255);
+            // 绘制边框（高亮，提示可点击）
+            graphics.strokeColor = new Color(150, 220, 255, 255);
             graphics.lineWidth = 2;
-            graphics.rect(-25, -25, 50, 50);
+            graphics.rect(-SLOT_HALF_SIZE, -SLOT_HALF_SIZE, SLOT_SIZE, SLOT_SIZE);
             graphics.stroke();
 
+            // 绘制中心标记（小十字）
+            graphics.strokeColor = new Color(200, 230, 255, 150);
+            graphics.lineWidth = 1;
+            graphics.moveTo(-8, 0);
+            graphics.lineTo(8, 0);
+            graphics.stroke();
+            graphics.moveTo(0, -8);
+            graphics.lineTo(0, 8);
+            graphics.stroke();
+
+            const slotClickHandler = () => {
+                console.log(`[BattleVisualManager] node TOUCH_END hit slot ${slot.id}`);
+                this._onSlotClick(slot.id);
+            };
+            slotNode.on(Node.EventType.TOUCH_END, slotClickHandler);
+            this._slotPointerListeners.push({ node: slotNode, handler: slotClickHandler });
+
             this._slotViews.set(slot.id, slotNode);
+            console.log(`[BattleVisualManager] 塔位 ${slot.id} 创建完成, pos=(${slot.position.x}, ${slot.position.y})`);
+        }
+    }
+
+    /**
+     * 系统级触摸事件处理
+     * 绕过节点层级触摸拦截，直接检测触摸位置是否在槽位范围内
+     */
+    private _onSystemTouchStart(event: EventTouch): void {
+        if (!this._isInitialized) return;
+        if (!this._battleManager) return;
+        if (!this._battleManager.isPlacementPhase()) return;
+
+        // 获取触摸位置（屏幕坐标）
+        const touch = event.touch;
+        if (!touch) return;
+
+        const screenPos = touch.getUILocation();
+
+        // 将屏幕坐标转换为 BattleVisualRoot 本地坐标
+        const localPos = this._screenToLocal(screenPos);
+        if (!localPos) return;
+
+        // 遍历所有槽位，检测碰撞
+        const towerManager = this._battleManager.getTowerManager();
+        if (!towerManager) return;
+
+        const slots = towerManager.getSlots();
+        for (const slot of slots) {
+            // 跳过已有塔的槽位
+            if (slot.towerId) continue;
+
+            // 检测触摸点是否在槽位范围内
+            const dx = Math.abs(localPos.x - slot.position.x);
+            const dy = Math.abs(localPos.y - slot.position.y);
+
+            if (dx <= SLOT_HALF_SIZE && dy <= SLOT_HALF_SIZE) {
+                console.log(`[BattleVisualManager] 系统触摸命中槽位 ${slot.id}, screen=(${screenPos.x.toFixed(0)}, ${screenPos.y.toFixed(0)}), local=(${localPos.x.toFixed(0)}, ${localPos.y.toFixed(0)})`);
+                this._onSlotClick(slot.id);
+                return;
+            }
+        }
+    }
+
+    /**
+     * 将屏幕坐标转换为 BattleVisualRoot 本地坐标
+     * 需要先用 Camera 做 screen→world 转换，再用 UITransform 做 world→local 转换
+     */
+    private _onSystemMouseDown(event: EventMouse): void {
+        if (!this._isInitialized) return;
+        if (!this._battleManager) return;
+        if (!this._battleManager.isPlacementPhase()) return;
+
+        const screenPos = event.getUILocation();
+        const localPos = this._screenToLocal(screenPos);
+        if (!localPos) return;
+
+        const towerManager = this._battleManager.getTowerManager();
+        if (!towerManager) return;
+
+        const slots = towerManager.getSlots();
+        for (const slot of slots) {
+            if (slot.towerId) continue;
+
+            const dx = Math.abs(localPos.x - slot.position.x);
+            const dy = Math.abs(localPos.y - slot.position.y);
+
+            if (dx <= SLOT_HALF_SIZE && dy <= SLOT_HALF_SIZE) {
+                console.log(`[BattleVisualManager] system mouse hit slot ${slot.id}, ui=(${screenPos.x.toFixed(0)}, ${screenPos.y.toFixed(0)}), local=(${localPos.x.toFixed(0)}, ${localPos.y.toFixed(0)})`);
+                this._onSlotClick(slot.id);
+                return;
+            }
+        }
+
+        console.log(`[BattleVisualManager] system mouse missed slots, ui=(${screenPos.x.toFixed(0)}, ${screenPos.y.toFixed(0)}), local=(${localPos.x.toFixed(0)}, ${localPos.y.toFixed(0)})`);
+    }
+
+    private _screenToLocal(screenPos: Vec2): Vec2 | null {
+        const transform = this.node.getComponent(UITransform);
+        if (!transform) return null;
+
+        const directLocal = this._worldToLocal(transform, new Vec3(screenPos.x, screenPos.y, 0));
+        if (this._isReasonableBattleLocal(directLocal)) {
+            return directLocal;
+        }
+
+        // 第一步：屏幕坐标 → 世界坐标（通过 Camera）
+        const camera = this._getCamera();
+        let worldPos: Vec3;
+        if (camera) {
+            worldPos = new Vec3();
+            camera.screenToWorld(new Vec3(screenPos.x, screenPos.y, 0), worldPos);
+        } else {
+            // 降级：直接使用屏幕坐标（在默认 Camera 配置下通常也有效）
+            worldPos = new Vec3(screenPos.x, screenPos.y, 0);
+        }
+
+        // 第二步：世界坐标 → 本地坐标
+        const localPos3 = new Vec3();
+        transform.convertToNodeSpaceAR(worldPos, localPos3);
+
+        return new Vec2(localPos3.x, localPos3.y);
+    }
+
+    /**
+     * 获取 2D UI Camera
+     */
+    private _worldToLocal(transform: UITransform, worldPos: Vec3): Vec2 {
+        const localPos3 = new Vec3();
+        transform.convertToNodeSpaceAR(worldPos, localPos3);
+        return new Vec2(localPos3.x, localPos3.y);
+    }
+
+    private _isReasonableBattleLocal(localPos: Vec2): boolean {
+        return Math.abs(localPos.x) <= 600 && Math.abs(localPos.y) <= 900;
+    }
+
+    private _getCamera(): Camera | null {
+        let current: Node | null = this.node;
+        while (current) {
+            const canvas = current.getComponent(Canvas);
+            if (canvas && canvas.cameraComponent) {
+                return canvas.cameraComponent;
+            }
+
+            const childCamera = current.getChildByName('Camera')?.getComponent(Camera);
+            if (childCamera) {
+                return childCamera;
+            }
+
+            current = current.parent;
+        }
+
+        const canvasCameraNode = find('Canvas/Camera');
+        if (canvasCameraNode) {
+            return canvasCameraNode.getComponent(Camera) || null;
+        }
+
+        // 优先查找名为 "Camera" 的子节点
+        const cameraNode = find('Camera');
+        if (cameraNode) {
+            return cameraNode.getComponent(Camera) || null;
+        }
+        // 降级：尝试主相机
+        return Camera.main || null;
+    }
+
+    /**
+     * 塔位点击处理
+     */
+    private _onSlotClick(slotId: string): void {
+        console.log(`[BattleVisualManager] _onSlotClick: slotId=${slotId}`);
+
+        if (!this._battleManager) {
+            console.warn('[BattleVisualManager] _onSlotClick: _battleManager is null');
+            return;
+        }
+
+        // 检查是否处于放置阶段
+        if (!this._battleManager.isPlacementPhase()) {
+            console.log('[BattleVisualManager] 不在放置阶段，忽略点击');
+            return;
+        }
+
+        // 检查槽位是否已有塔
+        const towerManager = this._battleManager.getTowerManager();
+        if (!towerManager) {
+            console.warn('[BattleVisualManager] _onSlotClick: towerManager is null');
+            return;
+        }
+
+        const slots = towerManager.getSlots();
+        const slot = slots.find(s => s.id === slotId);
+        if (slot && slot.towerId) {
+            console.log(`[BattleVisualManager] 槽位 ${slotId} 已有塔`);
+            return;
+        }
+
+        // 通知 BattleUI 显示塔选择面板
+        console.log(`[BattleVisualManager] 发送 SHOW_TOWER_SELECT 事件, slotId=${slotId}`);
+        if (this._eventBus) {
+            this._eventBus.emit('SHOW_TOWER_SELECT', { slotId });
         }
     }
 
@@ -325,6 +608,8 @@ export class BattleVisualManager extends Component {
      * 清除所有可视化
      */
     private _clearAll(): void {
+        this._clearSlotPointerListeners();
+
         // 清除敌人视图
         this._enemyViews.forEach(view => {
             if (view.node && view.node.isValid) {
@@ -354,6 +639,15 @@ export class BattleVisualManager extends Component {
         if (this.enemyLayer) this.enemyLayer.removeAllChildren();
         if (this.effectLayer) this.effectLayer.removeAllChildren();
         if (this.pathLayer) this.pathLayer.removeAllChildren();
+    }
+
+    private _clearSlotPointerListeners(): void {
+        for (const entry of this._slotPointerListeners) {
+            if (entry.node && entry.node.isValid) {
+                entry.node.off(Node.EventType.TOUCH_END, entry.handler);
+            }
+        }
+        this._slotPointerListeners = [];
     }
 
     update(deltaTime: number): void {
@@ -405,6 +699,14 @@ export class BattleVisualManager extends Component {
     }
 
     onDestroy(): void {
+        // 取消系统级触摸事件
+        this._unregisterSystemInput();
+
+        // 取消状态监听
+        if (this._unsubStateChange) {
+            this._unsubStateChange();
+            this._unsubStateChange = null;
+        }
         // 取消事件监听（使用保存的绑定回调引用）
         if (this._eventBus) {
             if (this._boundOnBattleStart) {
@@ -439,5 +741,9 @@ export class BattleVisualManager extends Component {
         this._boundOnTowerAttack = null;
 
         this._clearAll();
+
+        this._eventBus = null;
+        this._battleManager = null;
+        this._gameManager = null;
     }
 }
