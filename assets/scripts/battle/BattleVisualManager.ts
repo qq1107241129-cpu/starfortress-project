@@ -301,8 +301,7 @@ export class BattleVisualManager extends Component {
         effectNode.parent = this.effectLayer;
 
         const effectView = effectNode.addComponent(AttackEffectView);
-        const color = AttackEffectView.getTowerAttackColor(towerType);
-        effectView.initAttackLine(fromPos, toPos, color, 3);
+        effectView.playTowerAttackEffect(towerType, fromPos, toPos);
     }
 
     /**

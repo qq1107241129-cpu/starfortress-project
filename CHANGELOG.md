@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## 2026-06-11 013.3 攻击弹道效果
+
+### Added
+
+- `AttackEffectView.ts` 新增 `playTowerAttackEffect()` 统一入口，根据 `towerType` 播放 4 种防御塔专属攻击效果：
+  - `machinegun_tower`：快速小子弹 / 短拖尾
+  - `cannon_tower`：炮弹飞行 / 命中爆炸
+  - `ice_tower`：冰锥 / 冰冻扩散
+  - `electric_tower`：折线闪电
+
+### Changed
+
+- `BattleVisualManager._createAttackEffect()` 改为调用 `AttackEffectView.playTowerAttackEffect()`，不再让所有防御塔共用普通长直线攻击效果。
+- `AttackEffectView.getTowerAttackColor()` 颜色调整为与 013.3 视觉目标一致的黄白、橙红、冰蓝、蓝紫色系。
+
+### Notes
+
+- 保留 `initAttackLine`、`initHitEffect`、`getTowerAttackColor`，未知 `towerType` 才回退到旧普通线条。
+- 特效使用单个 `Graphics` 节点按生命周期重绘，结束后清理并销毁节点。
+- 未修改 `.scene` 文件。
+- 未修改战斗伤害数值、攻击频率、目标选择逻辑、敌人移动逻辑或塔配置数值。
+- 代码已实现，用户已人工 Web 预览验证通过。
+- 人工验收确认：可进入战斗，基地和塔位显示正常，可点击塔位并放置防御塔，4 种塔都能攻击，攻击弹道已从统一线条改为不同效果，未发现阻塞问题。
+
 ## 2026-06-10 013.3.1 统一塔类型命名
 
 ### Changed

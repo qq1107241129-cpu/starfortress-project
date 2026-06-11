@@ -4,6 +4,22 @@
 
 本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
 
+## 2026-06-11 013.3 攻击弹道状态更新
+
+- 当前分支：`fix/防御塔攻击弹道`
+- 013.3 攻击弹道状态：代码已实现，用户已人工 Web 预览验证通过
+- `AttackEffectView` 已新增 4 种塔的专属攻击效果和 `playTowerAttackEffect()` 统一入口
+- `BattleVisualManager._createAttackEffect()` 已改为按 `towerType` 播放专属效果
+- 4 种效果：
+  - `machinegun_tower`：快速小子弹 / 短拖尾
+  - `cannon_tower`：炮弹飞行 / 命中爆炸
+  - `ice_tower`：冰锥 / 冰冻扩散
+  - `electric_tower`：折线闪电
+- 未修改 `.scene`
+- 未修改战斗数值、攻击频率、目标选择逻辑、敌人移动逻辑或塔配置数值
+- 代码已实现，用户已人工 Web 预览验证通过
+- 人工验收确认：可进入战斗，基地和塔位显示正常，可点击塔位并放置防御塔，4 种塔都能攻击，攻击弹道已从统一线条改为不同效果，未发现阻塞问题。
+
 ---
 
 ## 1. 项目基本信息
@@ -128,6 +144,7 @@ git status --short --branch --untracked-files=all 结果：
 | 013.1 | UILayer改动 | 已完成 | - | - | UILayerController/BattleVisualManager状态监听 | 无 | 已确认挂载 |
 | 013.2 | 战斗布局重新设计 | 已完成 | - | - | 基地居中/8塔位/随机敌人/像素形状 | 需要Web预览验证 | 需要确认UI |
 | 013.3.1 | 统一塔类型命名 | 已完成 | - | - | machinegun_tower/cannon_tower/ice_tower/electric_tower | 需要Web预览验证 | 需要确认放置和攻击 |
+| 013.3 | 攻击弹道效果 | 已完成 | - | - | 4种塔专属攻击弹道/命中特效 | 代码已实现，用户已人工 Web 预览验证通过 | 已确认可进入战斗、放塔、攻击和弹道差异 |
 
 ### 012 特别说明
 
