@@ -70,16 +70,16 @@ export class TowerView extends Component {
      * 根据塔类型设置样式
      */
     private _setStyleByType(configId: string): void {
-        if (configId.includes('machinegun')) {
+        if (configId === 'machinegun_tower') {
             this._towerColor = new Color(50, 150, 255, 255); // 机枪塔: 蓝色
             this._towerSize = 16;
-        } else if (configId.includes('cannon')) {
+        } else if (configId === 'cannon_tower') {
             this._towerColor = new Color(255, 120, 30, 255); // 炮塔: 橙色
             this._towerSize = 20;
-        } else if (configId.includes('ice')) {
+        } else if (configId === 'ice_tower') {
             this._towerColor = new Color(100, 200, 255, 255); // 冰塔: 浅蓝
             this._towerSize = 16;
-        } else if (configId.includes('electric')) {
+        } else if (configId === 'electric_tower') {
             this._towerColor = new Color(180, 100, 255, 255); // 电塔: 紫色
             this._towerSize = 18;
         } else {

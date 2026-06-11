@@ -254,28 +254,28 @@ MVP 选项方向：
 
 ### 14.3 四种塔行为
 
-#### 机枪塔（machinegun）
+#### 机枪塔（machinegun_tower）
 
 - 类型：单体高频攻击。
 - 行为：发射单体投射物，命中目标后造成直接伤害。
 - 配置特点：射速快（attackSpeed 0.3~0.5 秒），伤害稳定。
 - 用途：清普通小怪。
 
-#### 炮塔（cannon）
+#### 炮塔（cannon_tower）
 
 - 类型：范围伤害。
 - 行为：发射范围投射物，命中目标后以命中点为中心、`splashRadius` 为半径造成爆炸伤害，距离中心越远伤害越低（线性衰减 50%）。
 - 配置特点：攻击慢（attackSpeed 1.1~1.5 秒），splashRadius = 60 像素。
 - 用途：处理密集敌群。
 
-#### 冰塔（ice）
+#### 冰塔（ice_tower）
 
 - 类型：减速控制。
 - 行为：发射减速投射物，命中目标后造成伤害并施加减速效果，敌人速度乘以 `(1 - slowFactor)`。
 - 配置特点：slowFactor = 0.4（减速 40%），slowDuration = 2.0 秒。
 - 用途：拖延敌潮，给输出塔争取时间。
 
-#### 电塔（electric）
+#### 电塔（electric_tower）
 
 - 类型：链式攻击。
 - 行为：发射链式投射物，命中主目标后向附近敌人弹射，每次弹射伤害衰减 20%，弹射距离上限 120 像素，不重复命中同一敌人。
@@ -389,10 +389,10 @@ MVP 选项方向：
 | ID | 名称 | 类型 | 目标 | 数值 |
 |----|------|------|------|------|
 | rogue_all_attack | 火力增幅 | tower_attack | 全局 | +10% |
-| rogue_machinegun_speed | 机枪强化 | tower_speed | machinegun | +15% |
-| rogue_cannon_range | 炮击扩展 | tower_range | cannon | +20% |
-| rogue_ice_effect | 冰冻增幅 | tower_slow_effect | ice | +10% |
-| rogue_electric_bounce | 电弧扩展 | tower_chain_count | electric | +1 |
+| rogue_machinegun_speed | 机枪强化 | tower_speed | machinegun_tower | +15% |
+| rogue_cannon_range | 炮击扩展 | tower_range | cannon_tower | +20% |
+| rogue_ice_effect | 冰冻增幅 | tower_slow_effect | ice_tower | +10% |
+| rogue_electric_bounce | 电弧扩展 | tower_chain_count | electric_tower | +1 |
 | rogue_orbital_charge | 轨道炮充能 | skill_charge | skill_orbital_cannon | +1 |
 | rogue_freeze_charge | 冻结充能 | skill_charge | skill_freeze | +1 |
 

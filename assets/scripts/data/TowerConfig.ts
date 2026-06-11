@@ -15,7 +15,7 @@ export interface TowerConfig {
     id: string;
     name: string;
     description: string;
-    type: 'machinegun' | 'cannon' | 'ice' | 'electric';
+    type: 'machinegun_tower' | 'cannon_tower' | 'ice_tower' | 'electric_tower';
     baseAttack: number;
     baseAttackSpeed: number;
     baseRange: number;
@@ -32,10 +32,10 @@ export interface TowerConfig {
 
 export const TOWER_CONFIGS: TowerConfig[] = [
     {
-        id: 'tower_machinegun',
+        id: 'machinegun_tower',
         name: '机枪塔',
         description: '基础单体输出，射速快，伤害稳定',
-        type: 'machinegun',
+        type: 'machinegun_tower',
         baseAttack: 10,
         baseAttackSpeed: 0.5,
         baseRange: 150,
@@ -52,10 +52,10 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         ],
     },
     {
-        id: 'tower_cannon',
+        id: 'cannon_tower',
         name: '炮塔',
         description: '范围伤害，攻击慢，爆炸范围伤害',
-        type: 'cannon',
+        type: 'cannon_tower',
         baseAttack: 25,
         baseAttackSpeed: 1.5,
         baseRange: 120,
@@ -72,10 +72,10 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         ],
     },
     {
-        id: 'tower_ice',
+        id: 'ice_tower',
         name: '冰塔',
         description: '控制，降低敌人移动速度',
-        type: 'ice',
+        type: 'ice_tower',
         baseAttack: 5,
         baseAttackSpeed: 1.0,
         baseRange: 130,
@@ -92,10 +92,10 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         ],
     },
     {
-        id: 'tower_electric',
+        id: 'electric_tower',
         name: '电塔',
         description: '链式攻击，攻击多个敌人',
-        type: 'electric',
+        type: 'electric_tower',
         baseAttack: 15,
         baseAttackSpeed: 0.8,
         baseRange: 140,

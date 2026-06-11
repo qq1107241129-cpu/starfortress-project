@@ -672,16 +672,16 @@ export class BattleUI extends Component {
             // 根据塔类型设置不同颜色
             let btnColor: Color;
             switch (config.type) {
-                case 'machinegun':
+                case 'machinegun_tower':
                     btnColor = new Color(40, 80, 140, 255);
                     break;
-                case 'cannon':
+                case 'cannon_tower':
                     btnColor = new Color(140, 60, 20, 255);
                     break;
-                case 'ice':
+                case 'ice_tower':
                     btnColor = new Color(30, 100, 140, 255);
                     break;
-                case 'electric':
+                case 'electric_tower':
                     btnColor = new Color(80, 40, 140, 255);
                     break;
                 default:

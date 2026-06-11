@@ -88,13 +88,13 @@ export class AttackEffectView extends Component {
      */
     static getTowerAttackColor(towerType: string): Color {
         switch (towerType) {
-            case 'machinegun':
+            case 'machinegun_tower':
                 return new Color(0, 200, 255, 255); // 蓝色
-            case 'cannon':
+            case 'cannon_tower':
                 return new Color(255, 150, 0, 255); // 橙色
-            case 'ice':
+            case 'ice_tower':
                 return new Color(150, 220, 255, 255); // 浅蓝
-            case 'electric':
+            case 'electric_tower':
                 return new Color(220, 150, 255, 255); // 紫色
             default:
                 return new Color(255, 255, 255, 255); // 白色

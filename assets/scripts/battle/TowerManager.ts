@@ -108,12 +108,12 @@ export class TowerManager {
         const targetPos = target.getPosition();
 
         switch (tower.getType()) {
-            case 'machinegun':
+            case 'machinegun_tower':
                 // 单体高频攻击：直接发射单体投射物
                 this._projectileManager.createSingle(towerPos, target.getId(), attack);
                 break;
 
-            case 'cannon':
+            case 'cannon_tower':
                 // 范围伤害：发射范围投射物
                 this._projectileManager.createSplash(
                     towerPos,
@@ -123,7 +123,7 @@ export class TowerManager {
                 );
                 break;
 
-            case 'ice':
+            case 'ice_tower':
                 // 减速攻击：发射减速投射物
                 this._projectileManager.createIce(
                     towerPos,
@@ -134,7 +134,7 @@ export class TowerManager {
                 );
                 break;
 
-            case 'electric':
+            case 'electric_tower':
                 // 链式攻击：发射链式投射物
                 this._projectileManager.createChain(
                     towerPos,

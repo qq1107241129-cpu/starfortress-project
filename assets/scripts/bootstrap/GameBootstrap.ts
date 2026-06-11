@@ -262,10 +262,10 @@ export class GameBootstrap extends Component {
 
         // 放置测试塔（使用存档中的塔等级，默认 1 级）
         const testTowers = [
-            { slotId: 'slot_1', towerId: 'tower_machinegun' },
-            { slotId: 'slot_2', towerId: 'tower_cannon' },
-            { slotId: 'slot_3', towerId: 'tower_ice' },
-            { slotId: 'slot_4', towerId: 'tower_electric' },
+            { slotId: 'slot_1', towerId: 'machinegun_tower' },
+            { slotId: 'slot_2', towerId: 'cannon_tower' },
+            { slotId: 'slot_3', towerId: 'ice_tower' },
+            { slotId: 'slot_4', towerId: 'electric_tower' },
         ];
 
         for (const testTower of testTowers) {

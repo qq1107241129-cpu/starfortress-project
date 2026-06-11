@@ -127,6 +127,7 @@ git status --short --branch --untracked-files=all 结果：
 | 012 | build-wechat-douyin-taptap | 已完成 | ✓ | ✓ | builder.json构建配置 | 未实机验证 | 需要工具实测 |
 | 013.1 | UILayer改动 | 已完成 | - | - | UILayerController/BattleVisualManager状态监听 | 无 | 已确认挂载 |
 | 013.2 | 战斗布局重新设计 | 已完成 | - | - | 基地居中/8塔位/随机敌人/像素形状 | 需要Web预览验证 | 需要确认UI |
+| 013.3.1 | 统一塔类型命名 | 已完成 | - | - | machinegun_tower/cannon_tower/ice_tower/electric_tower | 需要Web预览验证 | 需要确认放置和攻击 |
 
 ### 012 特别说明
 

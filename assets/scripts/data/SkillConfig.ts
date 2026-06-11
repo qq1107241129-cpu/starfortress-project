@@ -55,7 +55,7 @@ export const ROGUE_UPGRADE_CONFIGS: RogueUpgradeConfig[] = [
         name: '机枪强化',
         description: '机枪塔射速 +15%',
         type: 'tower_speed',
-        target: 'machinegun',
+        target: 'machinegun_tower',
         value: 0.15,
     },
     {
@@ -63,7 +63,7 @@ export const ROGUE_UPGRADE_CONFIGS: RogueUpgradeConfig[] = [
         name: '炮击扩展',
         description: '炮塔爆炸范围 +20%',
         type: 'tower_range',
-        target: 'cannon',
+        target: 'cannon_tower',
         value: 0.2,
     },
     {
@@ -71,7 +71,7 @@ export const ROGUE_UPGRADE_CONFIGS: RogueUpgradeConfig[] = [
         name: '冰冻增幅',
         description: '冰塔减速效果 +10%',
         type: 'tower_slow_effect',
-        target: 'ice',
+        target: 'ice_tower',
         value: 0.1,
     },
     {
@@ -79,7 +79,7 @@ export const ROGUE_UPGRADE_CONFIGS: RogueUpgradeConfig[] = [
         name: '电弧扩展',
         description: '电塔弹射次数 +1',
         type: 'tower_chain_count',
-        target: 'electric',
+        target: 'electric_tower',
         value: 1,
     },
     {

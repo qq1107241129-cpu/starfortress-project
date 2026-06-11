@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## 2026-06-10 013.3.1 统一塔类型命名
+
+### Changed
+
+- 统一 4 种塔的 id 和 type 命名，全部使用 `_tower` 后缀
+  - 旧 id: tower_machinegun, tower_cannon, tower_ice, tower_electric
+  - 新 id: machinegun_tower, cannon_tower, ice_tower, electric_tower
+  - type 已统一为同一套命名
+- 修改 `TowerConfig.ts`：id 和 type 字段统一
+- 修改 `GameBootstrap.ts`：测试放塔 towerId 同步更新
+- 修改 `TowerView.ts`：configId 判断改为精确匹配
+- 修改 `AttackEffectView.ts`：getTowerAttackColor() switch case
+- 修改 `TowerManager.ts`：_executeAttack() switch case
+- 修改 `BattleUI.ts`：_showTowerSelectPanel() switch case
+- 修改 `SkillConfig.ts`：肉鸽强化 target 字段
+
+### Notes
+
+- TowerConfig.id 和 type 统一为 machinegun_tower / cannon_tower / ice_tower / electric_tower
+- TowerView.ts 改为精确判断（configId === 'machinegun_tower'）
+- 不修改 .scene 文件
+- 不修改战斗数值
+- Web 预览未验证，需要人工确认
+
 ## 2026-06-10 013.2 Web preview placement click fix
 
 ### Fixed
