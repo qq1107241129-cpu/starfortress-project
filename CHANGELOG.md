@@ -1,5 +1,39 @@
 # CHANGELOG
 
+## 2026-06-14 014.2 战斗反馈修复（后续补丁）
+
+### Added
+
+- `EventBus.ts` 新增 `SPLASH_HIT` 事件（炮塔爆炸特效）、`ENEMY_SLOWED` / `ENEMY_SLOW_ENDED` 事件（减速特效）、`PROJECTILE_SPAWN` / `PROJECTILE_HIT` 事件（投射物视觉同步）。
+- `BattleVisualManager.ts` 监听 `PROJECTILE_SPAWN` 创建投射物视觉节点，每帧同步位置跟随逻辑投射物。
+- `BattleVisualManager.ts` 监听 `PROJECTILE_HIT` 销毁投射物视觉，炮塔命中时立即创建爆炸特效。
+- `BattleVisualManager.ts` 监听 `ENEMY_SLOWED` / `ENEMY_SLOW_ENDED` 创建/移除减速特效（冰蓝色光环+冰晶）。
+- `BattleVisualManager.ts` 新增 `_syncProjectilePositions()` 方法，每帧同步投射物视觉位置。
+- `BattleVisualManager.ts` 新增 `_syncSlowEffectPositions()` 方法，每帧同步减速特效位置跟随敌人。
+- 爆炸特效第一帧立即可见：橙红色实心爆点 + 外圈冲击波。
+
+### Changed
+
+- `EnemyController.applySlow()` 施加减速时发出 `ENEMY_SLOWED` 事件。
+- `EnemyController.update()` 减速结束时发出 `ENEMY_SLOW_ENDED` 事件。
+- `ProjectileManager.createSingle/createSplash/createIce()` 创建投射物时发出 `PROJECTILE_SPAWN` 事件。
+- `ProjectileManager._onHit()` 命中时发出 `PROJECTILE_HIT` 事件。
+- `BattleVisualManager._onTowerAttack()` 不再创建独立飞行特效，改由投射物视觉系统管理。
+- `AttackEffectView.ts` 新增 `updateTargetPosition()` 和 `isInFlightPhase()` 方法（保留但不再使用）。
+
+### Fixed
+
+- 修复 BattleVisualManager.ts 第 582 行语法错误（孤立代码导致 Cocos Missing class）。
+
+### Notes
+
+- 投射物视觉与逻辑统一：视觉炮弹跟随 ProjectileManager 的投射物位置，命中时立即销毁视觉并创建爆炸。
+- 炮塔爆炸在命中同一帧触发：PROJECTILE_HIT → SPLASH_HIT → takeDamage → DAMAGE_NUMBER_SHOW。
+- 减速特效跟随敌人移动，减速结束或敌人死亡时自动清理。
+- 未修改战斗数值、攻击逻辑、弹射规则。
+- 未修改 `.scene` 文件。
+- 代码已实现，Web 预览未验证，需要人工确认。
+
 ## 2026-06-13 014.2 电弧弹射特效修复与伤害飘字
 
 ### Added

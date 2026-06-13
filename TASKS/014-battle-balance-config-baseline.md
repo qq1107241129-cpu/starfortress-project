@@ -295,3 +295,21 @@ TASKS/014-battle-balance-config-baseline.md
 不要提交 Git，只提示人工执行：
 git status
 git diff
+
+---
+
+## 执行状态
+
+- 状态：已完成，代码已提交
+- 实际修改：
+  - 新增 `assets/scripts/data/BattleBalanceConfig.ts`（20+ 个平衡常量）
+  - 新增 `assets/scripts/data/BattleBalanceConfig.ts.meta`
+  - 修改 `assets/scripts/battle/EnemyController.ts`（敌人速度和基地伤害改为配置读取）
+  - 修改 `assets/scripts/battle/ProjectileManager.ts`（投射物速度/碰撞容差/伤害衰减改为配置读取）
+  - 修改 `assets/scripts/battle/SkillManager.ts`（轨道炮半径和搜索半径改为配置读取）
+  - 修改 `assets/scripts/battle/BattleSettlement.ts`（失败倍率/基础奖励/星级阈值改为配置读取）
+  - 修改 `assets/scripts/battle/RogueChoiceManager.ts`（肉鸽触发时间和候选数改为配置读取）
+  - 修改 `assets/scripts/battle/BattleManager.ts`（放置塔数量改为配置读取）
+- 未修改：TowerConfig / EnemyConfig / StageConfig / SkillConfig 数值、战斗机制、.scene
+- 验证状态：代码已实现，Web 预览待用户确认
+- 风险：默认值抄写错误可能导致行为变化（已逐项对比确认一致）

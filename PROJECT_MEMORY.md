@@ -172,7 +172,43 @@ Platform.instance.showRewardAd()
 -> 011-ui-flow
 -> 011.5-battle-visual-demo
 -> 012-build-wechat-douyin-taptap
+-> 014-battle-balance-config-baseline
+-> 014.1-battle-speed-control
+-> 014.2-electric-chain-effect-and-damage-float-text
 ```
+
+## 战斗数值配置位置
+
+- `assets/scripts/data/BattleBalanceConfig.ts`：集中管理战斗平衡常量（敌人速度、投射物速度、伤害衰减、技能半径、结算倍率等）
+- 默认值与原硬编码值一致，修改此文件可统一调整战斗体验
+- 后续数值调优在 `TASKS/015-battle-balance-first-tuning.md`
+
+## 战斗倍速规则
+
+- `BattleManager` 维护 `_battleSpeed`，`update()` 使用 `scaledDeltaTime = deltaTime * _battleSpeed`
+- 倍速通过 `scaledDeltaTime` 影响：战斗倒计时、敌人移动、敌人生成、塔攻击冷却、投射物飞行、减速持续时间
+- 倍速不影响：主界面、按钮点击、设置界面、离线收益
+- 倍速按钮由用户在 Cocos Creator 中手动创建节点并绑定 `speedButton` / `speedButtonLabel`
+
+## 投射物视觉与逻辑同步规则
+
+- 投射物视觉跟随 `ProjectileManager` 的逻辑投射物位置
+- `PROJECTILE_SPAWN` 事件创建视觉节点，`PROJECTILE_HIT` 事件销毁视觉节点
+- 炮塔爆炸在命中同一帧触发：`PROJECTILE_HIT` → `SPLASH_HIT` → `takeDamage` → `DAMAGE_NUMBER_SHOW`
+- 不再使用 `AttackEffectView` 的独立飞行特效（已弃用）
+
+## 战斗反馈事件
+
+- `CHAIN_HIT`：电弧弹射特效（塔→敌人1→敌人2...）
+- `SPLASH_HIT`：炮塔范围爆炸特效
+- `DAMAGE_NUMBER_SHOW`：伤害飘字
+- `ENEMY_SLOWED` / `ENEMY_SLOW_ENDED`：减速特效
+- `PROJECTILE_SPAWN` / `PROJECTILE_HIT`：投射物视觉同步
+
+## .scene 仍由用户人工维护
+
+- 执行 Agent 禁止修改 `.scene` 文件
+- 倍速按钮、UI 节点绑定需用户在 Cocos Creator 中手动完成
 
 ## MVP 暂不做
 

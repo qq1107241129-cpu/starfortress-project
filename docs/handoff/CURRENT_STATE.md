@@ -1,12 +1,26 @@
 # Starfortress Project 当前交接状态
 
-生成时间：2026-06-08
+生成时间：2026-06-14
 
 本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
 
+## 2026-06-14 014.2 战斗反馈修复（后续补丁）
+
+- 状态：代码已提交，待 Web 预览验证
+- 投射物视觉与逻辑统一：视觉炮弹跟随 ProjectileManager 投射物位置
+- 炮塔爆炸在命中同一帧触发，第一帧立即可见（橙红色爆点）
+- 减速特效已实现：冰蓝色光环+冰晶，跟随敌人移动
+- 减速结束或敌人死亡时自动清理特效
+- 修复 BattleVisualManager.ts 语法错误（第 582 行孤立代码）
+- 未修改战斗数值、攻击逻辑、弹射规则
+- 未修改 `.scene`
+- 代码已实现，Web 预览未验证，需要人工确认
+
+---
+
 ## 2026-06-13 014.2 电弧弹射特效修复与伤害飘字
 
-- 状态：代码已完成，待 Web 预览验证
+- 状态：代码已提交，待 Web 预览验证
 - 电弧弹射特效已修复：ProjectileManager._chainAttack() 发出 CHAIN_HIT 事件，BattleVisualManager 为每段弹射创建电弧
 - 伤害飘字已实现：ProjectileManager 每次 takeDamage 后发出 DAMAGE_NUMBER_SHOW 事件，BattleVisualManager 创建飘字
 - EnemyController.takeDamage() 已返回实际扣血值
@@ -20,14 +34,27 @@
 
 ## 2026-06-13 014.1 战斗倍速控制
 
-- 状态：代码已完成，待 Web 预览验证
+- 状态：代码已提交，待 Web 预览验证
 - 新增战斗倍速控制，支持 1x/2x/3x/4x 循环切换
 - `BattleManager` 维护 `_battleSpeed`，`update()` 使用 `scaledDeltaTime`
-- `BattleUI` 动态创建倍速按钮，不修改 `.scene`
+- `BattleUI` 场景绑定倍速按钮（speedButton / speedButtonLabel）
 - `AttackEffectView` 已接入倍速，特效跟随战斗速度
-- `TowerView` 和 `BattleVisualManager` 不需要额外接入
 - 倍速不影响主界面、放置阶段、肉鸽暂停
 - 新战斗默认回到 1x
+- 未修改 `.scene`
+- 代码已实现，Web 预览未验证，需要人工确认
+
+---
+
+## 2026-06-13 014 战斗数值配置化基线
+
+- 状态：代码已提交，待 Web 预览验证
+- 新增 `BattleBalanceConfig.ts`，集中 20+ 个硬编码平衡常量
+- 6 个战斗代码文件已改为从配置读取
+- 默认值与原硬编码值完全一致，行为不变
+- 未修改战斗数值
+- 未修改 `.scene`
+- 代码已实现，Web 预览未验证，需要人工确认
 - 未修改 `.scene`
 - 代码已实现，Web 预览未验证，需要人工确认
 
