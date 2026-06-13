@@ -256,8 +256,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": -4.228,
+      "y": 16.912,
       "z": 0
     },
     "_lrot": {
@@ -485,8 +485,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -539.247,
-      "y": 618.765,
+      "x": -537.133,
+      "y": 629.335,
       "z": 0
     },
     "_lrot": {
@@ -4981,8 +4981,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -15.934,
-      "y": -467.331,
+      "x": -3.25,
+      "y": -408.138,
       "z": 0
     },
     "_lrot": {
@@ -17380,8 +17380,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -5.654,
-      "y": 40.093,
+      "x": -7.768,
+      "y": 44.321,
       "z": 0
     },
     "_lrot": {
@@ -19771,8 +19771,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -184.662,
-      "y": 213.579,
+      "x": -169.864,
+      "y": 272.772,
       "z": 0
     },
     "_lrot": {
@@ -19951,8 +19951,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 284.247,
-      "y": 366.79,
+      "x": 320.186,
+      "y": 368.904,
       "z": 0
     },
     "_lrot": {
@@ -20083,8 +20083,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 415.727,
-      "y": 376.729,
+      "x": 474.92,
+      "y": 374.615,
       "z": 0
     },
     "_lrot": {
@@ -20479,8 +20479,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 159.397,
-      "y": 368.964,
+      "x": 167.853,
+      "y": 371.078,
       "z": 0
     },
     "_lrot": {
@@ -20611,8 +20611,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 221.183,
-      "y": 319.636,
+      "x": 242.323,
+      "y": 311.18,
       "z": 0
     },
     "_lrot": {
@@ -21582,8 +21582,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 26.772,
-      "y": 102.971,
+      "x": -36.649,
+      "y": 253.067,
       "z": 0
     },
     "_lrot": {
@@ -21649,8 +21649,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -281.469,
-      "y": -0.729,
+      "x": -304.723,
+      "y": 39.438,
       "z": 0
     },
     "_lrot": {
@@ -21697,8 +21697,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": 4.228,
+      "y": 190.263,
       "z": 0
     },
     "_lrot": {
@@ -21736,7 +21736,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 40,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -21766,7 +21766,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "label",
+    "_string": "名字",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -21829,8 +21829,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": 4.228,
+      "y": 145.868,
       "z": 0
     },
     "_lrot": {
@@ -21868,7 +21868,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 40,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -21898,7 +21898,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "label",
+    "_string": "等级",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -21961,8 +21961,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": 4.228,
+      "y": 103.588,
       "z": 0
     },
     "_lrot": {
@@ -22000,7 +22000,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 40,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -22030,7 +22030,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "label",
+    "_string": "攻击",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -22093,8 +22093,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": 4.228,
+      "y": 65.535,
       "z": 0
     },
     "_lrot": {
@@ -22132,7 +22132,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 40,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -22162,7 +22162,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "label",
+    "_string": "速度",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -22225,8 +22225,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": 4.228,
+      "y": 33.825,
       "z": 0
     },
     "_lrot": {
@@ -22264,7 +22264,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 40,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -22294,7 +22294,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "label",
+    "_string": "范围",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -22357,8 +22357,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": 6.342,
+      "y": -4.228,
       "z": 0
     },
     "_lrot": {
@@ -22396,7 +22396,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 40,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -22426,7 +22426,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "label",
+    "_string": "消耗",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -22496,8 +22496,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": 8.456,
+      "y": -46.509,
       "z": 0
     },
     "_lrot": {
@@ -22613,7 +22613,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "button",
+    "_string": "升级",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -26402,8 +26402,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -282.516,
-      "y": -71.089,
+      "x": -301.542,
+      "y": -73.203,
       "z": 0
     },
     "_lrot": {
@@ -26441,7 +26441,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 80,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -26471,7 +26471,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "label",
+    "_string": "战斗金币",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -26658,7 +26658,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "button",
+    "_string": "返回",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -27020,8 +27020,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 33.824,
-      "y": 23.254,
+      "x": 31.71,
+      "y": -19.027,
       "z": 0
     },
     "_lrot": {
@@ -28591,8 +28591,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 8.824,
-      "y": -6.059,
+      "x": -5.974,
+      "y": 2.397,
       "z": 0
     },
     "_lrot": {
