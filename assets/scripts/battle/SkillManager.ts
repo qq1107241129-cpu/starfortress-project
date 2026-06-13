@@ -5,6 +5,7 @@
 
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { ActiveSkillConfig, ACTIVE_SKILL_CONFIGS } from '../data/SkillConfig';
+import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
 import { EnemyController } from './EnemyController';
 
 export interface SkillState {
@@ -110,7 +111,7 @@ export class SkillManager {
 
         // 找到最密集的敌人区域
         const targetPos = this._findDensestPosition(aliveEnemies);
-        const hitRadius = 100; // 命中半径（像素）
+        const hitRadius = BATTLE_BALANCE.orbitalCannonRadius;
 
         // 对范围内所有敌人造成伤害
         let hitCount = 0;
@@ -173,7 +174,7 @@ export class SkillManager {
         if (enemies.length === 0) return { x: 540, y: 360 }; // 默认屏幕中心
         if (enemies.length === 1) return enemies[0].getPosition();
 
-        const searchRadius = 120;
+        const searchRadius = BATTLE_BALANCE.densestSearchRadius;
         let bestPos = enemies[0].getPosition();
         let bestCount = 0;
 

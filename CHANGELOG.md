@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## 2026-06-13 014 战斗平衡配置化基线
+
+### Added
+
+- 新增 `assets/scripts/data/BattleBalanceConfig.ts`：战斗平衡配置文件，集中管理 20+ 个原散落在战斗代码中的硬编码常量。
+- 配置项涵盖：敌人基础速度/伤害、投射物速度/碰撞容差、范围/链式伤害衰减、技能半径、结算倍率、肉鸽触发时间、放置塔数量。
+
+### Changed
+
+- `EnemyController.ts`：敌人移动速度和基地伤害改为从 `BATTLE_BALANCE` 读取。
+- `ProjectileManager.ts`：投射物速度、碰撞容差、范围/链式伤害衰减改为从 `BATTLE_BALANCE` 读取；删除顶部 `PROJECTILE_SPEED` 和 `CHAIN_RANGE` 常量。
+- `SkillManager.ts`：轨道炮命中半径和密集度搜索半径改为从 `BATTLE_BALANCE` 读取。
+- `BattleSettlement.ts`：失败倍率、基础经营币奖励、星级阈值改为从 `BATTLE_BALANCE` 读取。
+- `RogueChoiceManager.ts`：肉鸽触发时间和候选选项数改为从 `BATTLE_BALANCE` 读取；删除顶部 `ROGUE_TRIGGER_TIMES` 和 `CHOICE_COUNT` 常量。
+- `BattleManager.ts`：放置塔数量改为从 `BATTLE_BALANCE` 读取；`REQUIRED_TOWER_COUNT` 常量改为 getter。
+
+### Notes
+
+- 所有配置默认值与原硬编码值完全一致，行为不变。
+- 未做数值调优，调优放到 TASKS/015。
+- SkillManager 默认坐标 `{ x: 540, y: 360 }` 保持不变，后续在 TASKS/014.3 中处理。
+- 未修改 `.scene` 文件。
+- 未修改 TowerConfig / EnemyConfig / StageConfig / SkillConfig。
+- 未修改战斗机制。
+- `BattleBalanceConfig.ts.meta` 需要用户用 Cocos Creator 打开项目自动生成。
+- 代码已实现，Web 预览未验证，需要人工确认。
+
 ## 2026-06-11 001～013 全项目阶段审查技术债归档
 
 ### Added

@@ -12,6 +12,7 @@ import { SkillManager } from './SkillManager';
 import { TimeManager } from '../core/TimeManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { ConfigManager } from '../core/ConfigManager';
+import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
 
 export type BattleState = 'idle' | 'playing' | 'paused' | 'victory' | 'defeat' | 'settlement';
 
@@ -46,8 +47,8 @@ export class BattleManager {
     private _isPlacementPaused: boolean = false;
     /** 已放置的塔数量 */
     private _placedTowerCount: number = 0;
-    /** 需要放置的塔数量 */
-    private readonly REQUIRED_TOWER_COUNT: number = 4;
+    /** 需要放置的塔数量（从配置读取） */
+    private get _requiredTowerCount(): number { return BATTLE_BALANCE.requiredTowerCount; }
 
     constructor() {
         this._stageManager = new StageManager();
@@ -175,10 +176,10 @@ export class BattleManager {
 
         if (success) {
             this._placedTowerCount++;
-            console.log(`[BattleManager] 放置塔 ${this._placedTowerCount}/${this.REQUIRED_TOWER_COUNT}`);
+            console.log(`[BattleManager] 放置塔 ${this._placedTowerCount}/${this._requiredTowerCount}`);
 
-            // 检查是否放够了 4 个塔
-            if (this._placedTowerCount >= this.REQUIRED_TOWER_COUNT) {
+            // 检查是否放够了塔
+            if (this._placedTowerCount >= this._requiredTowerCount) {
                 this._resumeFromPlacement();
             }
         }

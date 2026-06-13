@@ -5,13 +5,8 @@
 
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { RogueUpgradeConfig, ROGUE_UPGRADE_CONFIGS } from '../data/SkillConfig';
+import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
 import { TowerManager } from './TowerManager';
-
-/** 肉鸽选择触发时间点（秒） */
-const ROGUE_TRIGGER_TIMES = [45, 90, 135];
-
-/** 每次选择的候选数量 */
-const CHOICE_COUNT = 3;
 
 export interface RogueChoiceState {
     /** 是否正在等待玩家选择 */
@@ -71,9 +66,9 @@ export class RogueChoiceManager {
         if (this._state.isActive) return;
 
         // 检查是否到达下一个触发时间
-        if (this._state.nextTriggerIndex >= ROGUE_TRIGGER_TIMES.length) return;
+        if (this._state.nextTriggerIndex >= BATTLE_BALANCE.rogueTriggerTimes.length) return;
 
-        const triggerTime = ROGUE_TRIGGER_TIMES[this._state.nextTriggerIndex];
+        const triggerTime = BATTLE_BALANCE.rogueTriggerTimes[this._state.nextTriggerIndex];
         if (currentTime >= triggerTime) {
             this._triggerChoice();
         }
@@ -94,7 +89,7 @@ export class RogueChoiceManager {
         this._eventBus.emit(BATTLE_EVENTS.ROGUE_CHOICE_TRIGGER, {
             choices: this._state.choices,
             choiceIndex: this._state.triggeredCount + 1,
-            totalChoices: ROGUE_TRIGGER_TIMES.length,
+            totalChoices: BATTLE_BALANCE.rogueTriggerTimes.length,
         });
     }
 
@@ -111,7 +106,7 @@ export class RogueChoiceManager {
             [pool[i], pool[j]] = [pool[j], pool[i]];
         }
 
-        const count = Math.min(CHOICE_COUNT, pool.length);
+        const count = Math.min(BATTLE_BALANCE.rogueChoiceCount, pool.length);
         for (let i = 0; i < count; i++) {
             choices.push(pool[i]);
         }
@@ -224,6 +219,6 @@ export class RogueChoiceManager {
      * 是否所有选择都已完成
      */
     isAllChoicesCompleted(): boolean {
-        return this._state.triggeredCount >= ROGUE_TRIGGER_TIMES.length;
+        return this._state.triggeredCount >= BATTLE_BALANCE.rogueTriggerTimes.length;
     }
 }

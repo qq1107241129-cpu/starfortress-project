@@ -4,6 +4,7 @@
  */
 
 import { StageConfig } from '../data/StageConfig';
+import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
 
 export interface BattleResult {
     stageId: string;
@@ -91,7 +92,7 @@ export class BattleSettlement {
      */
     private _calculateBattleCoinReward(result: 'victory' | 'defeat'): number {
         const stageMultiplier = this._stageConfig.rewardMultiplier;
-        const resultMultiplier = result === 'victory' ? 1.0 : 0.3; // 失败给 30%
+        const resultMultiplier = result === 'victory' ? 1.0 : BATTLE_BALANCE.defeatBattleCoinMultiplier;
 
         const reward = Math.floor(this._totalEnemyReward * stageMultiplier * resultMultiplier);
         return reward;
@@ -101,9 +102,9 @@ export class BattleSettlement {
      * 计算经营币奖励
      */
     private _calculateBaseCoinReward(result: 'victory' | 'defeat'): number {
-        const baseReward = 50; // 基础经营币奖励
+        const baseReward = BATTLE_BALANCE.baseBaseCoinReward;
         const stageMultiplier = this._stageConfig.rewardMultiplier;
-        const resultMultiplier = result === 'victory' ? 1.0 : 0.2; // 失败给 20%
+        const resultMultiplier = result === 'victory' ? 1.0 : BATTLE_BALANCE.defeatBaseCoinMultiplier;
 
         const reward = Math.floor(baseReward * stageMultiplier * resultMultiplier);
         return reward;
@@ -123,10 +124,10 @@ export class BattleSettlement {
 
         const healthPercent = baseHealthRemaining / baseHealthMax;
 
-        if (healthPercent >= 0.8) {
-            return 3; // 生命值 80% 以上 3 星
-        } else if (healthPercent >= 0.5) {
-            return 2; // 生命值 50% 以上 2 星
+        if (healthPercent >= BATTLE_BALANCE.starRating3Threshold) {
+            return 3;
+        } else if (healthPercent >= BATTLE_BALANCE.starRating2Threshold) {
+            return 2;
         } else {
             return 1; // 其他情况 1 星
         }

@@ -4,6 +4,7 @@
  */
 
 import { EnemyController } from './EnemyController';
+import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
 
 export type ProjectileType = 'single' | 'splash' | 'chain';
 
@@ -29,11 +30,6 @@ export interface ProjectileState {
     slowDuration: number;
 }
 
-/** 投射物飞行速度（像素/秒） */
-const PROJECTILE_SPEED = 600;
-/** 电塔弹射距离（像素） */
-const CHAIN_RANGE = 120;
-
 export class ProjectileManager {
     private _projectiles: Map<string, ProjectileState> = new Map();
 
@@ -52,7 +48,7 @@ export class ProjectileManager {
             position: { ...fromPos },
             targetId,
             damage,
-            speed: PROJECTILE_SPEED,
+            speed: BATTLE_BALANCE.projectileSpeed,
             isAlive: true,
             splashRadius: 0,
             chainRemaining: 0,
@@ -80,7 +76,7 @@ export class ProjectileManager {
             position: { ...fromPos },
             targetId,
             damage,
-            speed: PROJECTILE_SPEED * 0.8, // 炮弹稍慢
+            speed: BATTLE_BALANCE.projectileSpeed * BATTLE_BALANCE.splashProjectileSpeedFactor,
             isAlive: true,
             splashRadius,
             chainRemaining: 0,
@@ -109,7 +105,7 @@ export class ProjectileManager {
             position: { ...fromPos },
             targetId,
             damage,
-            speed: PROJECTILE_SPEED,
+            speed: BATTLE_BALANCE.projectileSpeed,
             isAlive: true,
             splashRadius: 0,
             chainRemaining: 0,
@@ -137,11 +133,11 @@ export class ProjectileManager {
             position: { ...fromPos },
             targetId,
             damage,
-            speed: PROJECTILE_SPEED * 1.5, // 电弧更快
+            speed: BATTLE_BALANCE.projectileSpeed * BATTLE_BALANCE.chainProjectileSpeedFactor,
             isAlive: true,
             splashRadius: 0,
             chainRemaining: chainCount,
-            chainRange: CHAIN_RANGE,
+            chainRange: BATTLE_BALANCE.chainRange,
             chainHitIds: [targetId],
             slowFactor: 0,
             slowDuration: 0,
@@ -174,7 +170,7 @@ export class ProjectileManager {
             const dist = Math.sqrt(dx * dx + dy * dy);
             const moveDistance = proj.speed * deltaTime;
 
-            if (dist <= moveDistance + 5) {
+            if (dist <= moveDistance + BATTLE_BALANCE.hitCollisionTolerance) {
                 // 命中目标
                 proj.position.x = tPos.x;
                 proj.position.y = tPos.y;
@@ -230,7 +226,7 @@ export class ProjectileManager {
                 if (Math.sqrt(dx * dx + dy * dy) <= proj.splashRadius) {
                     // 范围伤害衰减：距离中心越远伤害越低
                     const distRatio = Math.sqrt(dx * dx + dy * dy) / proj.splashRadius;
-                    const splashDamage = Math.floor(proj.damage * (1 - distRatio * 0.5));
+                    const splashDamage = Math.floor(proj.damage * (1 - distRatio * BATTLE_BALANCE.splashDamageFalloff));
                     enemy.takeDamage(splashDamage);
                     hits.push({
                         projectileId: proj.id,
@@ -265,7 +261,7 @@ export class ProjectileManager {
 
         for (let i = 0; i < proj.chainRemaining; i++) {
             // 链式伤害衰减：每次弹射降低 20%
-            chainDamage = Math.floor(chainDamage * 0.8);
+            chainDamage = Math.floor(chainDamage * BATTLE_BALANCE.chainDamageFalloff);
 
             // 找到最近的未命中敌人
             let nearestEnemy: EnemyController | null = null;

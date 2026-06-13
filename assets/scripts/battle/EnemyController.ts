@@ -4,6 +4,7 @@
  */
 
 import { EnemyConfig } from '../data/EnemyConfig';
+import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 
 export interface EnemyState {
@@ -141,7 +142,7 @@ export class EnemyController {
 
         // 计算移动距离（使用有效速度）
         const effectiveSpeed = this.getEffectiveSpeed();
-        const moveDistance = effectiveSpeed * deltaTime * 100; // 100 像素/秒为基础速度
+        const moveDistance = effectiveSpeed * deltaTime * BATTLE_BALANCE.enemyBaseSpeed;
         const dx = currentTarget.x - this._state.position.x;
         const dy = currentTarget.y - this._state.position.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -212,7 +213,7 @@ export class EnemyController {
         this._state.isAlive = false;
         this._eventBus.emit(BATTLE_EVENTS.ENEMY_REACH_BASE, {
             enemyId: this._state.id,
-            damage: 10 // 基础伤害值
+            damage: BATTLE_BALANCE.enemyBaseDamageToBase
         });
     }
 
