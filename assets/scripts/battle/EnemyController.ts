@@ -95,12 +95,23 @@ export class EnemyController {
      * @param duration 持续时间（秒）
      */
     applySlow(slowFactor: number, duration: number): void {
+        const wasSlowed = this._state.slowRemaining > 0;
+
         // 取更强的减速效果
         if (slowFactor > this._state.slowFactor || this._state.slowRemaining <= 0) {
             this._state.slowFactor = slowFactor;
         }
         // 刷新持续时间
         this._state.slowRemaining = Math.max(this._state.slowRemaining, duration);
+
+        // 如果之前没有减速，发出减速开始事件
+        if (!wasSlowed) {
+            this._eventBus.emit(BATTLE_EVENTS.ENEMY_SLOWED, {
+                enemyId: this._state.id,
+                position: this.getPosition(),
+                duration: this._state.slowRemaining,
+            });
+        }
     }
 
     /**
@@ -130,6 +141,11 @@ export class EnemyController {
             if (this._state.slowRemaining <= 0) {
                 this._state.slowFactor = 0;
                 this._state.slowRemaining = 0;
+
+                // 发出减速结束事件
+                this._eventBus.emit(BATTLE_EVENTS.ENEMY_SLOW_ENDED, {
+                    enemyId: this._state.id,
+                });
             }
         }
 

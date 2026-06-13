@@ -106,6 +106,14 @@ export const BATTLE_EVENTS = {
     TOWER_ATTACK: 'tower:attack',
     // 电弧弹射特效事件
     CHAIN_HIT: 'battle:chain_hit',
+    // 炮塔范围爆炸特效事件
+    SPLASH_HIT: 'battle:splash_hit',
     // 伤害飘字事件
     DAMAGE_NUMBER_SHOW: 'battle:damage_number_show',
+    // 敌人减速事件
+    ENEMY_SLOWED: 'battle:enemy_slowed',
+    ENEMY_SLOW_ENDED: 'battle:enemy_slow_ended',
+    // 投射物事件（用于视觉同步）
+    PROJECTILE_SPAWN: 'battle:projectile_spawn',
+    PROJECTILE_HIT: 'battle:projectile_hit',
 } as const;

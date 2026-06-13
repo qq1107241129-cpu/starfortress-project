@@ -19,7 +19,7 @@ export interface BattleBalanceConfig {
     /** 炮塔投射物速度系数（乘以 projectileSpeed）。原硬编码: 0.8 */
     splashProjectileSpeedFactor: number;
     /** 电塔投射物速度系数（乘以 projectileSpeed）。原硬编码: 1.5 */
-    chainProjectileSpeedFactor: 1.5;
+    chainProjectileSpeedFactor: number;
     /** 命中碰撞容差（像素）。原硬编码: 5 */
     hitCollisionTolerance: number;
 
@@ -29,7 +29,7 @@ export interface BattleBalanceConfig {
     /** 电塔链式伤害衰减系数（每次弹射乘以此值）。原硬编码: 0.8 */
     chainDamageFalloff: number;
     /** 电塔弹射距离上限（像素）。原硬编码: 120 */
-    chainRange: 240;
+    chainRange: number;
 
     // ==================== 技能 ====================
     /** 轨道炮命中半径（像素）。原硬编码: 100 */
@@ -74,7 +74,7 @@ export const BATTLE_BALANCE: BattleBalanceConfig = {
     // 伤害衰减
     splashDamageFalloff: 0.5,
     chainDamageFalloff: 0.8,
-    chainRange: 240,
+    chainRange: 120,
 
     // 技能
     orbitalCannonRadius: 100,

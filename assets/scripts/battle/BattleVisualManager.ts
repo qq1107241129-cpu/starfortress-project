@@ -56,10 +56,24 @@ export class BattleVisualManager extends Component {
     private _boundOnTowerPlaced: ((data: any) => void) | null = null;
     private _boundOnTowerAttack: ((data: any) => void) | null = null;
     private _boundOnChainHit: ((data: any) => void) | null = null;
+    private _boundOnSplashHit: ((data: any) => void) | null = null;
     private _boundOnDamageNumberShow: ((data: any) => void) | null = null;
+    private _boundOnEnemySlowed: ((data: any) => void) | null = null;
+    private _boundOnEnemySlowEnded: ((data: any) => void) | null = null;
+    private _boundOnProjectileSpawn: ((data: any) => void) | null = null;
+    private _boundOnProjectileHit: ((data: any) => void) | null = null;
 
     // 飘字管理
     private _floatingTexts: Array<{ node: Node; lifetime: number; maxLifetime: number; startY: number }> = [];
+
+    // 飞行特效追踪：effectNode -> targetId
+    private _trackingEffects: Map<Node, string> = new Map();
+
+    // 减速特效：enemyId -> effectNode
+    private _slowEffects: Map<string, Node> = new Map();
+
+    // 投射物视觉节点：projectileId -> node
+    private _projectileVisuals: Map<string, Node> = new Map();
 
     onLoad(): void {
         this._eventBus = EventBus.getInstance();
@@ -153,7 +167,12 @@ export class BattleVisualManager extends Component {
         this._boundOnTowerPlaced = this._onTowerPlaced.bind(this);
         this._boundOnTowerAttack = this._onTowerAttack.bind(this);
         this._boundOnChainHit = this._onChainHit.bind(this);
+        this._boundOnSplashHit = this._onSplashHit.bind(this);
         this._boundOnDamageNumberShow = this._onDamageNumberShow.bind(this);
+        this._boundOnEnemySlowed = this._onEnemySlowed.bind(this);
+        this._boundOnEnemySlowEnded = this._onEnemySlowEnded.bind(this);
+        this._boundOnProjectileSpawn = this._onProjectileSpawn.bind(this);
+        this._boundOnProjectileHit = this._onProjectileHit.bind(this);
 
         // 注册事件
         this._eventBus.on(BATTLE_EVENTS.BATTLE_START, this._boundOnBattleStart);
@@ -164,7 +183,12 @@ export class BattleVisualManager extends Component {
         this._eventBus.on(BATTLE_EVENTS.TOWER_PLACED, this._boundOnTowerPlaced);
         this._eventBus.on(BATTLE_EVENTS.TOWER_ATTACK, this._boundOnTowerAttack);
         this._eventBus.on(BATTLE_EVENTS.CHAIN_HIT, this._boundOnChainHit);
+        this._eventBus.on(BATTLE_EVENTS.SPLASH_HIT, this._boundOnSplashHit);
         this._eventBus.on(BATTLE_EVENTS.DAMAGE_NUMBER_SHOW, this._boundOnDamageNumberShow);
+        this._eventBus.on(BATTLE_EVENTS.ENEMY_SLOWED, this._boundOnEnemySlowed);
+        this._eventBus.on(BATTLE_EVENTS.ENEMY_SLOW_ENDED, this._boundOnEnemySlowEnded);
+        this._eventBus.on(BATTLE_EVENTS.PROJECTILE_SPAWN, this._boundOnProjectileSpawn);
+        this._eventBus.on(BATTLE_EVENTS.PROJECTILE_HIT, this._boundOnProjectileHit);
     }
 
     private _registerSystemInput(): void {
@@ -238,6 +262,7 @@ export class BattleVisualManager extends Component {
     private _onEnemyDeath(data: any): void {
         const { enemyId } = data;
         this._removeEnemyView(enemyId);
+        this._removeSlowEffect(enemyId);
     }
 
     /**
@@ -246,6 +271,7 @@ export class BattleVisualManager extends Component {
     private _onEnemyReachBase(data: any): void {
         const { enemyId } = data;
         this._removeEnemyView(enemyId);
+        this._removeSlowEffect(enemyId);
     }
 
     /**
@@ -292,8 +318,11 @@ export class BattleVisualManager extends Component {
             towerView.playAttackFeedback();
         }
 
-        // 创建攻击特效
-        this._createAttackEffect(towerType, towerPosition, targetPosition);
+        // 只有电塔需要立即创建攻击特效（瞬发电弧）
+        // 其他塔的投射物视觉由 PROJECTILE_SPAWN 事件管理
+        if (towerType === 'electric_tower') {
+            this._createAttackEffect(towerType, towerPosition, targetPosition);
+        }
     }
 
     /**
@@ -306,6 +335,249 @@ export class BattleVisualManager extends Component {
 
         // 创建电弧弹射特效
         this._createAttackEffect('electric_tower', fromPosition, toPosition);
+    }
+
+    /**
+     * 炮塔范围爆炸特效事件处理
+     */
+    private _onSplashHit(data: any): void {
+        if (!this._isInitialized || !this.effectLayer) return;
+
+        const { position, radius } = data;
+
+        // 创建爆炸特效节点
+        const explosionNode = new Node('Explosion');
+        explosionNode.parent = this.effectLayer;
+        explosionNode.setPosition(position.x, position.y, 0);
+
+        const transform = explosionNode.addComponent(UITransform);
+        transform.setContentSize(radius * 2, radius * 2);
+
+        const graphics = explosionNode.addComponent(Graphics);
+
+        // 第一帧立即绘制爆点（橙红色实心圆 + 外圈闪光）
+        graphics.fillColor = new Color(255, 200, 100, 255);
+        graphics.circle(0, 0, radius * 0.5);
+        graphics.fill();
+
+        // 外圈冲击波（第一帧就可见）
+        graphics.strokeColor = new Color(255, 135, 45, 200);
+        graphics.lineWidth = 4;
+        graphics.circle(0, 0, radius * 0.7);
+        graphics.stroke();
+
+        // 更外圈的冲击波
+        graphics.strokeColor = new Color(255, 80, 20, 120);
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, radius);
+        graphics.stroke();
+
+        // 动画参数
+        const maxRadius = radius;
+        const duration = 0.25; // 爆炸持续时间
+
+        // 添加逐帧更新组件（从初始爆点开始扩散）
+        explosionNode.addComponent(class extends Component {
+            private _lifetime = 0;
+            private _graphics = graphics;
+            private _maxRadius = maxRadius;
+            private _duration = duration;
+
+            update(dt: number) {
+                this._lifetime += dt;
+                const progress = Math.min(1, this._lifetime / this._duration);
+                const alpha = 1 - progress;
+
+                this._graphics.clear();
+
+                // 内圈闪光（从大到小）
+                if (progress < 0.4) {
+                    const flashAlpha = 1 - progress / 0.4;
+                    this._graphics.fillColor = new Color(255, 200, 100, Math.floor(255 * flashAlpha));
+                    this._graphics.circle(0, 0, this._maxRadius * 0.5 * (1 - progress * 0.5));
+                    this._graphics.fill();
+                }
+
+                // 外圈冲击波（从小到大扩散）
+                const ringRadius = this._maxRadius * (0.3 + progress * 0.7);
+                this._graphics.strokeColor = new Color(255, 135, 45, Math.floor(200 * alpha));
+                this._graphics.lineWidth = 3;
+                this._graphics.circle(0, 0, ringRadius);
+                this._graphics.stroke();
+
+                // 最外圈淡出
+                if (progress > 0.3) {
+                    const outerAlpha = (1 - progress) * 0.6;
+                    this._graphics.strokeColor = new Color(255, 80, 20, Math.floor(120 * outerAlpha));
+                    this._graphics.lineWidth = 2;
+                    this._graphics.circle(0, 0, ringRadius * 1.2);
+                    this._graphics.stroke();
+                }
+
+                // 动画结束，销毁节点
+                if (progress >= 1) {
+                    this.node.destroy();
+                }
+            }
+        });
+    }
+
+    /**
+     * 敌人减速事件处理
+     */
+    private _onEnemySlowed(data: any): void {
+        if (!this._isInitialized || !this.enemyLayer) return;
+
+        const { enemyId, position } = data;
+
+        // 如果已有减速特效，先移除
+        this._removeSlowEffect(enemyId);
+
+        // 创建减速特效节点
+        const slowNode = new Node(`SlowEffect_${enemyId}`);
+        slowNode.parent = this.enemyLayer;
+        slowNode.setPosition(position.x, position.y, 0);
+
+        const transform = slowNode.addComponent(UITransform);
+        transform.setContentSize(40, 40);
+
+        const graphics = slowNode.addComponent(Graphics);
+
+        // 绘制冰蓝色光环
+        graphics.strokeColor = new Color(100, 200, 255, 180);
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, 18);
+        graphics.stroke();
+
+        // 绘制内部冰晶装饰
+        graphics.strokeColor = new Color(150, 230, 255, 120);
+        graphics.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 * i) / 6;
+            const x = Math.cos(angle) * 10;
+            const y = Math.sin(angle) * 10;
+            graphics.moveTo(0, 0);
+            graphics.lineTo(x, y);
+            graphics.stroke();
+        }
+
+        // 添加闪烁动画组件
+        slowNode.addComponent(class extends Component {
+            private _graphics = graphics;
+            private _lifetime = 0;
+
+            update(dt: number) {
+                this._lifetime += dt;
+                const alpha = 0.6 + Math.sin(this._lifetime * 8) * 0.4;
+                this._graphics.clear();
+
+                // 外圈光环
+                this._graphics.strokeColor = new Color(100, 200, 255, Math.floor(180 * alpha));
+                this._graphics.lineWidth = 2;
+                this._graphics.circle(0, 0, 18);
+                this._graphics.stroke();
+
+                // 内部冰晶
+                this._graphics.strokeColor = new Color(150, 230, 255, Math.floor(120 * alpha));
+                this._graphics.lineWidth = 1;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI * 2 * i) / 6;
+                    const x = Math.cos(angle) * 10;
+                    const y = Math.sin(angle) * 10;
+                    this._graphics.moveTo(0, 0);
+                    this._graphics.lineTo(x, y);
+                    this._graphics.stroke();
+                }
+            }
+        });
+
+        this._slowEffects.set(enemyId, slowNode);
+    }
+
+    /**
+     * 敌人减速结束事件处理
+     */
+    private _onEnemySlowEnded(data: any): void {
+        const { enemyId } = data;
+        this._removeSlowEffect(enemyId);
+    }
+
+    /**
+     * 移除减速特效
+     */
+    private _removeSlowEffect(enemyId: string): void {
+        const slowNode = this._slowEffects.get(enemyId);
+        if (slowNode && slowNode.isValid) {
+            slowNode.destroy();
+        }
+        this._slowEffects.delete(enemyId);
+    }
+
+    /**
+     * 投射物创建事件处理
+     */
+    private _onProjectileSpawn(data: any): void {
+        if (!this._isInitialized || !this.effectLayer) return;
+
+        const { projectileId, type, position, targetId } = data;
+
+        // 电塔投射物是瞬发的，不需要视觉节点
+        if (type === 'chain') return;
+
+        // 创建投射物视觉节点
+        const projNode = new Node(`Projectile_${projectileId}`);
+        projNode.parent = this.effectLayer;
+        projNode.setPosition(position.x, position.y, 0);
+
+        const transform = projNode.addComponent(UITransform);
+        transform.setContentSize(20, 20);
+
+        const graphics = projNode.addComponent(Graphics);
+
+        // 根据类型绘制不同外观
+        if (type === 'splash') {
+            // 炮塔：橙红色圆形炮弹
+            graphics.fillColor = new Color(255, 135, 45, 255);
+            graphics.circle(0, 0, 6);
+            graphics.fill();
+            graphics.strokeColor = new Color(255, 200, 100, 200);
+            graphics.lineWidth = 1;
+            graphics.circle(0, 0, 8);
+            graphics.stroke();
+        } else if (type === 'ice') {
+            // 冰塔：冰蓝色菱形
+            graphics.fillColor = new Color(135, 225, 255, 255);
+            graphics.moveTo(0, 7);
+            graphics.lineTo(5, 0);
+            graphics.lineTo(0, -7);
+            graphics.lineTo(-5, 0);
+            graphics.close();
+            graphics.fill();
+        } else {
+            // 机枪塔：黄白色小圆点
+            graphics.fillColor = new Color(255, 240, 170, 255);
+            graphics.circle(0, 0, 3);
+            graphics.fill();
+        }
+
+        // 存储映射
+        this._projectileVisuals.set(projectileId, projNode);
+    }
+
+    /**
+     * 投射物命中事件处理
+     */
+    private _onProjectileHit(data: any): void {
+        const { projectileId, type, position } = data;
+
+        // 销毁投射物视觉节点
+        const projNode = this._projectileVisuals.get(projectileId);
+        if (projNode && projNode.isValid) {
+            projNode.destroy();
+        }
+        this._projectileVisuals.delete(projectileId);
+
+        // 注意：炮塔爆炸特效由 SPLASH_HIT 事件处理，不在这里重复创建
     }
 
     /**
@@ -347,14 +619,16 @@ export class BattleVisualManager extends Component {
         towerType: string,
         fromPos: { x: number; y: number },
         toPos: { x: number; y: number }
-    ): void {
-        if (!this.effectLayer) return;
+    ): Node | null {
+        if (!this.effectLayer) return null;
 
         const effectNode = new Node('AttackEffect');
         effectNode.parent = this.effectLayer;
 
         const effectView = effectNode.addComponent(AttackEffectView);
         effectView.playTowerAttackEffect(towerType, fromPos, toPos);
+
+        return effectNode;
     }
 
     /**
@@ -694,6 +968,25 @@ export class BattleVisualManager extends Component {
         }
         this._floatingTexts = [];
 
+        // 清除追踪特效映射
+        this._trackingEffects.clear();
+
+        // 清除减速特效
+        for (const [enemyId, slowNode] of this._slowEffects) {
+            if (slowNode && slowNode.isValid) {
+                slowNode.destroy();
+            }
+        }
+        this._slowEffects.clear();
+
+        // 清除投射物视觉
+        for (const [id, node] of this._projectileVisuals) {
+            if (node && node.isValid) {
+                node.destroy();
+            }
+        }
+        this._projectileVisuals.clear();
+
         // 清除层级子节点
         if (this.towerLayer) this.towerLayer.removeAllChildren();
         if (this.enemyLayer) this.enemyLayer.removeAllChildren();
@@ -719,8 +1012,73 @@ export class BattleVisualManager extends Component {
         // 同步敌人血量
         this._syncEnemyHealth();
 
+        // 同步投射物视觉位置
+        this._syncProjectilePositions();
+
+        // 同步减速特效位置
+        this._syncSlowEffectPositions();
+
         // 更新飘字动画（使用真实 deltaTime，不跟随倍速）
         this._updateFloatingTexts(deltaTime);
+    }
+
+    /**
+     * 同步投射物视觉位置（跟随逻辑投射物）
+     */
+    private _syncProjectilePositions(): void {
+        if (!this._battleManager) return;
+
+        const towerManager = this._battleManager.getTowerManager();
+        if (!towerManager) return;
+
+        const projectileManager = towerManager.getProjectileManager();
+        const activeProjectiles = projectileManager.getActiveProjectiles();
+
+        // 更新每个活跃投射物的视觉位置
+        for (const proj of activeProjectiles) {
+            const visualNode = this._projectileVisuals.get(proj.id);
+            if (visualNode && visualNode.isValid) {
+                visualNode.setPosition(proj.position.x, proj.position.y, 0);
+            }
+        }
+
+        // 清理已失效的投射物视觉
+        const activeIds = new Set(activeProjectiles.map(p => p.id));
+        for (const [id, node] of this._projectileVisuals) {
+            if (!activeIds.has(id)) {
+                if (node && node.isValid) {
+                    node.destroy();
+                }
+                this._projectileVisuals.delete(id);
+            }
+        }
+    }
+
+    /**
+     * 同步减速特效位置（跟随敌人移动）
+     */
+    private _syncSlowEffectPositions(): void {
+        if (!this._battleManager) return;
+
+        const aliveEnemies = this._battleManager.getAliveEnemies();
+
+        for (const enemy of aliveEnemies) {
+            const enemyId = enemy.getId();
+            const slowNode = this._slowEffects.get(enemyId);
+
+            if (slowNode && slowNode.isValid) {
+                const position = enemy.getPosition();
+                slowNode.setPosition(position.x, position.y, 0);
+            }
+        }
+    }
+
+    /**
+     * 更新飞行特效追踪（已弃用，现在使用投射物视觉系统）
+     */
+    private _updateTrackingEffects(): void {
+        // 投射物视觉现在由 _syncProjectilePositions() 处理
+        // 此方法保留为空，避免破坏现有调用
     }
 
     /**
@@ -830,8 +1188,23 @@ export class BattleVisualManager extends Component {
             if (this._boundOnChainHit) {
                 this._eventBus.off(BATTLE_EVENTS.CHAIN_HIT, this._boundOnChainHit);
             }
+            if (this._boundOnSplashHit) {
+                this._eventBus.off(BATTLE_EVENTS.SPLASH_HIT, this._boundOnSplashHit);
+            }
             if (this._boundOnDamageNumberShow) {
                 this._eventBus.off(BATTLE_EVENTS.DAMAGE_NUMBER_SHOW, this._boundOnDamageNumberShow);
+            }
+            if (this._boundOnEnemySlowed) {
+                this._eventBus.off(BATTLE_EVENTS.ENEMY_SLOWED, this._boundOnEnemySlowed);
+            }
+            if (this._boundOnEnemySlowEnded) {
+                this._eventBus.off(BATTLE_EVENTS.ENEMY_SLOW_ENDED, this._boundOnEnemySlowEnded);
+            }
+            if (this._boundOnProjectileSpawn) {
+                this._eventBus.off(BATTLE_EVENTS.PROJECTILE_SPAWN, this._boundOnProjectileSpawn);
+            }
+            if (this._boundOnProjectileHit) {
+                this._eventBus.off(BATTLE_EVENTS.PROJECTILE_HIT, this._boundOnProjectileHit);
             }
         }
 
@@ -843,7 +1216,12 @@ export class BattleVisualManager extends Component {
         this._boundOnTowerPlaced = null;
         this._boundOnTowerAttack = null;
         this._boundOnChainHit = null;
+        this._boundOnSplashHit = null;
         this._boundOnDamageNumberShow = null;
+        this._boundOnEnemySlowed = null;
+        this._boundOnEnemySlowEnded = null;
+        this._boundOnProjectileSpawn = null;
+        this._boundOnProjectileHit = null;
 
         // 清理飘字
         for (const float of this._floatingTexts) {

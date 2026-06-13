@@ -24,7 +24,7 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         name: '普通机械虫',
         description: '血量低、速度中、奖励低',
         type: 'normal',
-        health: 10,
+        health: 100,
         speed: 1.0,
         armor: 0,
         reward: 10,

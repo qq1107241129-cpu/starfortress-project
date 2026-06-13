@@ -241,6 +241,23 @@ export class AttackEffectView extends Component {
         this._lightningPoints = [];
     }
 
+    /**
+     * 更新目标位置（用于飞行特效追踪移动中的敌人）
+     * 只在飞行阶段更新，命中阶段不再更新
+     */
+    updateTargetPosition(pos: { x: number; y: number }): void {
+        if (this._lifetime <= this._flightDuration) {
+            this._toPos = { ...pos };
+        }
+    }
+
+    /**
+     * 是否还在飞行阶段
+     */
+    isInFlightPhase(): boolean {
+        return this._lifetime <= this._flightDuration;
+    }
+
     private _drawLegacyAttackLine(alphaRatio: number): void {
         if (!this._ensureGraphics()) return;
 

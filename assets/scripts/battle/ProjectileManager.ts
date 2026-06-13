@@ -59,6 +59,15 @@ export class ProjectileManager {
             slowFactor: 0,
             slowDuration: 0,
         });
+
+        // 发出投射物创建事件
+        this._eventBus.emit(BATTLE_EVENTS.PROJECTILE_SPAWN, {
+            projectileId: id,
+            type: 'single',
+            position: { ...fromPos },
+            targetId,
+        });
+
         return id;
     }
 
@@ -87,6 +96,15 @@ export class ProjectileManager {
             slowFactor: 0,
             slowDuration: 0,
         });
+
+        // 发出投射物创建事件
+        this._eventBus.emit(BATTLE_EVENTS.PROJECTILE_SPAWN, {
+            projectileId: id,
+            type: 'splash',
+            position: { ...fromPos },
+            targetId,
+        });
+
         return id;
     }
 
@@ -116,6 +134,15 @@ export class ProjectileManager {
             slowFactor,
             slowDuration,
         });
+
+        // 发出投射物创建事件
+        this._eventBus.emit(BATTLE_EVENTS.PROJECTILE_SPAWN, {
+            projectileId: id,
+            type: 'ice',
+            position: { ...fromPos },
+            targetId,
+        });
+
         return id;
     }
 
@@ -203,6 +230,13 @@ export class ProjectileManager {
         enemyMap: Map<string, EnemyController>,
         hits: ProjectileHitEvent[]
     ): void {
+        // 发出投射物命中事件（用于销毁视觉炮弹）
+        this._eventBus.emit(BATTLE_EVENTS.PROJECTILE_HIT, {
+            projectileId: proj.id,
+            type: proj.type,
+            position: target.getPosition(),
+        });
+
         // 对主目标造成伤害
         const actualDamage = target.takeDamage(proj.damage);
         const targetPos = target.getPosition();
@@ -227,6 +261,13 @@ export class ProjectileManager {
         // 炮塔范围伤害
         if (proj.type === 'splash' && proj.splashRadius > 0) {
             const center = target.getPosition();
+
+            // 发出爆炸特效事件（在命中点立即创建爆炸）
+            this._eventBus.emit(BATTLE_EVENTS.SPLASH_HIT, {
+                position: center,
+                radius: proj.splashRadius,
+            });
+
             enemyMap.forEach(enemy => {
                 if (!enemy.isAlive() || enemy.getId() === target.getId()) return;
                 const ePos = enemy.getPosition();
