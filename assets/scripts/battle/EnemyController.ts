@@ -170,9 +170,10 @@ export class EnemyController {
 
     /**
      * 敌人受到伤害
+     * @returns 实际扣血值（考虑护甲后）
      */
-    takeDamage(damage: number): void {
-        if (!this._state.isAlive) return;
+    takeDamage(damage: number): number {
+        if (!this._state.isAlive) return 0;
 
         // 计算实际伤害（考虑护甲）
         const actualDamage = Math.max(1, damage - this._state.armor);
@@ -182,6 +183,8 @@ export class EnemyController {
         if (this._state.health <= 0) {
             this._die();
         }
+
+        return actualDamage;
     }
 
     /**

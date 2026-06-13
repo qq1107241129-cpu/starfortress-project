@@ -4,7 +4,7 @@
  * 监听战斗事件，将逻辑对象映射为可见节点
  */
 
-import { _decorator, Component, Node, Graphics, Color, UITransform, input, Input, EventTouch, EventMouse, Vec2, Vec3, Camera, Canvas, find } from 'cc';
+import { _decorator, Component, Node, Graphics, Color, Label, UITransform, input, Input, EventTouch, EventMouse, Vec2, Vec3, Camera, Canvas, find } from 'cc';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { GameManager, GameFlowState } from '../core/GameManager';
 import { BattleManager } from './BattleManager';
@@ -55,6 +55,11 @@ export class BattleVisualManager extends Component {
     private _boundOnEnemyReachBase: ((data: any) => void) | null = null;
     private _boundOnTowerPlaced: ((data: any) => void) | null = null;
     private _boundOnTowerAttack: ((data: any) => void) | null = null;
+    private _boundOnChainHit: ((data: any) => void) | null = null;
+    private _boundOnDamageNumberShow: ((data: any) => void) | null = null;
+
+    // 飘字管理
+    private _floatingTexts: Array<{ node: Node; lifetime: number; maxLifetime: number; startY: number }> = [];
 
     onLoad(): void {
         this._eventBus = EventBus.getInstance();
@@ -147,6 +152,8 @@ export class BattleVisualManager extends Component {
         this._boundOnEnemyReachBase = this._onEnemyReachBase.bind(this);
         this._boundOnTowerPlaced = this._onTowerPlaced.bind(this);
         this._boundOnTowerAttack = this._onTowerAttack.bind(this);
+        this._boundOnChainHit = this._onChainHit.bind(this);
+        this._boundOnDamageNumberShow = this._onDamageNumberShow.bind(this);
 
         // 注册事件
         this._eventBus.on(BATTLE_EVENTS.BATTLE_START, this._boundOnBattleStart);
@@ -156,6 +163,8 @@ export class BattleVisualManager extends Component {
         this._eventBus.on(BATTLE_EVENTS.ENEMY_REACH_BASE, this._boundOnEnemyReachBase);
         this._eventBus.on(BATTLE_EVENTS.TOWER_PLACED, this._boundOnTowerPlaced);
         this._eventBus.on(BATTLE_EVENTS.TOWER_ATTACK, this._boundOnTowerAttack);
+        this._eventBus.on(BATTLE_EVENTS.CHAIN_HIT, this._boundOnChainHit);
+        this._eventBus.on(BATTLE_EVENTS.DAMAGE_NUMBER_SHOW, this._boundOnDamageNumberShow);
     }
 
     private _registerSystemInput(): void {
@@ -285,6 +294,50 @@ export class BattleVisualManager extends Component {
 
         // 创建攻击特效
         this._createAttackEffect(towerType, towerPosition, targetPosition);
+    }
+
+    /**
+     * 电弧弹射特效事件处理
+     */
+    private _onChainHit(data: any): void {
+        if (!this._isInitialized || !this.effectLayer) return;
+
+        const { fromPosition, toPosition } = data;
+
+        // 创建电弧弹射特效
+        this._createAttackEffect('electric_tower', fromPosition, toPosition);
+    }
+
+    /**
+     * 伤害飘字事件处理
+     */
+    private _onDamageNumberShow(data: any): void {
+        if (!this._isInitialized || !this.effectLayer) return;
+
+        const { damage, position } = data;
+
+        // 创建飘字节点
+        const floatNode = new Node('DamageFloat');
+        floatNode.parent = this.effectLayer;
+        floatNode.setPosition(position.x, position.y + 30, 0);
+
+        // 添加 Label 组件
+        const label = floatNode.addComponent(Label);
+        label.string = `-${damage}`;
+        label.fontSize = 20;
+        label.color = new Color(255, 255, 200, 255); // 浅黄色
+
+        // 添加 UITransform（Label 自动添加，但确保存在）
+        const transform = floatNode.getComponent(UITransform) || floatNode.addComponent(UITransform);
+        transform.setContentSize(60, 30);
+
+        // 记录飘字信息
+        this._floatingTexts.push({
+            node: floatNode,
+            lifetime: 0,
+            maxLifetime: 0.7, // 0.7 秒真实时间
+            startY: position.y + 30,
+        });
     }
 
     /**
@@ -633,6 +686,14 @@ export class BattleVisualManager extends Component {
         });
         this._slotViews.clear();
 
+        // 清除飘字
+        for (const float of this._floatingTexts) {
+            if (float.node && float.node.isValid) {
+                float.node.destroy();
+            }
+        }
+        this._floatingTexts = [];
+
         // 清除层级子节点
         if (this.towerLayer) this.towerLayer.removeAllChildren();
         if (this.enemyLayer) this.enemyLayer.removeAllChildren();
@@ -657,6 +718,43 @@ export class BattleVisualManager extends Component {
 
         // 同步敌人血量
         this._syncEnemyHealth();
+
+        // 更新飘字动画（使用真实 deltaTime，不跟随倍速）
+        this._updateFloatingTexts(deltaTime);
+    }
+
+    /**
+     * 更新飘字动画
+     * 使用真实 deltaTime，不跟随战斗倍速，确保 x4 下不会瞬间消失
+     */
+    private _updateFloatingTexts(deltaTime: number): void {
+        const floatSpeed = 70; // 飘字上升速度（像素/秒）
+
+        for (let i = this._floatingTexts.length - 1; i >= 0; i--) {
+            const float = this._floatingTexts[i];
+            float.lifetime += deltaTime;
+
+            // 检查是否结束
+            if (float.lifetime >= float.maxLifetime) {
+                if (float.node && float.node.isValid) {
+                    float.node.destroy();
+                }
+                this._floatingTexts.splice(i, 1);
+                continue;
+            }
+
+            // 更新位置（向上漂浮）
+            const progress = float.lifetime / float.maxLifetime;
+            const newY = float.startY + floatSpeed * float.lifetime;
+            float.node.setPosition(float.node.position.x, newY, 0);
+
+            // 更新透明度（从 255 渐变到 0）
+            const label = float.node.getComponent(Label);
+            if (label) {
+                const alpha = Math.floor(255 * (1 - progress));
+                label.color = new Color(label.color.r, label.color.g, label.color.b, alpha);
+            }
+        }
     }
 
     /**
@@ -729,6 +827,12 @@ export class BattleVisualManager extends Component {
             if (this._boundOnTowerAttack) {
                 this._eventBus.off(BATTLE_EVENTS.TOWER_ATTACK, this._boundOnTowerAttack);
             }
+            if (this._boundOnChainHit) {
+                this._eventBus.off(BATTLE_EVENTS.CHAIN_HIT, this._boundOnChainHit);
+            }
+            if (this._boundOnDamageNumberShow) {
+                this._eventBus.off(BATTLE_EVENTS.DAMAGE_NUMBER_SHOW, this._boundOnDamageNumberShow);
+            }
         }
 
         this._boundOnBattleStart = null;
@@ -738,6 +842,16 @@ export class BattleVisualManager extends Component {
         this._boundOnEnemyReachBase = null;
         this._boundOnTowerPlaced = null;
         this._boundOnTowerAttack = null;
+        this._boundOnChainHit = null;
+        this._boundOnDamageNumberShow = null;
+
+        // 清理飘字
+        for (const float of this._floatingTexts) {
+            if (float.node && float.node.isValid) {
+                float.node.destroy();
+            }
+        }
+        this._floatingTexts = [];
 
         this._clearAll();
 

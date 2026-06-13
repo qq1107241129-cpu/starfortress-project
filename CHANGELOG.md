@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## 2026-06-13 014.2 电弧弹射特效修复与伤害飘字
+
+### Added
+
+- `EventBus.ts` 新增 `CHAIN_HIT` 事件（电弧弹射特效）和 `DAMAGE_NUMBER_SHOW` 事件（伤害飘字）。
+- `BattleVisualManager.ts` 监听 `CHAIN_HIT` 事件，为每段弹射创建电弧特效。
+- `BattleVisualManager.ts` 监听 `DAMAGE_NUMBER_SHOW` 事件，动态创建伤害飘字 Label 节点。
+- `BattleVisualManager.ts` 新增 `_updateFloatingTexts()` 方法，处理飘字上浮、淡出、销毁动画。
+- 飘字使用真实 `deltaTime`，不跟随战斗倍速，确保 x4 下不会瞬间消失。
+
+### Changed
+
+- `EnemyController.takeDamage()` 返回实际扣血值（考虑护甲后），便于伤害飘字显示真实数值。
+- `ProjectileManager._onHit()` 发出 `DAMAGE_NUMBER_SHOW` 事件，传递实际扣血值和位置。
+- `ProjectileManager._chainAttack()` 发出 `CHAIN_HIT` 事件（电弧特效）和 `DAMAGE_NUMBER_SHOW` 事件（伤害飘字）。
+
+### Notes
+
+- 电弧弹射特效复用现有 `AttackEffectView.playLightningEffect()`，折线闪电效果。
+- 伤害飘字：浅黄色，从敌人头顶上方出现，向上漂浮 0.7 秒后消失。
+- 飘字使用真实时间，不跟随倍速，确保可读性。
+- 电弧特效跟随现有 `AttackEffectView` 倍速机制。
+- 未修改战斗数值、攻击逻辑、弹射规则。
+- 未修改 `.scene` 文件。
+- 代码已实现，Web 预览未验证，需要人工确认。
+
 ## 2026-06-13 014.1 战斗倍速控制
 
 ### Added

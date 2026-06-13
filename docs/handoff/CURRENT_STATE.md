@@ -4,6 +4,20 @@
 
 本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
 
+## 2026-06-13 014.2 电弧弹射特效修复与伤害飘字
+
+- 状态：代码已完成，待 Web 预览验证
+- 电弧弹射特效已修复：ProjectileManager._chainAttack() 发出 CHAIN_HIT 事件，BattleVisualManager 为每段弹射创建电弧
+- 伤害飘字已实现：ProjectileManager 每次 takeDamage 后发出 DAMAGE_NUMBER_SHOW 事件，BattleVisualManager 创建飘字
+- EnemyController.takeDamage() 已返回实际扣血值
+- 飘字使用真实 deltaTime，不跟随倍速，确保 x4 下可读
+- 电弧特效跟随现有 AttackEffectView 倍速机制
+- 未修改战斗数值、攻击逻辑、弹射规则
+- 未修改 `.scene`
+- 代码已实现，Web 预览未验证，需要人工确认
+
+---
+
 ## 2026-06-13 014.1 战斗倍速控制
 
 - 状态：代码已完成，待 Web 预览验证

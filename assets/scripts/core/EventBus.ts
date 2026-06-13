@@ -104,4 +104,8 @@ export const BATTLE_EVENTS = {
     // 可视化事件（011.5-battle-visual-demo）
     TOWER_PLACED: 'tower:placed',
     TOWER_ATTACK: 'tower:attack',
+    // 电弧弹射特效事件
+    CHAIN_HIT: 'battle:chain_hit',
+    // 伤害飘字事件
+    DAMAGE_NUMBER_SHOW: 'battle:damage_number_show',
 } as const;

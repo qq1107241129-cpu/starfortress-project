@@ -5,6 +5,7 @@
 
 import { EnemyController } from './EnemyController';
 import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
+import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 
 export type ProjectileType = 'single' | 'splash' | 'chain';
 
@@ -32,6 +33,7 @@ export interface ProjectileState {
 
 export class ProjectileManager {
     private _projectiles: Map<string, ProjectileState> = new Map();
+    private _eventBus: EventBus = EventBus.getInstance();
 
     /**
      * 创建单体投射物（机枪塔）
@@ -133,7 +135,7 @@ export class ProjectileManager {
             position: { ...fromPos },
             targetId,
             damage,
-            speed: BATTLE_BALANCE.projectileSpeed * BATTLE_BALANCE.chainProjectileSpeedFactor,
+            speed: 99999, // 电弧瞬发，投射物瞬间命中
             isAlive: true,
             splashRadius: 0,
             chainRemaining: chainCount,
@@ -202,12 +204,19 @@ export class ProjectileManager {
         hits: ProjectileHitEvent[]
     ): void {
         // 对主目标造成伤害
-        target.takeDamage(proj.damage);
+        const actualDamage = target.takeDamage(proj.damage);
+        const targetPos = target.getPosition();
         hits.push({
             projectileId: proj.id,
             enemyId: target.getId(),
-            damage: proj.damage,
-            position: target.getPosition(),
+            damage: actualDamage,
+            position: targetPos,
+        });
+
+        // 发出伤害飘字事件
+        this._eventBus.emit(BATTLE_EVENTS.DAMAGE_NUMBER_SHOW, {
+            damage: actualDamage,
+            position: targetPos,
         });
 
         // 冰塔减速效果
@@ -227,11 +236,17 @@ export class ProjectileManager {
                     // 范围伤害衰减：距离中心越远伤害越低
                     const distRatio = Math.sqrt(dx * dx + dy * dy) / proj.splashRadius;
                     const splashDamage = Math.floor(proj.damage * (1 - distRatio * BATTLE_BALANCE.splashDamageFalloff));
-                    enemy.takeDamage(splashDamage);
+                    const actualSplashDamage = enemy.takeDamage(splashDamage);
                     hits.push({
                         projectileId: proj.id,
                         enemyId: enemy.getId(),
-                        damage: splashDamage,
+                        damage: actualSplashDamage,
+                        position: ePos,
+                    });
+
+                    // 发出伤害飘字事件
+                    this._eventBus.emit(BATTLE_EVENTS.DAMAGE_NUMBER_SHOW, {
+                        damage: actualSplashDamage,
                         position: ePos,
                     });
                 }
@@ -285,14 +300,30 @@ export class ProjectileManager {
             if (!nearestEnemy) break;
 
             const chainTarget = nearestEnemy;
-            chainTarget.takeDamage(chainDamage);
+            const chainTargetPos = chainTarget.getPosition();
+
+            // 发出电弧弹射特效事件（从上一个位置到当前敌人位置）
+            this._eventBus.emit(BATTLE_EVENTS.CHAIN_HIT, {
+                fromPosition: { ...currentPos },
+                toPosition: { ...chainTargetPos },
+                chainIndex: i,
+                damage: chainDamage,
+            });
+
+            const actualChainDamage = chainTarget.takeDamage(chainDamage);
             proj.chainHitIds.push(chainTarget.getId());
-            currentPos = chainTarget.getPosition();
+            currentPos = chainTargetPos;
 
             hits.push({
                 projectileId: proj.id,
                 enemyId: chainTarget.getId(),
-                damage: chainDamage,
+                damage: actualChainDamage,
+                position: currentPos,
+            });
+
+            // 发出伤害飘字事件
+            this._eventBus.emit(BATTLE_EVENTS.DAMAGE_NUMBER_SHOW, {
+                damage: actualChainDamage,
                 position: currentPos,
             });
         }
