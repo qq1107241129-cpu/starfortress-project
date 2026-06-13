@@ -162,7 +162,7 @@ export class ProjectileManager {
             position: { ...fromPos },
             targetId,
             damage,
-            speed: 99999, // 电弧瞬发，投射物瞬间命中
+            speed: BATTLE_BALANCE.projectileSpeed * BATTLE_BALANCE.chainProjectileSpeedFactor,
             isAlive: true,
             splashRadius: 0,
             chainRemaining: chainCount,
@@ -194,6 +194,15 @@ export class ProjectileManager {
 
             // 向目标移动
             const tPos = target.getPosition();
+
+            // 电塔是瞬发电弧：不创建慢速视觉投射物，也不让逻辑命中滞后。
+            if (proj.type === 'chain') {
+                proj.position.x = tPos.x;
+                proj.position.y = tPos.y;
+                this._onHit(proj, target, enemyMap, hits);
+                return;
+            }
+
             const dx = tPos.x - proj.position.x;
             const dy = tPos.y - proj.position.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -325,7 +334,7 @@ export class ProjectileManager {
 
             enemyMap.forEach(enemy => {
                 if (!enemy.isAlive()) return;
-                if (proj.chainHitIds.includes(enemy.getId())) return;
+                if (proj.chainHitIds.indexOf(enemy.getId()) >= 0) return;
 
                 const ePos = enemy.getPosition();
                 const dx = ePos.x - currentPos.x;
@@ -343,15 +352,16 @@ export class ProjectileManager {
             const chainTarget = nearestEnemy;
             const chainTargetPos = chainTarget.getPosition();
 
+            const actualChainDamage = chainTarget.takeDamage(chainDamage);
+
             // 发出电弧弹射特效事件（从上一个位置到当前敌人位置）
             this._eventBus.emit(BATTLE_EVENTS.CHAIN_HIT, {
                 fromPosition: { ...currentPos },
                 toPosition: { ...chainTargetPos },
                 chainIndex: i,
-                damage: chainDamage,
+                damage: actualChainDamage,
             });
 
-            const actualChainDamage = chainTarget.takeDamage(chainDamage);
             proj.chainHitIds.push(chainTarget.getId());
             currentPos = chainTargetPos;
 

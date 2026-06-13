@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 2026-06-14 Codex 审查修复 014 系列
+
+### Fixed
+
+- 修复 `AttackEffectView.ts` 重复 `onDestroy()`：合并倍速事件解绑和 Graphics 清理，避免 TypeScript 重复实现风险与事件监听残留。
+- 修复 `ProjectileManager.ts` 中电塔链式攻击使用 `99999` 魔法速度的问题：链式攻击仍保持瞬发结算，但速度字段恢复为 `BATTLE_BALANCE.projectileSpeed * BATTLE_BALANCE.chainProjectileSpeedFactor`。
+- 修复 `CHAIN_HIT` 事件伤害值来源：改为在 `takeDamage()` 后发出，并传递实际扣血值。
+- 修复当前 TypeScript 目标兼容性问题：`BattleManager.ts` / `ProjectileManager.ts` 不再使用 `Array.includes()`，`BattleUI.ts` 不再使用 `String.padStart()`，`BattleVisualManager.ts` / `BattleUI.ts` 不再访问类型声明中不存在的 `Camera.main`。
+- 恢复越权改动的战斗数值：`EnemyConfig.ts` 普通机械虫生命值、`StageConfig.ts` 第 1 关波次、`TowerConfig.ts` 炮塔爆炸半径均恢复到任务前配置。
+- 恢复越权改动的 `settings/v2/packages/project.json`，本轮不改项目设置。
+
+### Notes
+
+- 未修改 `assets/scenes/Battle.scene`；当前检测到的 `.scene` 差异默认视为用户在 Cocos Creator 中的人工改动。
+- 未修改塔伤害、敌人血量、攻击速度、范围伤害衰减、弹射次数或弹射范围。
+- 代码已实现，Web 预览待用户确认。
+
 ## 2026-06-14 014.2 战斗反馈修复（后续补丁）
 
 ### Added

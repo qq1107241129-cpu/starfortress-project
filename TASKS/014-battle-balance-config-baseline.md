@@ -313,3 +313,10 @@ git diff
 - 未修改：TowerConfig / EnemyConfig / StageConfig / SkillConfig 数值、战斗机制、.scene
 - 验证状态：代码已实现，Web 预览待用户确认
 - 风险：默认值抄写错误可能导致行为变化（已逐项对比确认一致）
+
+## Codex 复审修复记录（2026-06-14）
+
+- `BattleBalanceConfig.ts` interface 已确认只写类型，具体数值只写在 `BATTLE_BALANCE`
+- `BattleBalanceConfig.ts.meta` 已存在
+- 已恢复后续越权调试数值改动：普通机械虫生命值、第 1 关波次、炮塔爆炸半径均回到 014 基线前配置
+- Web 预览仍待用户确认

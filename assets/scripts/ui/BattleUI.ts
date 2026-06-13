@@ -542,7 +542,8 @@ export class BattleUI extends Component {
             const remaining = Math.max(0, info.remainingTime);
             const minutes = Math.floor(remaining / 60);
             const seconds = Math.floor(remaining % 60);
-            this.timeLabel.string = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            const secondsText = seconds < 10 ? `0${seconds}` : `${seconds}`;
+            this.timeLabel.string = `${minutes}:${secondsText}`;
         }
 
         if (this.baseHealthLabel) {
@@ -1032,6 +1033,6 @@ export class BattleUI extends Component {
         if (cameraNode) {
             return cameraNode.getComponent(Camera) || null;
         }
-        return Camera.main || null;
+        return null;
     }
 }

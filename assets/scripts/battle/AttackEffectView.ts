@@ -43,13 +43,6 @@ export class AttackEffectView extends Component {
         eventBus.on(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, this._boundOnSpeedChange);
     }
 
-    onDestroy(): void {
-        if (this._boundOnSpeedChange) {
-            EventBus.getInstance().off(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, this._boundOnSpeedChange);
-            this._boundOnSpeedChange = null;
-        }
-    }
-
     /**
      * 初始化攻击线特效
      */
@@ -538,6 +531,10 @@ export class AttackEffectView extends Component {
     }
 
     onDestroy(): void {
+        if (this._boundOnSpeedChange) {
+            EventBus.getInstance().off(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, this._boundOnSpeedChange);
+            this._boundOnSpeedChange = null;
+        }
         if (this._graphics) {
             this._graphics.clear();
         }

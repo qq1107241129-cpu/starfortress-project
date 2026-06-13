@@ -4,16 +4,34 @@
 
 本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
 
+## 2026-06-14 Codex 审查修复 014 / 014.1 / 014.2
+
+- 状态：已完成最小修复，Web 预览待用户确认
+- 修复 `AttackEffectView.ts` 重复 `onDestroy()`，确保倍速事件解绑和 Graphics 清理同时执行
+- 修复 `ProjectileManager.ts` 电塔链式攻击 `99999` 魔法速度；链式攻击保持瞬发结算，速度字段恢复为 `BATTLE_BALANCE` 配置表达式
+- 修复 014 系列相关 TypeScript 兼容性问题：移除 `Array.includes()` / `String.padStart()` / `Camera.main` 用法
+- 恢复越权数值改动：
+  - `EnemyConfig.ts` 普通机械虫生命值恢复为 25
+  - `StageConfig.ts` 第 1 关波次恢复为原配置
+  - `TowerConfig.ts` 炮塔 `splashRadius` 恢复为 60
+- 恢复越权项目设置改动：`settings/v2/packages/project.json` 恢复为仅保留 `__version__`
+- `.meta` 状态：`BattleBalanceConfig.ts.meta` 已存在
+- `.scene` 状态：检测到 `assets/scenes/Battle.scene` 相对 `origin/develop` 有变更，默认视为用户人工 Cocos Creator 改动；本轮 Codex 未修改、未恢复、未 checkout、未 stash
+- 代码已实现，Web 预览待用户确认
+
+---
+
 ## 2026-06-14 014.2 战斗反馈修复（后续补丁）
 
-- 状态：代码已提交，待 Web 预览验证
+- 状态：代码已提交，已做 Codex 最小修复，待 Web 预览验证
 - 投射物视觉与逻辑统一：视觉炮弹跟随 ProjectileManager 投射物位置
 - 炮塔爆炸在命中同一帧触发，第一帧立即可见（橙红色爆点）
 - 减速特效已实现：冰蓝色光环+冰晶，跟随敌人移动
 - 减速结束或敌人死亡时自动清理特效
 - 修复 BattleVisualManager.ts 语法错误（第 582 行孤立代码）
+- Codex 后续修复：合并 AttackEffectView.ts 重复 onDestroy，避免事件解绑残留
 - 未修改战斗数值、攻击逻辑、弹射规则
-- 未修改 `.scene`
+- 检测到 `assets/scenes/Battle.scene` 相对 `origin/develop` 有变更，默认视为用户人工 Cocos Creator 改动；本轮 Codex 未修改
 - 代码已实现，Web 预览未验证，需要人工确认
 
 ---
@@ -67,7 +85,7 @@
 - 6 个战斗代码文件已改为从配置读取
 - 默认值与原硬编码值完全一致，行为不变
 - SkillManager 默认坐标 `{ x: 540, y: 360 }` 保持不变
-- `.meta` 待用户用 Cocos Creator 打开项目生成
+- `BattleBalanceConfig.ts.meta` 已存在
 - 未修改 `.scene`
 - 未做数值调优，调优放到 TASKS/015
 

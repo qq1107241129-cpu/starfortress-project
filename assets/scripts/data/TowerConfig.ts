@@ -59,7 +59,7 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         baseAttack: 25,
         baseAttackSpeed: 1.5,
         baseRange: 120,
-        splashRadius: 120,
+        splashRadius: 60,
         chainCount: 0,
         slowFactor: 0,
         slowDuration: 0,

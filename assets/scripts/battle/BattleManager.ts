@@ -294,7 +294,7 @@ export class BattleManager {
      * @param speed 倍速值（必须在 SPEED_OPTIONS 中）
      */
     setBattleSpeed(speed: number): void {
-        if (!this.SPEED_OPTIONS.includes(speed)) {
+        if (this.SPEED_OPTIONS.indexOf(speed) === -1) {
             console.warn(`[BattleManager] 不支持的倍速: ${speed}`);
             return;
         }

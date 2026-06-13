@@ -196,6 +196,7 @@ Platform.instance.showRewardAd()
 - `PROJECTILE_SPAWN` 事件创建视觉节点，`PROJECTILE_HIT` 事件销毁视觉节点
 - 炮塔爆炸在命中同一帧触发：`PROJECTILE_HIT` → `SPLASH_HIT` → `takeDamage` → `DAMAGE_NUMBER_SHOW`
 - 不再使用 `AttackEffectView` 的独立飞行特效（已弃用）
+- 电塔链式攻击是瞬发电弧：逻辑命中在 `ProjectileManager.update()` 中同帧结算，不使用慢速视觉投射物，也不得用新的魔法速度常量模拟瞬发
 
 ## 战斗反馈事件
 

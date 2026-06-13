@@ -888,8 +888,7 @@ export class BattleVisualManager extends Component {
         if (cameraNode) {
             return cameraNode.getComponent(Camera) || null;
         }
-        // 降级：尝试主相机
-        return Camera.main || null;
+        return null;
     }
 
     /**
