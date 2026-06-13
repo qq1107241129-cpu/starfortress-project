@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 2026-06-11 001～013 全项目阶段审查技术债归档
+
+### Added
+
+- 新增 `docs/handoff/TECH_DEBT.md`：技术债登记文档，记录 001～013 全项目阶段审查中发现的 P2/P3 问题。
+- P2 技术债 6 项：任务文档不可审计、交接状态不一致、永久技能未接入、totalPower TODO、SkillManager 默认坐标、裸字符串事件。
+- P3 技术债 3 项：旧塔命名残留、ConfigManager 旧 API、文档未验证标注。
+- 建议后续任务：014-web-preview-acceptance、014.1-task-doc-consistency、014.2-rebirth-skill-integration、014.3-coordinate-event-cleanup、014.4-config-api-cleanup。
+
+### Notes
+
+- 仅文档归档，未修改任何代码文件。
+- 未修改 `.scene` 文件。
+- 不修复 P2/P3 问题，后续按独立 TASKS 处理。
+
 ## 2026-06-11 013.3 攻击弹道效果
 
 ### Added
