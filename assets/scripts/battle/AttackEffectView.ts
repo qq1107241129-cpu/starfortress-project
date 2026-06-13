@@ -4,6 +4,7 @@
  */
 
 import { _decorator, Component, Graphics, Color } from 'cc';
+import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 
 const { ccclass, property } = _decorator;
 
@@ -25,8 +26,28 @@ export class AttackEffectView extends Component {
     private _hitDuration: number = 0;
     private _lightningPoints: EffectPoint[] = [];
 
+    /** 战斗倍速缓存 */
+    private _battleSpeed: number = 1;
+    private _boundOnSpeedChange: ((data: { speed: number }) => void) | null = null;
+
     onLoad(): void {
         this._ensureGraphics();
+        this._setupSpeedListener();
+    }
+
+    private _setupSpeedListener(): void {
+        const eventBus = EventBus.getInstance();
+        this._boundOnSpeedChange = (data: { speed: number }) => {
+            this._battleSpeed = data.speed;
+        };
+        eventBus.on(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, this._boundOnSpeedChange);
+    }
+
+    onDestroy(): void {
+        if (this._boundOnSpeedChange) {
+            EventBus.getInstance().off(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, this._boundOnSpeedChange);
+            this._boundOnSpeedChange = null;
+        }
     }
 
     /**
@@ -155,7 +176,7 @@ export class AttackEffectView extends Component {
     }
 
     update(deltaTime: number): void {
-        this._lifetime += deltaTime;
+        this._lifetime += deltaTime * this._battleSpeed;
 
         if (this._lifetime >= this._maxLifetime) {
             this._destroyEffectNode();

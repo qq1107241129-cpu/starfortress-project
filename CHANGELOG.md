@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## 2026-06-13 014.1 战斗倍速控制
+
+### Added
+
+- `EventBus.ts` 新增 `BATTLE_SPEED_CHANGE` 事件，用于倍速变化通知。
+- `BattleManager.ts` 新增倍速管理：`_battleSpeed` 字段、`getBattleSpeed()`、`setBattleSpeed()`、`cycleBattleSpeed()` 方法。
+- `BattleManager.update()` 使用 `scaledDeltaTime = deltaTime * _battleSpeed` 驱动战斗逻辑。
+- `BattleManager.startBattle()` 和 `returnToIdle()` 自动重置倍速为 1x。
+- `BattleUI.ts` 新增场景绑定字段 `speedButton` 和 `speedButtonLabel`，倍速按钮由 Cocos 场景绑定，代码负责事件监听和文本更新。
+- `AttackEffectView.ts` 接入倍速，特效生命周期跟随战斗速度。
+
+### Changed
+
+- `BattleManager.update()` 内部使用 `scaledDeltaTime` 替代原始 `deltaTime`，统一驱动 TimeManager、EnemySpawner、TowerManager。
+
+### Notes
+
+- 倍速通过 `scaledDeltaTime` 影响：战斗倒计时、敌人移动、敌人生成、塔攻击冷却、投射物飞行、减速持续时间、攻击特效生命周期。
+- 倍速不影响：主界面、按钮点击响应、设置界面、离线收益计时。
+- TowerView（视觉闪烁）和 BattleVisualManager（位置同步）不需要额外接入倍速。
+- 倍速按钮改为场景绑定方式，用户需在 Cocos Creator 中手动创建节点并绑定 `speedButton` 和 `speedButtonLabel`。
+- 放置阶段和肉鸽选择暂停期间，倍速不生效（已有 `isPlacementPaused` / `isForcePaused` 守卫）。
+- 未修改战斗数值配置。
+- 代码已实现，Web 预览未验证，需要人工确认。
+
 ## 2026-06-13 014 战斗平衡配置化基线
 
 ### Added

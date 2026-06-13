@@ -9,6 +9,7 @@
  * 4. 创建肉鸽选择面板节点并绑定到 rogueChoicePanel
  * 5. 创建 3 个选择按钮节点并绑定到 rogueChoiceButtons
  * 6. 绑定时间、生命、资源显示 Label（可选）
+ * 7. 创建倍速按钮节点并绑定到 speedButton / speedButtonLabel
  *
  * 塔位选择面板：如果 towerSelectPanel 未绑定，会自动动态创建
  */
@@ -82,6 +83,13 @@ export class BattleUI extends Component {
     @property(Node)
     returnMainButton: Node | null = null;
 
+    // ==================== 倍速按钮（场景绑定） ====================
+    @property(Node)
+    speedButton: Node | null = null;
+
+    @property(Label)
+    speedButtonLabel: Label | null = null;
+
     // ==================== 内部状态 ====================
     private _battleManager: BattleManager | null = null;
     private _gameManager: GameManager | null = null;
@@ -114,6 +122,10 @@ export class BattleUI extends Component {
     private _boundOnReturnMain: (() => void) | null = null;
     private _boundOnSettlement: ((data: any) => void) | null = null;
     private _unsubStateChange: (() => void) | null = null;
+
+    // ==================== 倍速按钮内部状态 ====================
+    private _boundOnSpeedClick: (() => void) | null = null;
+    private _boundOnSpeedChange: ((data: { speed: number }) => void) | null = null;
 
     // ==================== 生命周期 ====================
 
@@ -231,6 +243,16 @@ export class BattleUI extends Component {
         if (this._dynamicTowerSelectPanel && this._dynamicTowerSelectPanel.isValid) {
             this._dynamicTowerSelectPanel.destroy();
             this._dynamicTowerSelectPanel = null;
+        }
+
+        // 解绑倍速按钮事件
+        if (this.speedButton && this._boundOnSpeedClick) {
+            this.speedButton.off(Node.EventType.TOUCH_END, this._boundOnSpeedClick);
+            this._boundOnSpeedClick = null;
+        }
+        if (this._boundOnSpeedChange) {
+            EventBus.getInstance().off(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, this._boundOnSpeedChange);
+            this._boundOnSpeedChange = null;
         }
 
         this._eventBus = null;
@@ -436,6 +458,9 @@ export class BattleUI extends Component {
             this._boundOnReturnMain = () => this._onReturnMain();
             this.returnMainButton.on(Node.EventType.TOUCH_END, this._boundOnReturnMain);
         }
+
+        // 初始化倍速按钮（场景绑定）
+        this._initSpeedButton();
     }
 
     private _onPause(): void {
@@ -456,6 +481,53 @@ export class BattleUI extends Component {
             this._battleManager.returnToIdle();
         }
         this._gameManager.returnToMain();
+    }
+
+    // ==================== 倍速按钮 ====================
+
+    /**
+     * 初始化倍速按钮（场景绑定）
+     * 如果 speedButton 或 speedButtonLabel 未绑定，输出 warn 不崩溃
+     */
+    private _initSpeedButton(): void {
+        if (!this.speedButton) {
+            console.warn('[BattleUI] speedButton is not bound');
+            return;
+        }
+        if (!this.speedButtonLabel) {
+            console.warn('[BattleUI] speedButtonLabel is not bound');
+            return;
+        }
+
+        // 初始文本
+        this.speedButtonLabel.string = '倍速 x1';
+
+        // 点击事件
+        this._boundOnSpeedClick = () => this._onSpeedClick();
+        this.speedButton.on(Node.EventType.TOUCH_END, this._boundOnSpeedClick);
+
+        // 监听倍速变化事件
+        this._boundOnSpeedChange = (data: { speed: number }) => {
+            this._updateSpeedButton(data.speed);
+        };
+        EventBus.getInstance().on(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, this._boundOnSpeedChange);
+    }
+
+    /**
+     * 倍速按钮点击处理
+     */
+    private _onSpeedClick(): void {
+        if (!this._battleManager) return;
+        this._battleManager.cycleBattleSpeed();
+    }
+
+    /**
+     * 更新倍速按钮文本
+     */
+    private _updateSpeedButton(speed: number): void {
+        if (this.speedButtonLabel) {
+            this.speedButtonLabel.string = `倍速 x${speed}`;
+        }
     }
 
     /**

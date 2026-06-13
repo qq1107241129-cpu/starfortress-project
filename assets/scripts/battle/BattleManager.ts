@@ -50,6 +50,12 @@ export class BattleManager {
     /** 需要放置的塔数量（从配置读取） */
     private get _requiredTowerCount(): number { return BATTLE_BALANCE.requiredTowerCount; }
 
+    // ==================== 战斗倍速 ====================
+    /** 当前战斗倍速 */
+    private _battleSpeed: number = 1;
+    /** 可选倍速列表 */
+    private readonly SPEED_OPTIONS: number[] = [1, 2, 3, 4];
+
     constructor() {
         this._stageManager = new StageManager();
         this._rogueChoiceManager = new RogueChoiceManager();
@@ -147,6 +153,7 @@ export class BattleManager {
         this._isForcePaused = false;
         this._isPlacementPaused = true; // 开始时暂停，等待玩家放置塔
         this._placedTowerCount = 0;
+        this._battleSpeed = 1; // 重置倍速为 1x
 
         // 开始计时
         this._timeManager.startBattleTimer(stageConfig.duration);
@@ -251,8 +258,11 @@ export class BattleManager {
         // 如果因肉鸽选择或塔位选择而暂停，跳过战斗逻辑更新
         if (this._isForcePaused || this._isPlacementPaused) return;
 
+        // 应用战斗倍速
+        const scaledDeltaTime = deltaTime * this._battleSpeed;
+
         // 更新时间
-        this._timeManager.updateBattleTime(deltaTime);
+        this._timeManager.updateBattleTime(scaledDeltaTime);
         const currentTime = this._timeManager.getBattleTime();
 
         // 更新肉鸽选择（检查是否触发）
@@ -260,14 +270,46 @@ export class BattleManager {
 
         // 更新敌人生成器
         if (this._enemySpawner) {
-            this._enemySpawner.update(deltaTime, currentTime);
+            this._enemySpawner.update(scaledDeltaTime, currentTime);
         }
 
         // 更新塔（目标选择 + 攻击）
         if (this._towerManager && this._enemySpawner) {
             const aliveEnemies = this._enemySpawner.getAliveEnemies();
-            this._towerManager.update(deltaTime, aliveEnemies);
+            this._towerManager.update(scaledDeltaTime, aliveEnemies);
         }
+    }
+
+    // ==================== 战斗倍速控制 ====================
+
+    /**
+     * 获取当前战斗倍速
+     */
+    getBattleSpeed(): number {
+        return this._battleSpeed;
+    }
+
+    /**
+     * 设置战斗倍速
+     * @param speed 倍速值（必须在 SPEED_OPTIONS 中）
+     */
+    setBattleSpeed(speed: number): void {
+        if (!this.SPEED_OPTIONS.includes(speed)) {
+            console.warn(`[BattleManager] 不支持的倍速: ${speed}`);
+            return;
+        }
+        this._battleSpeed = speed;
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, { speed });
+        console.log(`[BattleManager] 战斗倍速切换为: x${speed}`);
+    }
+
+    /**
+     * 循环切换战斗倍速：1x → 2x → 3x → 4x → 1x
+     */
+    cycleBattleSpeed(): void {
+        const currentIndex = this.SPEED_OPTIONS.indexOf(this._battleSpeed);
+        const nextIndex = (currentIndex + 1) % this.SPEED_OPTIONS.length;
+        this.setBattleSpeed(this.SPEED_OPTIONS[nextIndex]);
     }
 
     /**
@@ -319,6 +361,7 @@ export class BattleManager {
         this._towerManager = null;
         this._isPlacementPaused = false;
         this._placedTowerCount = 0;
+        this._battleSpeed = 1; // 重置倍速为 1x
         // 如果是玩家主动中断战斗（暂停/进行中），需要停止计时并发出 BATTLE_END
         // 如果是战斗已结束（victory/defeat），_endBattle() 已经发出过 BATTLE_END
         if (wasPlaying) {

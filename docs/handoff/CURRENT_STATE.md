@@ -4,6 +4,21 @@
 
 本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
 
+## 2026-06-13 014.1 战斗倍速控制
+
+- 状态：代码已完成，待 Web 预览验证
+- 新增战斗倍速控制，支持 1x/2x/3x/4x 循环切换
+- `BattleManager` 维护 `_battleSpeed`，`update()` 使用 `scaledDeltaTime`
+- `BattleUI` 动态创建倍速按钮，不修改 `.scene`
+- `AttackEffectView` 已接入倍速，特效跟随战斗速度
+- `TowerView` 和 `BattleVisualManager` 不需要额外接入
+- 倍速不影响主界面、放置阶段、肉鸽暂停
+- 新战斗默认回到 1x
+- 未修改 `.scene`
+- 代码已实现，Web 预览未验证，需要人工确认
+
+---
+
 ## 2026-06-13 014 战斗平衡配置化基线
 
 - 状态：代码已完成，待 Web 预览验证

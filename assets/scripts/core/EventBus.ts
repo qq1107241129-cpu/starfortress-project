@@ -92,6 +92,8 @@ export const BATTLE_EVENTS = {
     BATTLE_FORCE_RESUME: 'battle:force_resume',
     // 放置阶段完成（区别于 BATTLE_START，不触发自动放置）
     BATTLE_PLACEMENT_COMPLETE: 'battle:placement_complete',
+    // 战斗倍速变化
+    BATTLE_SPEED_CHANGE: 'battle:speed_change',
     // 放置收益事件
     IDLE_INCOME_TICK: 'idle:income_tick',
     OFFLINE_REWARD_READY: 'idle:offline_reward_ready',
