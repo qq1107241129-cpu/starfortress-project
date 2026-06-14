@@ -19,7 +19,9 @@ import { BattleManager } from '../battle/BattleManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { RogueUpgradeConfig } from '../data/SkillConfig';
 import { GameManager } from '../core/GameManager';
+import { BaseManager } from '../base/BaseManager';
 import { TOWER_CONFIGS } from '../data/TowerConfig';
+import { TowerEffectiveStats } from '../battle/TowerController';
 
 const { ccclass, property } = _decorator;
 
@@ -112,6 +114,10 @@ export class BattleUI extends Component {
     private _boundOnSkillChargeChange: ((data: any) => void) | null = null;
     private _boundOnSkillUse: ((data: any) => void) | null = null;
     private _boundOnShowTowerSelect: ((data: any) => void) | null = null;
+    private _boundOnTowerDetailShow: ((data: any) => void) | null = null;
+
+    // 动态创建的塔详情面板
+    private _dynamicTowerDetailPanel: Node | null = null;
 
     // 保存按钮回调引用，确保能安全解绑
     private _boundOnOrbitalCannonClick: (() => void) | null = null;
@@ -209,6 +215,11 @@ export class BattleUI extends Component {
                 this._eventBus.off('SHOW_TOWER_SELECT', this._boundOnShowTowerSelect);
                 this._boundOnShowTowerSelect = null;
             }
+            // 解绑塔详情显示事件
+            if (this._boundOnTowerDetailShow) {
+                this._eventBus.off(BATTLE_EVENTS.TOWER_DETAIL_SHOW, this._boundOnTowerDetailShow);
+                this._boundOnTowerDetailShow = null;
+            }
         }
 
         // 解绑技能按钮事件
@@ -243,6 +254,10 @@ export class BattleUI extends Component {
         if (this._dynamicTowerSelectPanel && this._dynamicTowerSelectPanel.isValid) {
             this._dynamicTowerSelectPanel.destroy();
             this._dynamicTowerSelectPanel = null;
+        }
+        if (this._dynamicTowerDetailPanel && this._dynamicTowerDetailPanel.isValid) {
+            this._dynamicTowerDetailPanel.destroy();
+            this._dynamicTowerDetailPanel = null;
         }
 
         // 解绑倍速按钮事件
@@ -304,6 +319,13 @@ export class BattleUI extends Component {
             this.showTowerSelectPanel(data.slotId);
         };
         this._eventBus.on('SHOW_TOWER_SELECT', this._boundOnShowTowerSelect);
+
+        // 监听塔详情显示事件
+        this._boundOnTowerDetailShow = (data: { towerId: string; slotId: string; configId: string }) => {
+            console.log(`[BattleUI] 收到 TOWER_DETAIL_SHOW 事件, towerId=${data.towerId}`);
+            this._showTowerDetailPanel(data.towerId);
+        };
+        this._eventBus.on(BATTLE_EVENTS.TOWER_DETAIL_SHOW, this._boundOnTowerDetailShow);
     }
 
     private _setupButtonListeners(): void {
@@ -412,8 +434,19 @@ export class BattleUI extends Component {
         const towerConfig = towerConfigs[towerIndex];
         console.log(`[BattleUI] 选择塔: ${towerConfig.name} (${towerConfig.id})`);
 
+        // 从存档读取塔等级（兜底为 1）
+        let towerLevel = 1;
+        try {
+            const saveMgr = BaseManager.getInstance().getSaveManager();
+            const save = saveMgr.getSave();
+            towerLevel = save.towerLevels?.[towerConfig.id] ?? 1;
+        } catch (e) {
+            console.warn('[BattleUI] 读取塔等级失败，使用默认等级 1');
+        }
+        console.log(`[BattleUI] 塔等级: ${towerLevel}`);
+
         // 放置塔
-        const success = this._battleManager.placeTower(this._currentSlotId, towerConfig.id, 1);
+        const success = this._battleManager.placeTower(this._currentSlotId, towerConfig.id, towerLevel);
         console.log(`[BattleUI] placeTower result: ${success}`);
 
         if (success) {
@@ -886,6 +919,161 @@ export class BattleUI extends Component {
         if (this._dynamicTowerSelectPanel) {
             this._dynamicTowerSelectPanel.active = false;
         }
+    }
+
+    // ==================== 塔详情面板 ====================
+
+    /**
+     * 显示塔详情面板
+     * @param towerId 塔ID
+     */
+    private _showTowerDetailPanel(towerId: string): void {
+        if (!this._battleManager) return;
+
+        const towerManager = this._battleManager.getTowerManager();
+        if (!towerManager) return;
+
+        const tower = towerManager.getTower(towerId);
+        if (!tower) return;
+
+        const stats = tower.getEffectiveStats();
+
+        // 确保面板存在
+        this._ensureTowerDetailPanel();
+        if (!this._dynamicTowerDetailPanel) return;
+
+        // 更新面板内容
+        this._updateTowerDetailContent(stats);
+
+        // 置顶面板
+        this._bringNodeToFront(this._dynamicTowerDetailPanel);
+        this._bringNodeToFront(this.node);
+
+        this._dynamicTowerDetailPanel.active = true;
+        console.log(`[BattleUI] 显示塔详情面板: ${stats.name} Lv.${stats.level}`);
+    }
+
+    /**
+     * 隐藏塔详情面板
+     */
+    private _hideTowerDetailPanel(): void {
+        if (this._dynamicTowerDetailPanel) {
+            this._dynamicTowerDetailPanel.active = false;
+        }
+    }
+
+    /**
+     * 确保塔详情面板存在
+     */
+    private _ensureTowerDetailPanel(): void {
+        if (this._dynamicTowerDetailPanel && this._dynamicTowerDetailPanel.isValid) {
+            return;
+        }
+
+        console.log('[BattleUI] 动态创建塔详情面板');
+
+        const panel = new Node('TowerDetailPanel');
+        panel.parent = this.node;
+
+        // 面板居中显示
+        const panelTransform = panel.addComponent(UITransform);
+        panelTransform.setContentSize(500, 600);
+
+        // 半透明背景
+        const bg = panel.addComponent(Graphics);
+        bg.fillColor = new Color(20, 20, 40, 230);
+        bg.roundRect(-250, -300, 500, 600, 12);
+        bg.fill();
+        bg.strokeColor = new Color(100, 180, 255, 200);
+        bg.lineWidth = 2;
+        bg.roundRect(-250, -300, 500, 600, 12);
+        bg.stroke();
+
+        // 标题
+        const titleNode = new Node('Title');
+        titleNode.parent = panel;
+        titleNode.setPosition(0, 250, 0);
+        const titleLabel = titleNode.addComponent(Label);
+        titleLabel.string = '塔详情';
+        titleLabel.fontSize = 28;
+        titleLabel.color = new Color(255, 255, 255, 255);
+
+        // 内容区域（动态更新）
+        const contentNode = new Node('Content');
+        contentNode.parent = panel;
+        contentNode.setPosition(0, 0, 0);
+        const contentLabel = contentNode.addComponent(Label);
+        contentLabel.string = '';
+        contentLabel.fontSize = 20;
+        contentLabel.color = new Color(220, 220, 220, 255);
+        contentLabel.lineHeight = 30;
+
+        // 关闭按钮
+        const closeBtnNode = new Node('CloseBtn');
+        closeBtnNode.parent = panel;
+        closeBtnNode.setPosition(200, 250, 0);
+        const closeTransform = closeBtnNode.addComponent(UITransform);
+        closeTransform.setContentSize(60, 40);
+        const closeGraphics = closeBtnNode.addComponent(Graphics);
+        closeGraphics.fillColor = new Color(120, 40, 40, 255);
+        closeGraphics.roundRect(-30, -20, 60, 40, 6);
+        closeGraphics.fill();
+        closeGraphics.strokeColor = new Color(200, 100, 100, 200);
+        closeGraphics.lineWidth = 1;
+        closeGraphics.roundRect(-30, -20, 60, 40, 6);
+        closeGraphics.stroke();
+        const closeLabelNode = new Node('Label');
+        closeLabelNode.parent = closeBtnNode;
+        const closeLabel = closeLabelNode.addComponent(Label);
+        closeLabel.string = '关闭';
+        closeLabel.fontSize = 18;
+        closeLabel.color = new Color(255, 200, 200, 255);
+        closeBtnNode.on(Node.EventType.TOUCH_END, () => {
+            this._hideTowerDetailPanel();
+        });
+
+        this._dynamicTowerDetailPanel = panel;
+        panel.active = false;
+    }
+
+    /**
+     * 更新塔详情面板内容
+     */
+    private _updateTowerDetailContent(stats: TowerEffectiveStats): void {
+        if (!this._dynamicTowerDetailPanel) return;
+
+        const contentNode = this._dynamicTowerDetailPanel.getChildByName('Content');
+        if (!contentNode) return;
+
+        const contentLabel = contentNode.getComponent(Label);
+        if (!contentLabel) return;
+
+        // 根据塔类型显示不同内容
+        let specialInfo = '';
+        switch (stats.type) {
+            case 'cannon_tower':
+                specialInfo = `爆炸范围: ${stats.splashRadius}`;
+                break;
+            case 'ice_tower':
+                specialInfo = `减速比例: ${(stats.slowFactor * 100).toFixed(0)}%\n减速时长: ${stats.slowDuration.toFixed(1)}s`;
+                break;
+            case 'electric_tower':
+                specialInfo = `弹射次数: ${stats.chainCount}`;
+                break;
+            case 'machinegun_tower':
+                specialInfo = '单体高频输出';
+                break;
+        }
+
+        contentLabel.string = [
+            `名称: ${stats.name}`,
+            `类型: ${stats.type}`,
+            `等级: Lv.${stats.level}`,
+            `攻击: ${stats.attack}`,
+            `攻速: ${stats.attackSpeed.toFixed(2)}s`,
+            `射程: ${stats.range}`,
+            specialInfo,
+        ].join('\n');
     }
 
     /**

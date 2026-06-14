@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-06-14 015.4 塔升级属性生效 + 塔详情面板
+
+### Fixed
+
+- 修复战斗内放塔读取存档塔等级，使局外升级生效
+- `BattleUI.ts`：从 SaveManager 读取存档中的塔等级，不再硬编码 `level = 1`
+
+### Added
+
+- 新增 `TowerController.getEffectiveStats()` 方法，返回当前实际生效属性
+- 新增 `TowerEffectiveStats` 接口，用于塔详情显示
+- 新增 `TOWER_DETAIL_SHOW`、`TOWER_DETAIL_HIDE` 事件常量
+- `BattleVisualManager.ts`：处理点击已放置塔，发出 `TOWER_DETAIL_SHOW` 事件
+- `BattleUI.ts`：动态创建塔详情面板，显示塔名称、等级、伤害、攻速、射程、特殊属性
+
+### Notes
+
+- 塔详情面板显示实际生效属性（含等级和肉鸽加成）
+- 点击已放置塔显示详情，点击空塔位显示建塔选择
+- 未修改 `.scene` 文件
+- 未修改 TowerConfig 基础数值
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-14 015.3 Boss 击杀胜利 + Boss 进基地结算
 
 ### Changed

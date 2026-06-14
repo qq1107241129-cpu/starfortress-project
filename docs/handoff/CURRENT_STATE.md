@@ -1,8 +1,18 @@
 # Starfortress Project 当前交接状态
 
-## 2026-06-14 015.3 Boss 击杀胜利 + Boss 进基地结算
+## 2026-06-14 015.4 塔升级属性生效 + 塔详情面板
 
 - 状态：代码已完成，Web 预览待用户确认
+- 修复战斗内放塔读取存档塔等级，使局外升级生效
+- 新增 `TowerController.getEffectiveStats()` 方法，返回当前实际生效属性
+- 新增塔详情面板，点击已放置塔显示属性
+- `.scene` 状态：未修改
+- 未修改 TowerConfig 基础数值
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-14 015.3 Boss 击杀胜利 + Boss 进基地结算
 - 修改战斗胜利条件：不再因为 180 秒时间到达自动胜利，改为 Boss 被击杀后才胜利结算
 - `TimeManager.ts`：删除时间到自动 emit `BATTLE_RESULT: victory` 的逻辑
 - `BattleManager.ts`：在 `ENEMY_DEATH` 监听中增加 Boss 死亡胜利判断

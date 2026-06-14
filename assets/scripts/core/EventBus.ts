@@ -116,4 +116,7 @@ export const BATTLE_EVENTS = {
     // 投射物事件（用于视觉同步）
     PROJECTILE_SPAWN: 'battle:projectile_spawn',
     PROJECTILE_HIT: 'battle:projectile_hit',
+    // 塔详情面板事件
+    TOWER_DETAIL_SHOW: 'battle:tower_detail_show',
+    TOWER_DETAIL_HIDE: 'battle:tower_detail_hide',
 } as const;

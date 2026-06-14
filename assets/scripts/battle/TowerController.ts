@@ -15,6 +15,22 @@ export interface TowerState {
     cooldownRemaining: number;
 }
 
+/** 塔生效属性（用于显示） */
+export interface TowerEffectiveStats {
+    id: string;
+    configId: string;
+    name: string;
+    type: string;
+    level: number;
+    attack: number;
+    attackSpeed: number;
+    range: number;
+    splashRadius: number;
+    chainCount: number;
+    slowFactor: number;
+    slowDuration: number;
+}
+
 export class TowerController {
     private _state: TowerState;
     private _config: TowerConfig;
@@ -218,5 +234,25 @@ export class TowerController {
         this._state.level = nextLevel;
         this._levelConfig = nextConfig;
         return true;
+    }
+
+    /**
+     * 获取当前实际生效属性（含等级和加成）
+     */
+    getEffectiveStats(): TowerEffectiveStats {
+        return {
+            id: this._state.id,
+            configId: this._state.configId,
+            name: this._config.name,
+            type: this._config.type,
+            level: this._state.level,
+            attack: this.getAttack(),
+            attackSpeed: this.getAttackSpeed(),
+            range: this.getRange(),
+            splashRadius: this.getSplashRadius(),
+            chainCount: this.getChainCount(),
+            slowFactor: this.getSlowFactor(),
+            slowDuration: this.getSlowDuration(),
+        };
     }
 }

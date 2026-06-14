@@ -756,7 +756,6 @@ export class BattleVisualManager extends Component {
     private _onSystemTouchStart(event: EventTouch): void {
         if (!this._isInitialized) return;
         if (!this._battleManager) return;
-        if (!this._battleManager.isPlacementPhase()) return;
 
         // 获取触摸位置（屏幕坐标）
         const touch = event.touch;
@@ -774,16 +773,24 @@ export class BattleVisualManager extends Component {
 
         const slots = towerManager.getSlots();
         for (const slot of slots) {
-            // 跳过已有塔的槽位
-            if (slot.towerId) continue;
-
             // 检测触摸点是否在槽位范围内
             const dx = Math.abs(localPos.x - slot.position.x);
             const dy = Math.abs(localPos.y - slot.position.y);
 
             if (dx <= SLOT_HALF_SIZE && dy <= SLOT_HALF_SIZE) {
-                console.log(`[BattleVisualManager] 系统触摸命中槽位 ${slot.id}, screen=(${screenPos.x.toFixed(0)}, ${screenPos.y.toFixed(0)}), local=(${localPos.x.toFixed(0)}, ${localPos.y.toFixed(0)})`);
-                this._onSlotClick(slot.id);
+                if (this._battleManager.isPlacementPhase()) {
+                    // 放置阶段：点击空槽位显示建塔选择
+                    if (!slot.towerId) {
+                        console.log(`[BattleVisualManager] 系统触摸命中空槽位 ${slot.id}`);
+                        this._onSlotClick(slot.id);
+                    }
+                } else {
+                    // 战斗阶段：点击已放置塔显示详情
+                    if (slot.towerId) {
+                        console.log(`[BattleVisualManager] 系统触摸命中已放置塔 ${slot.towerId}`);
+                        this._onTowerClick(slot.towerId, slot.id);
+                    }
+                }
                 return;
             }
         }
@@ -796,7 +803,6 @@ export class BattleVisualManager extends Component {
     private _onSystemMouseDown(event: EventMouse): void {
         if (!this._isInitialized) return;
         if (!this._battleManager) return;
-        if (!this._battleManager.isPlacementPhase()) return;
 
         const screenPos = event.getUILocation();
         const localPos = this._screenToLocal(screenPos);
@@ -807,19 +813,26 @@ export class BattleVisualManager extends Component {
 
         const slots = towerManager.getSlots();
         for (const slot of slots) {
-            if (slot.towerId) continue;
-
             const dx = Math.abs(localPos.x - slot.position.x);
             const dy = Math.abs(localPos.y - slot.position.y);
 
             if (dx <= SLOT_HALF_SIZE && dy <= SLOT_HALF_SIZE) {
-                console.log(`[BattleVisualManager] system mouse hit slot ${slot.id}, ui=(${screenPos.x.toFixed(0)}, ${screenPos.y.toFixed(0)}), local=(${localPos.x.toFixed(0)}, ${localPos.y.toFixed(0)})`);
-                this._onSlotClick(slot.id);
+                if (this._battleManager.isPlacementPhase()) {
+                    // 放置阶段：点击空槽位显示建塔选择
+                    if (!slot.towerId) {
+                        console.log(`[BattleVisualManager] system mouse hit empty slot ${slot.id}`);
+                        this._onSlotClick(slot.id);
+                    }
+                } else {
+                    // 战斗阶段：点击已放置塔显示详情
+                    if (slot.towerId) {
+                        console.log(`[BattleVisualManager] system mouse hit placed tower ${slot.towerId}`);
+                        this._onTowerClick(slot.towerId, slot.id);
+                    }
+                }
                 return;
             }
         }
-
-        console.log(`[BattleVisualManager] system mouse missed slots, ui=(${screenPos.x.toFixed(0)}, ${screenPos.y.toFixed(0)}), local=(${localPos.x.toFixed(0)}, ${localPos.y.toFixed(0)})`);
     }
 
     private _screenToLocal(screenPos: Vec2): Vec2 | null {
@@ -927,6 +940,29 @@ export class BattleVisualManager extends Component {
         if (this._eventBus) {
             this._eventBus.emit('SHOW_TOWER_SELECT', { slotId });
         }
+    }
+
+    /**
+     * 已放置塔点击处理（战斗阶段）
+     */
+    private _onTowerClick(towerId: string, slotId: string): void {
+        console.log(`[BattleVisualManager] _onTowerClick: towerId=${towerId}, slotId=${slotId}`);
+
+        if (!this._battleManager) return;
+        if (!this._eventBus) return;
+
+        const towerManager = this._battleManager.getTowerManager();
+        if (!towerManager) return;
+
+        const tower = towerManager.getTower(towerId);
+        if (!tower) return;
+
+        // 发出塔详情显示事件
+        this._eventBus.emit(BATTLE_EVENTS.TOWER_DETAIL_SHOW, {
+            towerId: tower.getId(),
+            slotId: slotId,
+            configId: tower.getConfig().id,
+        });
     }
 
     /**
