@@ -453,28 +453,28 @@ export class BattleUI extends Component {
 
         // 应用文字样式
         if (this.orbitalCannonChargeLabel) {
-            styleLabel(this.orbitalCannonChargeLabel, 'medium');
+            styleLabel(this.orbitalCannonChargeLabel.node, 'medium');
         }
         if (this.freezeChargeLabel) {
-            styleLabel(this.freezeChargeLabel, 'medium');
+            styleLabel(this.freezeChargeLabel.node, 'medium');
         }
         if (this.rogueChoiceTitleLabel) {
-            styleLabel(this.rogueChoiceTitleLabel, 'title');
+            styleLabel(this.rogueChoiceTitleLabel.node, 'title');
         }
         if (this.towerSelectTitleLabel) {
-            styleLabel(this.towerSelectTitleLabel, 'title');
+            styleLabel(this.towerSelectTitleLabel.node, 'title');
         }
         if (this.timeLabel) {
-            styleLabel(this.timeLabel, 'medium');
+            styleLabel(this.timeLabel.node, 'medium');
         }
         if (this.baseHealthLabel) {
-            styleLabel(this.baseHealthLabel, 'medium');
+            styleLabel(this.baseHealthLabel.node, 'medium');
         }
         if (this.battleCoinLabel) {
-            styleLabel(this.battleCoinLabel, 'medium');
+            styleLabel(this.battleCoinLabel.node, 'medium');
         }
         if (this.baseCoinLabel) {
-            styleLabel(this.baseCoinLabel, 'medium');
+            styleLabel(this.baseCoinLabel.node, 'medium');
         }
     }
 

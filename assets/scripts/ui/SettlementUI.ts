@@ -113,28 +113,28 @@ export class SettlementUI extends Component {
 
         // 应用文字样式
         if (this.resultLabel) {
-            styleLabel(this.resultLabel, 'title');
+            styleLabel(this.resultLabel.node, 'title');
         }
         if (this.stageLabel) {
-            styleLabel(this.stageLabel, 'medium');
+            styleLabel(this.stageLabel.node, 'medium');
         }
         if (this.starLabel) {
-            styleLabel(this.starLabel, 'large');
+            styleLabel(this.starLabel.node, 'large');
         }
         if (this.killCountLabel) {
-            styleLabel(this.killCountLabel, 'medium');
+            styleLabel(this.killCountLabel.node, 'medium');
         }
         if (this.bossKillLabel) {
-            styleLabel(this.bossKillLabel, 'medium');
+            styleLabel(this.bossKillLabel.node, 'medium');
         }
         if (this.healthLabel) {
-            styleLabel(this.healthLabel, 'medium');
+            styleLabel(this.healthLabel.node, 'medium');
         }
         if (this.battleCoinLabel) {
-            styleLabel(this.battleCoinLabel, 'medium');
+            styleLabel(this.battleCoinLabel.node, 'medium');
         }
         if (this.baseCoinLabel) {
-            styleLabel(this.baseCoinLabel, 'medium');
+            styleLabel(this.baseCoinLabel.node, 'medium');
         }
     }
 

@@ -176,16 +176,16 @@ export class MainUI extends Component {
 
         // 应用文字样式
         if (this.baseCoinLabel) {
-            styleLabel(this.baseCoinLabel, 'medium');
+            styleLabel(this.baseCoinLabel.node, 'medium');
         }
         if (this.battleCoinLabel) {
-            styleLabel(this.battleCoinLabel, 'medium');
+            styleLabel(this.battleCoinLabel.node, 'medium');
         }
         if (this.rebirthTokenLabel) {
-            styleLabel(this.rebirthTokenLabel, 'medium');
+            styleLabel(this.rebirthTokenLabel.node, 'medium');
         }
         if (this.stageLabel) {
-            styleLabel(this.stageLabel, 'medium');
+            styleLabel(this.stageLabel.node, 'medium');
         }
     }
 

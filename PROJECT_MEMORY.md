@@ -215,7 +215,7 @@ Platform.instance.showRewardAd()
 - `ENEMY_SLOWED` / `ENEMY_SLOW_ENDED`：减速特效
 - `PROJECTILE_SPAWN` / `PROJECTILE_HIT`：投射物视觉同步
 - `SKILL_ORBITAL_CANNON`：轨道炮特效（预警圆环 + 能量光柱 + 命中爆炸）
-- `SKILL_FREEZE`：全屏冻结特效（冰蓝遮罩 + 冰环 + 冰晶线条）
+- `SKILL_FREEZE`：全屏冻结特效（冰蓝覆盖 + 雪花扩散 + 冰晶裂纹/短线）
 
 ## 技能特效系统
 
@@ -224,8 +224,8 @@ Platform.instance.showRewardAd()
 - 设计决策：独立于 `BattleVisualManager`，便于后续扩展更多技能特效
 - 只负责视觉效果，不修改技能伤害、冻结时长、充能逻辑
 - 使用 `Graphics` 动态绘制，不引入新图片资源
-- 特效生命周期：轨道炮 0.6 秒，全屏冻结 0.8 秒
-- 特效使用 `scheduleOnce` 管理，不受战斗倍速影响
+- 特效生命周期：轨道炮约 0.9 秒，全屏冻结约 1.17 秒
+- 特效使用 `update(deltaTime)` 和内部 active effect list 管理，不跟随战斗倍速
 - `BATTLE_END` 事件自动清理所有特效
 
 ## .scene 仍由用户人工维护

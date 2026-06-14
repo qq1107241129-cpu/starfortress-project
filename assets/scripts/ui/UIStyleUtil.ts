@@ -163,7 +163,7 @@ export function styleButton(buttonNode: Node, variant: 'primary' | 'danger' | 's
 
         // 如果找到背景节点，设置 button.target
         if (sprite && !button.target) {
-            button.target = sprite;
+            button.target = sprite.node;
         }
     }
 
@@ -455,5 +455,4 @@ export function styleCard(cardNode: Node, variant: 'default' | 'highlight' = 'de
     graphics.roundRect(-width / 2, -height / 2, width, height, UI_THEME.panelRadius);
     graphics.stroke();
 }
-
 

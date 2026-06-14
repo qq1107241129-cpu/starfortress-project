@@ -1,83 +1,40 @@
 # CHANGELOG
 
+## 2026-06-15 015 系列审查修复
+
+### Fixed
+
+- 修复 015.5 UI 样式接入的 TypeScript 类型错误：
+  - `BattleUI.ts`、`MainUI.ts`、`SettlementUI.ts` 调用 `styleLabel()` 时传入 `Label.node`
+  - `UIStyleUtil.ts` 将 `Button.target` 设置为 `Sprite.node`
+- 补建缺失的 `TASKS/015.5.2-ui-visual-polish-detail-fix.md`
+- 同步 015.5.3 文档：真实目标已变更为复用肉鸽 `styleOuterFrame` 大面板逻辑，不再做 modal backdrop / TowerModalBackdrop / Shader / Material / RenderTexture
+- 同步 015.1 和 `PROJECT_MEMORY.md` 的技能 VFX 描述：冻结特效为雪花扩散，特效生命周期由 `update(deltaTime)` 驱动
+
+### Notes
+
+- `assets/scenes/Battle.scene` 为用户人工 Cocos 绑定 / UI 调整改动，本轮只报告，不修改、恢复、checkout、stash、格式化或脚本处理
+- `RebirthManager.ts` 的 `baseCoreLevel` TypeScript 问题不属于 015 系列，本轮不修；整体 `tsc` 仍会被该既有非 015 问题阻断
+- 代码修复完成，Web 预览待用户确认
+
 ## 2026-06-14 015.5.3 塔详情和塔位选择界面复用肉鸽大面板逻辑
 
 ### Changed
 
 - 放弃单独遮罩节点方案，复用肉鸽 `styleOuterFrame` 大面板逻辑
 - `BattleUI.ts`：
-  - 删除 `_towerModalBackdrop`、`_activeTowerModal` 相关字段
-  - 删除 `_getPanelParent()`、`_ensureTowerModalBackdrop()`、`_showTowerModalBackdrop()`、`_hideTowerModalBackdrop()` 方法
   - 塔详情面板使用 `styleOuterFrame` 替代 `stylePanel`
   - 塔位选择面板使用 `styleOuterFrame` 替代 `stylePanel`
   - 动态 fallback 面板也使用 `styleOuterFrame`
-- `UIStyleUtil.ts`：删除 `styleModalBackdrop`、`ensureModalBackdrop` 方法
-- `UITheme.ts`：删除 `modalBackdropColor`、`frostedPanelColor` 颜色
+- `UIStyleUtil.ts`：保留 `styleOuterFrame`，不新增 modal backdrop 工具方法
+- `UITheme.ts`：保留现有主题色，不新增 modal backdrop 专用颜色
 
 ### Notes
 
 - 塔详情/塔位选择改为深色半透明大底板，复用肉鸽逻辑
 - 用户在 Cocos 里负责调整面板 UITransform 尺寸
 - `styleOuterFrame` 会读取面板本体尺寸绘制大底板
-- 未修改 `.scene` 文件
-- 未修改战斗/数值/技能逻辑
-- 代码已实现，Web 预览待用户确认
-
-- 修复遮罩不生效问题：遮罩必须创建在面板同一个 parent 下
-- `_getPanelParent()`：优先使用绑定面板的 parent，否则使用 this.node
-- `_ensureTowerModalBackdrop()`：如果遮罩 parent 不对，重新创建
-- `_showTowerModalBackdrop()`：每次显示时重新设置样式
-- `_showBoundTowerDetailPanel()`：面板在遮罩上方
-- `_showBoundTowerSelectPanel()`：面板在遮罩上方
-- 遮罩颜色调明显（调试用）：`new Color(0, 0, 0, 180)`
-
-### Added
-
-- `UITheme.ts`：新增遮罩颜色（modalBackdropColor、frostedPanelColor）
-- `UIStyleUtil.ts`：新增 styleModalBackdrop、ensureModalBackdrop 方法
-- `BattleUI.ts`：
-  - 新增私有字段：`_towerModalBackdrop`、`_activeTowerModal`
-  - 新增方法：`_ensureTowerModalBackdrop()`、`_showTowerModalBackdrop()`、`_hideTowerModalBackdrop()`、`_getPanelParent()`
-  - `_hideInitialPanels()` 已扩展，隐藏所有面板和遮罩
-  - `showTowerSelectPanel()` 已修改，增加遮罩逻辑和互斥逻辑
-  - `_hideTowerSelectPanel()` 已修改，增加遮罩隐藏逻辑
-  - `_showTowerDetailPanel()` 已修改，增加遮罩逻辑和互斥逻辑
-  - `_hideTowerDetailPanel()` 已修改，增加遮罩隐藏逻辑
-
-### Notes
-
-- 塔详情面板显示时，背后战斗画面被半透明暗化
-- 塔位选择面板显示时，背后战斗画面被半透明暗化
-- 遮罩在 BattleVisualRoot 之上、面板之下
-- 遮罩阻止点击穿透到战斗区域
-- 显示塔位选择时，先隐藏塔详情；显示塔详情时，先隐藏塔位选择
-- 记录当前打开的 modal 类型，避免错误隐藏
-- 游戏开始时遮罩默认隐藏
-- 未修改 `.scene` 文件
-- 未修改战斗/数值/技能逻辑
-- 代码已实现，Web 预览待用户确认
-
-- `UITheme.ts`：新增遮罩颜色（modalBackdropColor、frostedPanelColor）
-- `UIStyleUtil.ts`：新增 styleModalBackdrop、ensureModalBackdrop 方法
-- `BattleUI.ts`：
-  - 新增私有字段：`_towerModalBackdrop`、`_activeTowerModal`
-  - 新增方法：`_ensureTowerModalBackdrop()`、`_showTowerModalBackdrop()`、`_hideTowerModalBackdrop()`
-  - `_hideInitialPanels()` 已扩展，隐藏所有面板和遮罩
-  - `showTowerSelectPanel()` 已修改，增加遮罩逻辑和互斥逻辑
-  - `_hideTowerSelectPanel()` 已修改，增加遮罩隐藏逻辑
-  - `_showTowerDetailPanel()` 已修改，增加遮罩逻辑和互斥逻辑
-  - `_hideTowerDetailPanel()` 已修改，增加遮罩隐藏逻辑
-
-### Notes
-
-- 塔详情面板显示时，背后战斗画面被半透明暗化
-- 塔位选择面板显示时，背后战斗画面被半透明暗化
-- 遮罩在 BattleVisualRoot 之上、面板之下
-- 遮罩阻止点击穿透到战斗区域
-- 显示塔位选择时，先隐藏塔详情；显示塔详情时，先隐藏塔位选择
-- 记录当前打开的 modal 类型，避免错误隐藏
-- 游戏开始时遮罩默认隐藏
-- 未修改 `.scene` 文件
+- `assets/scenes/Battle.scene` 为用户人工 Cocos 绑定 / UI 调整改动
 - 未修改战斗/数值/技能逻辑
 - 代码已实现，Web 预览待用户确认
 
@@ -286,7 +243,7 @@
 
 - 新增 `assets/scripts/battle/SkillEffectView.ts`：技能视觉特效管理器
 - 轨道炮特效：预警圆环（红色）+ 能量光柱（橙黄色）+ 命中爆炸圆环（白色），持续 0.6 秒
-- 全屏冻结特效：冰蓝遮罩 + 雪花扩散 + 冰晶裂纹/短线，持续约 1.17 秒
+- 全屏冻结特效：冰蓝覆盖 + 雪花扩散 + 冰晶裂纹/短线，持续约 1.17 秒
 - 监听 `SKILL_ORBITAL_CANNON` 和 `SKILL_FREEZE` 事件自动创建特效
 - 监听 `BATTLE_END` 事件清理所有特效
 - 特效使用 Graphics 动态绘制，不引入新图片资源
@@ -295,7 +252,7 @@
 
 - `SkillEffectView` 需要在 Cocos Creator 中手动挂载到 `BattleVisualRoot -> EffectLayer` 节点
 - 只负责视觉效果，不修改技能伤害、冻结时长、充能逻辑
-- 使用 `scheduleOnce` 管理特效生命周期，不受战斗倍速影响
+- 使用 `update(deltaTime)` 和内部 active effect list 管理特效生命周期，不跟随战斗倍速
 - 未修改 `.scene` 文件
 - 未修改战斗数值
 - 代码已实现，Web 预览待用户确认

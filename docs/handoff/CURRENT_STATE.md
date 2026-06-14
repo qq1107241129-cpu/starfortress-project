@@ -1,35 +1,26 @@
 # Starfortress Project 当前交接状态
 
+## 2026-06-15 015 系列审查修复
+
+- 状态：代码修复完成，Web 预览待用户确认
+- 修复 015.5 UI 样式接入的 TypeScript 类型错误：
+  - `styleLabel()` 调用改为传入 `Label.node`
+  - `Button.target` 改为设置 `Sprite.node`
+- 补建缺失的 `TASKS/015.5.2-ui-visual-polish-detail-fix.md`
+- 同步 015.5.3 文档：真实目标为复用肉鸽 `styleOuterFrame` 大面板逻辑，不再做 modal backdrop / TowerModalBackdrop / Shader / Material / RenderTexture
+- 同步 015.1 / `PROJECT_MEMORY.md`：冻结特效为雪花扩散，技能 VFX 生命周期由 `update(deltaTime)` 驱动
+- `assets/scenes/Battle.scene` 为用户人工 Cocos 绑定 / UI 调整改动，本轮只报告，不修改、恢复、checkout、stash、格式化或脚本处理
+- `RebirthManager.ts` 的 `baseCoreLevel` TypeScript 问题不属于 015 系列，本轮不修；整体 `tsc` 仍会被该既有非 015 问题阻断
+
+---
+
 ## 2026-06-14 015.5.3 塔详情和塔位选择界面复用肉鸽大面板逻辑
 
 - 状态：代码已完成，Web 预览待用户确认
 - 放弃单独遮罩节点方案，复用肉鸽 `styleOuterFrame` 大面板逻辑
 - 塔详情/塔位选择改为深色半透明大底板
 - 用户在 Cocos 里负责调整面板 UITransform 尺寸
-- `.scene` 状态：未修改
-- 代码已实现，Web 预览待用户确认
-
----
-
-## 2026-06-14 015.5.3 塔详情和塔位选择界面背景磨砂遮罩（修复遮罩不生效）
-- 修复遮罩不生效问题：遮罩必须创建在面板同一个 parent 下
-- `_getPanelParent()`：优先使用绑定面板的 parent，否则使用 this.node
-- `_ensureTowerModalBackdrop()`：如果遮罩 parent 不对，重新创建
-- 遮罩颜色调明显（调试用）：`new Color(0, 0, 0, 180)`
-- `.scene` 状态：未修改
-- 代码已实现，Web 预览待用户确认
-
----
-
-## 2026-06-14 015.5.3 塔详情和塔位选择界面背景磨砂遮罩
-- 塔详情面板显示时，背后战斗画面被半透明暗化
-- 塔位选择面板显示时，背后战斗画面被半透明暗化
-- 遮罩在 BattleVisualRoot 之上、面板之下
-- 遮罩阻止点击穿透到战斗区域
-- 显示塔位选择时，先隐藏塔详情；显示塔详情时，先隐藏塔位选择
-- 记录当前打开的 modal 类型，避免错误隐藏
-- 游戏开始时遮罩默认隐藏
-- `.scene` 状态：未修改
+- `.scene` 状态：`assets/scenes/Battle.scene` 为用户人工 Cocos 绑定 / UI 调整改动
 - 代码已实现，Web 预览待用户确认
 
 ---
@@ -131,7 +122,7 @@
 - Effect sizing now reads `UITransform` from the mounted layer or parent first; `1080x1920` is fallback only.
 - Effect lifetime now uses `update(deltaTime)` with an active effect list. `BATTLE_END` and `onDestroy` destroy all active skill effect nodes.
 - `.scene` status: `assets/scenes/Battle.scene` was already modified before this redo and remains treated as user manual Cocos work. Codex did not modify, recover, checkout, stash, format, or script-process it.
-- `.meta` status: `assets/scripts/battle/SkillEffectView.ts.meta` already exists as an untracked file and was left untouched by this redo.
+- `.meta` status: `assets/scripts/battle/SkillEffectView.ts.meta` already exists and was left untouched by this redo.
 
 Manual Cocos check:
 1. Open Cocos Creator.
@@ -157,10 +148,10 @@ Web preview check:
 - 状态：代码已完成，需人工在 Cocos Creator 中挂载组件，Web 预览待用户确认
 - 新增 `assets/scripts/battle/SkillEffectView.ts`：技能视觉特效管理器
 - 轨道炮特效：预警圆环 + 能量光柱 + 命中爆炸圆环，持续 0.6 秒
-- 全屏冻结特效：冰蓝遮罩 + 雪花扩散 + 冰晶裂纹/短线，持续约 1.17 秒
+- 全屏冻结特效：冰蓝覆盖 + 雪花扩散 + 冰晶裂纹/短线，持续约 1.17 秒
 - 使用 Graphics 动态绘制，不引入新图片资源
-- `.meta` 状态：`SkillEffectView.ts.meta` 需要在 Cocos Creator 中刷新生成
-- `.scene` 状态：未修改，检测到的 `.scene` 差异默认视为用户人工改动
+- `.meta` 状态：`SkillEffectView.ts.meta` 已存在，本轮不主动重写
+- `.scene` 状态：`assets/scenes/Battle.scene` 为用户人工 Cocos 绑定 / UI 调整改动
 - 未修改技能伤害、冻结时长、充能逻辑
 - 代码已实现，Web 预览待用户确认
 
