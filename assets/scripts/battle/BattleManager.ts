@@ -79,14 +79,29 @@ export class BattleManager {
      */
     private _setupEventListeners(): void {
         // 监听敌人到达基地
-        this._eventBus.on(BATTLE_EVENTS.ENEMY_REACH_BASE, (data: { enemyId: string; damage: number }) => {
+        this._eventBus.on(BATTLE_EVENTS.ENEMY_REACH_BASE, (data: { enemyId: string; configId: string; isBoss: boolean; damage: number }) => {
+            // 先扣血
             this._stageManager.damageBase(data.damage);
+
+            // Boss 进基地触发结算
+            if (data.isBoss && this._state === 'playing') {
+                const baseState = this._stageManager.getBaseState();
+                if (baseState.health > 0) {
+                    // 基地血量 > 0，胜利
+                    this._eventBus.emit(BATTLE_EVENTS.BATTLE_RESULT, { result: 'victory' });
+                }
+                // 基地血量 <= 0 时，damageBase 已经触发了 defeat，这里不需要重复触发
+            }
         });
 
         // 监听敌人死亡
         this._eventBus.on(BATTLE_EVENTS.ENEMY_DEATH, (data: { enemyId: string; reward: number; isBoss: boolean }) => {
             if (this._battleSettlement) {
                 this._battleSettlement.recordKill(data.isBoss, data.reward);
+            }
+            // Boss 死亡触发胜利
+            if (data.isBoss && this._state === 'playing') {
+                this._eventBus.emit(BATTLE_EVENTS.BATTLE_RESULT, { result: 'victory' });
             }
         });
 

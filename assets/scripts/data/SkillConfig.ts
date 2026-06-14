@@ -29,7 +29,7 @@ export const ACTIVE_SKILL_CONFIGS: ActiveSkillConfig[] = [
         name: '轨道炮',
         description: '对敌人最密集区域造成高额伤害',
         cooldown: 60,
-        damage: 500,
+        damage: 300,
         initialCharges: 1,
     },
     {

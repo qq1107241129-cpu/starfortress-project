@@ -12,6 +12,7 @@ export interface EnemyConfig {
     speed: number;
     armor: number;
     reward: number;
+    baseDamage: number;
     special?: {
         splitCount?: number;
         splitEnemyId?: string;
@@ -28,6 +29,7 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         speed: 1.0,
         armor: 0,
         reward: 10,
+        baseDamage: 10,
     },
     {
         id: 'enemy_fast_bug',
@@ -38,6 +40,7 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         speed: 2.0,
         armor: 0,
         reward: 15,
+        baseDamage: 8,
     },
     {
         id: 'enemy_heavy_mech',
@@ -48,6 +51,7 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         speed: 0.5,
         armor: 20,
         reward: 50,
+        baseDamage: 20,
     },
     {
         id: 'enemy_split_drone',
@@ -58,6 +62,7 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         speed: 1.2,
         armor: 5,
         reward: 30,
+        baseDamage: 12,
         special: {
             splitCount: 2,
             splitEnemyId: 'enemy_mech_bug',
@@ -68,10 +73,11 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         name: '小 Boss',
         description: '血量高、奖励高、最后 30 秒出现',
         type: 'boss',
-        health: 500,
+        health: 700,
         speed: 0.3,
-        armor: 30,
+        armor: 15,
         reward: 200,
+        baseDamage: 90,
     },
 ];
 

@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## 2026-06-14 015.3 Boss 击杀胜利 + Boss 进基地结算
+
+### Changed
+
+- 修改战斗胜利条件：不再因为 180 秒时间到达自动胜利，改为 Boss 被击杀后才胜利结算
+- `TimeManager.ts`：删除时间到自动 emit `BATTLE_RESULT: victory` 的逻辑，时间到后只停止计时
+- `BattleManager.ts`：在 `ENEMY_DEATH` 监听中增加 Boss 死亡胜利判断
+- `BattleManager.ts`：在 `ENEMY_REACH_BASE` 监听中增加 Boss 进基地结算逻辑
+- `EnemyConfig.ts`：接口和配置新增 `baseDamage` 字段
+- `EnemyController.ts`：状态保存 `baseDamage`，`_reachBase()` 传递 `configId`、`isBoss`
+
+### Notes
+
+- 180 秒到达后战斗继续，直到 Boss 死亡或进基地
+- Boss 死亡后立即触发胜利结算
+- Boss 进基地后先扣血，再根据基地血量判断胜利/失败
+- 普通怪进基地只扣血，不触发胜利
+- 基地血量归零仍然触发失败结算
+- 未修改 Boss 数值、塔数值、.scene 文件
+- 代码已实现，Web 预览待用户确认
+
+- 修改战斗胜利条件：不再因为 180 秒时间到达自动胜利，改为 Boss 被击杀后才胜利结算
+- `TimeManager.ts`：删除时间到自动 emit `BATTLE_RESULT: victory` 的逻辑，时间到后只停止计时
+- `BattleManager.ts`：在 `ENEMY_DEATH` 监听中增加 Boss 死亡胜利判断，Boss 死亡时 emit `BATTLE_RESULT: victory`
+
+### Notes
+
+- 180 秒到达后战斗继续，直到 Boss 死亡或基地被摧毁
+- Boss 死亡后立即触发胜利结算，沿用现有结算管线
+- 基地血量归零仍然触发失败结算
+- 未修改 Boss 数值、塔数值、.scene 文件
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-14 015.2 冰塔减速特效残留修复
 
 ### Fixed

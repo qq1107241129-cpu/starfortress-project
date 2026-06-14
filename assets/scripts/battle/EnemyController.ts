@@ -15,6 +15,7 @@ export interface EnemyState {
     speed: number;
     armor: number;
     reward: number;
+    baseDamage: number;
     position: { x: number; y: number };
     pathIndex: number;
     pathProgress: number;
@@ -50,6 +51,7 @@ export class EnemyController {
             speed: config.speed,
             armor: config.armor,
             reward: config.reward,
+            baseDamage: config.baseDamage,
             position: { ...spawnPosition },
             pathIndex: 0,
             pathProgress: 0,
@@ -232,7 +234,9 @@ export class EnemyController {
         this._state.isAlive = false;
         this._eventBus.emit(BATTLE_EVENTS.ENEMY_REACH_BASE, {
             enemyId: this._state.id,
-            damage: BATTLE_BALANCE.enemyBaseDamageToBase
+            configId: this._state.configId,
+            isBoss: this._state.isBoss,
+            damage: this._state.baseDamage
         });
     }
 

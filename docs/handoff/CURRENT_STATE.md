@@ -1,5 +1,20 @@
 # Starfortress Project 当前交接状态
 
+## 2026-06-14 015.3 Boss 击杀胜利 + Boss 进基地结算
+
+- 状态：代码已完成，Web 预览待用户确认
+- 修改战斗胜利条件：不再因为 180 秒时间到达自动胜利，改为 Boss 被击杀后才胜利结算
+- `TimeManager.ts`：删除时间到自动 emit `BATTLE_RESULT: victory` 的逻辑
+- `BattleManager.ts`：在 `ENEMY_DEATH` 监听中增加 Boss 死亡胜利判断
+- `BattleManager.ts`：在 `ENEMY_REACH_BASE` 监听中增加 Boss 进基地结算逻辑
+- `EnemyConfig.ts`：接口和配置新增 `baseDamage` 字段
+- `EnemyController.ts`：状态保存 `baseDamage`，`_reachBase()` 传递 `configId`、`isBoss`
+- `.scene` 状态：未修改
+- 未修改 TowerConfig、BattleBalanceConfig、StageConfig
+- 代码已实现，Web 预览待用户确认
+
+---
+
 ## 2026-06-14 015.2 冰塔减速特效残留修复
 
 - 状态：代码已完成，Web 预览待用户确认

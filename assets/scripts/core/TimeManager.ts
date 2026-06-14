@@ -73,10 +73,10 @@ export class TimeManager {
             progress: this._battleTime / this._battleDuration
         });
 
-        // 检查是否时间到
+        // 时间到后停止计时，但不触发胜利（胜利由 Boss 击杀触发）
         if (this._battleTime >= this._battleDuration) {
+            this._battleTime = this._battleDuration;
             this._isBattleRunning = false;
-            this._eventBus.emit(BATTLE_EVENTS.BATTLE_RESULT, { result: 'victory' });
         }
     }
 

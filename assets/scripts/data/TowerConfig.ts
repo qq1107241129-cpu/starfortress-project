@@ -81,7 +81,7 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         baseRange: 130,
         splashRadius: 0,
         chainCount: 0,
-        slowFactor: 0.4,
+        slowFactor: 0.8,
         slowDuration: 2.0,
         levels: [
             { level: 1, attack: 5, attackSpeed: 1.0, range: 430, upgradeCost: 0 },
