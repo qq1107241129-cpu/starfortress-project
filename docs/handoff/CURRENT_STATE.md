@@ -1,8 +1,73 @@
 # Starfortress Project 当前交接状态
 
+## 2026-06-14 015.2 冰塔减速特效残留修复
+
+- 状态：代码已完成，Web 预览待用户确认
+- 问题：冰塔减速特效在敌人死亡时有概率残留原地不消失
+- 修复：`BattleVisualManager._syncSlowEffectPositions()` 增加兜底清理逻辑
+  - 每帧遍历 `_slowEffects` Map
+  - 如果 enemyId 不在存活敌人列表中，立即清理对应特效
+  - 如果 slowNode 无效，也从 `_slowEffects` 删除
+- `.scene` 状态：未修改
+- 未修改冰塔减速倍率、减速时间、伤害、攻击逻辑
+- 未修改 `EnemyController.ts`（本轮只在视觉层兜底）
+- 代码已实现，Web 预览待用户确认
+- 如果本轮修复后仍复现残留，再开第二轮排查 `EnemyController._die()` 是否需要重置 `slowRemaining` / `slowFactor`
+
+---
+
+## 2026-06-14 015.1 active skill VFX redo
+
+- Status: code redo completed; Cocos manual mount and Web preview visual acceptance are still user-side checks.
+- Changed `assets/scripts/battle/SkillEffectView.ts` only for skill visuals: no skill logic, damage, freeze duration, charges, targeting, enemy movement, platform API, images, or dependencies were changed.
+- Orbital cannon VFX is now staged: lock-on rings/crosshair, descending high-energy beam, impact flash, shockwave rings, residual glow, and outward sparks.
+- Freeze VFX is now staged: an expanding snowflake burst, light battlefield ice cover, diagonal frost bands, sparse cracks, and crystal flakes that fade out.
+- Effect sizing now reads `UITransform` from the mounted layer or parent first; `1080x1920` is fallback only.
+- Effect lifetime now uses `update(deltaTime)` with an active effect list. `BATTLE_END` and `onDestroy` destroy all active skill effect nodes.
+- `.scene` status: `assets/scenes/Battle.scene` was already modified before this redo and remains treated as user manual Cocos work. Codex did not modify, recover, checkout, stash, format, or script-process it.
+- `.meta` status: `assets/scripts/battle/SkillEffectView.ts.meta` already exists as an untracked file and was left untouched by this redo.
+
+Manual Cocos check:
+1. Open Cocos Creator.
+2. Open the Battle scene.
+3. Select `BattleVisualRoot -> EffectLayer`.
+4. Confirm `SkillEffectView` is mounted on `EffectLayer`.
+5. Save only through Cocos Creator if a scene binding change is needed.
+
+Web preview check:
+1. Run Web Preview from Cocos Creator.
+2. Enter battle and place towers.
+3. Use orbital cannon and confirm lock-on, beam, and impact burst are readable.
+4. Use freeze and confirm the snowflake burst, blue cover, cracks, and flakes are readable.
+5. Switch x1/x2/x3/x4 and confirm VFX remains readable.
+6. End battle and confirm no skill effect nodes remain and the console has no errors.
+
 生成时间：2026-06-14
 
 本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
+
+## 2026-06-14 015.1 主动技能视觉特效
+
+- 状态：代码已完成，需人工在 Cocos Creator 中挂载组件，Web 预览待用户确认
+- 新增 `assets/scripts/battle/SkillEffectView.ts`：技能视觉特效管理器
+- 轨道炮特效：预警圆环 + 能量光柱 + 命中爆炸圆环，持续 0.6 秒
+- 全屏冻结特效：冰蓝遮罩 + 雪花扩散 + 冰晶裂纹/短线，持续约 1.17 秒
+- 使用 Graphics 动态绘制，不引入新图片资源
+- `.meta` 状态：`SkillEffectView.ts.meta` 需要在 Cocos Creator 中刷新生成
+- `.scene` 状态：未修改，检测到的 `.scene` 差异默认视为用户人工改动
+- 未修改技能伤害、冻结时长、充能逻辑
+- 代码已实现，Web 预览待用户确认
+
+**Cocos 人工挂载步骤**：
+1. 打开 Cocos Creator 编辑器
+2. 在场景中找到 `BattleVisualRoot` 节点
+3. 展开 `BattleVisualRoot`，找到 `EffectLayer` 子节点
+4. 选中 `EffectLayer` 节点
+5. 在属性检查器中点击「添加组件」
+6. 搜索并添加 `SkillEffectView` 脚本组件
+7. 保存场景
+
+---
 
 ## 2026-06-14 015 肉鸽选择面板与塔位选择面板置顶修复
 

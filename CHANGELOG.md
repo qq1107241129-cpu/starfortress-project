@@ -1,5 +1,62 @@
 # CHANGELOG
 
+## 2026-06-14 015.2 冰塔减速特效残留修复
+
+### Fixed
+
+- 修复冰塔减速特效在敌人死亡时有概率残留原地不消失的 bug
+- `BattleVisualManager._syncSlowEffectPositions()` 增加兜底清理逻辑：
+  - 每帧遍历 `_slowEffects` Map
+  - 如果 enemyId 不在存活敌人列表中，立即 `_removeSlowEffect(enemyId)` 清理对应特效
+  - 如果 slowNode 无效，也从 `_slowEffects` 删除
+  - 对存活敌人继续同步减速特效位置
+
+### Notes
+
+- 本轮只在视觉层兜底，未修改 `EnemyController._die()` 的减速状态重置
+- 如果本轮修复后 Web 预览仍复现残留，再开第二轮排查 `EnemyController._die()`
+- 未修改冰塔减速倍率、减速时间、伤害、攻击逻辑
+- 未修改 `.scene` 文件
+- 未修改战斗数值
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-14 015.1 active skill VFX redo
+
+### Changed
+
+- Reworked `assets/scripts/battle/SkillEffectView.ts` from one-shot static Graphics drawings to update-driven staged VFX.
+- Orbital cannon now has a lock-on phase, descending energy beam phase, and impact burst phase with shock rings, residual glow, and radial energy sparks.
+- Full-screen freeze now has an expanding snowflake burst, a light ice-blue battlefield cover, diagonal frost bands, sparse ice cracks, and crystal flakes.
+- Skill VFX now reads the mounted EffectLayer/UITransform size first, with `1080x1920` used only as a fallback.
+- Effect cleanup now uses an internal active effect list and removes finished effects during `update(deltaTime)`; `BATTLE_END` and `onDestroy` still clear all active skill effects.
+
+### Notes
+
+- No `.scene` file was modified by Codex in this redo.
+- No skill damage, freeze duration, charge logic, targeting, enemy movement, platform API, image asset, or dependency was changed.
+- `SkillEffectView` still needs to be mounted manually in Cocos Creator if the current scene does not already have it on `BattleVisualRoot -> EffectLayer`.
+- Web preview remains pending for user-side visual acceptance.
+
+## 2026-06-14 015.1 主动技能视觉特效
+
+### Added
+
+- 新增 `assets/scripts/battle/SkillEffectView.ts`：技能视觉特效管理器
+- 轨道炮特效：预警圆环（红色）+ 能量光柱（橙黄色）+ 命中爆炸圆环（白色），持续 0.6 秒
+- 全屏冻结特效：冰蓝遮罩 + 雪花扩散 + 冰晶裂纹/短线，持续约 1.17 秒
+- 监听 `SKILL_ORBITAL_CANNON` 和 `SKILL_FREEZE` 事件自动创建特效
+- 监听 `BATTLE_END` 事件清理所有特效
+- 特效使用 Graphics 动态绘制，不引入新图片资源
+
+### Notes
+
+- `SkillEffectView` 需要在 Cocos Creator 中手动挂载到 `BattleVisualRoot -> EffectLayer` 节点
+- 只负责视觉效果，不修改技能伤害、冻结时长、充能逻辑
+- 使用 `scheduleOnce` 管理特效生命周期，不受战斗倍速影响
+- 未修改 `.scene` 文件
+- 未修改战斗数值
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-14 015 肉鸽选择面板与塔位选择面板置顶修复
 
 ### Fixed

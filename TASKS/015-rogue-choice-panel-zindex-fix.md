@@ -154,4 +154,9 @@ git checkout assets/scripts/ui/BattleUI.ts
 
 ## 执行状态
 
-- 状态：待执行
+- 状态：已完成
+- 实际修改：
+  - `assets/scripts/ui/BattleUI.ts`：新增 `_bringNodeToFront()` 方法，在 `_showRogueChoicePanel()`、`_showTowerSelectPanel()`、`_showDynamicTowerSelectPanel()` 中调用置顶
+- 未修改：`.scene` 文件、战斗数值配置、platform 目录
+- 验证状态：代码已实现，Web 预览待用户确认
+- 风险：无新增风险，`setSiblingIndex` 是轻量级操作

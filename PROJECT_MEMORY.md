@@ -147,6 +147,14 @@ Platform.instance.showRewardAd()
 - BattleManager 在 `startBattle()` 时发出 `BATTLE_START`，在 `_endBattle()` 和 `returnToIdle()` 时发出 `BATTLE_END`。
 - 所有 UI 组件在 onDestroy 中解绑事件、按钮回调和 onStateChange 取消函数。
 
+## UI 层级置顶规则
+
+- Cocos Creator 3.x 中兄弟节点按 `siblingIndex` 顺序渲染，siblingIndex 越大，渲染越靠后，视觉上越靠上。
+- 战斗中的弹出面板（肉鸽选择、塔位选择）需要置顶显示，防止被 BattleVisualRoot 盖住。
+- `BattleUI._bringNodeToFront(target)` 方法封装置顶逻辑：`target.setSiblingIndex(target.parent.children.length - 1)`。
+- 弹出面板时需要两步置顶：先置顶面板节点（在 BattleUIRoot 内），再置顶 BattleUIRoot（在 Canvas 下）。
+- 面板隐藏后不需要恢复层级，下次显示时会重新置顶。
+
 ## 执行 Agent 可切换规则
 
 - Codex：规划 + 审查。
@@ -175,6 +183,7 @@ Platform.instance.showRewardAd()
 -> 014-battle-balance-config-baseline
 -> 014.1-battle-speed-control
 -> 014.2-electric-chain-effect-and-damage-float-text
+-> 015-rogue-choice-panel-zindex-fix
 ```
 
 ## 战斗数值配置位置
@@ -205,6 +214,19 @@ Platform.instance.showRewardAd()
 - `DAMAGE_NUMBER_SHOW`：伤害飘字
 - `ENEMY_SLOWED` / `ENEMY_SLOW_ENDED`：减速特效
 - `PROJECTILE_SPAWN` / `PROJECTILE_HIT`：投射物视觉同步
+- `SKILL_ORBITAL_CANNON`：轨道炮特效（预警圆环 + 能量光柱 + 命中爆炸）
+- `SKILL_FREEZE`：全屏冻结特效（冰蓝遮罩 + 冰环 + 冰晶线条）
+
+## 技能特效系统
+
+- `SkillEffectView`：技能视觉特效管理器，负责轨道炮和全屏冻结的视觉效果
+- 挂载位置：`BattleVisualRoot -> EffectLayer` 节点
+- 设计决策：独立于 `BattleVisualManager`，便于后续扩展更多技能特效
+- 只负责视觉效果，不修改技能伤害、冻结时长、充能逻辑
+- 使用 `Graphics` 动态绘制，不引入新图片资源
+- 特效生命周期：轨道炮 0.6 秒，全屏冻结 0.8 秒
+- 特效使用 `scheduleOnce` 管理，不受战斗倍速影响
+- `BATTLE_END` 事件自动清理所有特效
 
 ## .scene 仍由用户人工维护
 

@@ -1055,16 +1055,32 @@ export class BattleVisualManager extends Component {
 
     /**
      * 同步减速特效位置（跟随敌人移动）
+     * 同时兜底清理：敌人死亡或节点无效时，移除对应减速特效
      */
     private _syncSlowEffectPositions(): void {
         if (!this._battleManager) return;
 
         const aliveEnemies = this._battleManager.getAliveEnemies();
+        const aliveIds = new Set<string>();
+        for (const enemy of aliveEnemies) {
+            aliveIds.add(enemy.getId());
+        }
 
+        // 兜底清理：遍历 _slowEffects，清理不在存活列表中或节点无效的特效
+        const toRemove: string[] = [];
+        for (const [enemyId, slowNode] of this._slowEffects) {
+            if (!aliveIds.has(enemyId) || !slowNode || !slowNode.isValid) {
+                toRemove.push(enemyId);
+            }
+        }
+        for (const enemyId of toRemove) {
+            this._removeSlowEffect(enemyId);
+        }
+
+        // 正常同步存活敌人的减速特效位置
         for (const enemy of aliveEnemies) {
             const enemyId = enemy.getId();
             const slowNode = this._slowEffects.get(enemyId);
-
             if (slowNode && slowNode.isValid) {
                 const position = enemy.getPosition();
                 slowNode.setPosition(position.x, position.y, 0);
