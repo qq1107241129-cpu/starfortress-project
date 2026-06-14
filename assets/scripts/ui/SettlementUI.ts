@@ -13,6 +13,7 @@ import { GameManager } from '../core/GameManager';
 import { BaseManager } from '../base/BaseManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { BattleResult } from '../battle/BattleSettlement';
+import { styleButton, styleLabel } from './UIStyleUtil';
 
 const { ccclass, property } = _decorator;
 
@@ -74,14 +75,8 @@ export class SettlementUI extends Component {
         this._eventBus.on(BATTLE_EVENTS.BATTLE_SETTLEMENT, this._boundOnSettlement);
 
         // 绑定按钮
-        if (this.continueButton) {
-            this._boundOnContinue = () => this._onContinue();
-            this.continueButton.on(Node.EventType.TOUCH_END, this._boundOnContinue);
-        }
-        if (this.returnMainButton) {
-            this._boundOnReturnMain = () => this._onReturnMain();
-            this.returnMainButton.on(Node.EventType.TOUCH_END, this._boundOnReturnMain);
-        }
+        this._setupButtonListeners();
+        this._applyStyles();
 
         // 默认隐藏
         this.node.active = false;
@@ -92,6 +87,55 @@ export class SettlementUI extends Component {
                 this.node.active = false;
             }
         });
+    }
+
+    private _setupButtonListeners(): void {
+        if (this.continueButton) {
+            this._boundOnContinue = () => this._onContinue();
+            this.continueButton.on(Node.EventType.TOUCH_END, this._boundOnContinue);
+        }
+        if (this.returnMainButton) {
+            this._boundOnReturnMain = () => this._onReturnMain();
+            this.returnMainButton.on(Node.EventType.TOUCH_END, this._boundOnReturnMain);
+        }
+    }
+
+    // ==================== 样式应用 ====================
+
+    private _applyStyles(): void {
+        // 应用按钮样式
+        if (this.continueButton) {
+            styleButton(this.continueButton, 'primary');
+        }
+        if (this.returnMainButton) {
+            styleButton(this.returnMainButton, 'secondary');
+        }
+
+        // 应用文字样式
+        if (this.resultLabel) {
+            styleLabel(this.resultLabel, 'title');
+        }
+        if (this.stageLabel) {
+            styleLabel(this.stageLabel, 'medium');
+        }
+        if (this.starLabel) {
+            styleLabel(this.starLabel, 'large');
+        }
+        if (this.killCountLabel) {
+            styleLabel(this.killCountLabel, 'medium');
+        }
+        if (this.bossKillLabel) {
+            styleLabel(this.bossKillLabel, 'medium');
+        }
+        if (this.healthLabel) {
+            styleLabel(this.healthLabel, 'medium');
+        }
+        if (this.battleCoinLabel) {
+            styleLabel(this.battleCoinLabel, 'medium');
+        }
+        if (this.baseCoinLabel) {
+            styleLabel(this.baseCoinLabel, 'medium');
+        }
     }
 
     onDestroy(): void {

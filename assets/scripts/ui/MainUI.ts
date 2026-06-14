@@ -12,6 +12,7 @@ import { _decorator, Component, Node, Label, Button } from 'cc';
 import { GameManager } from '../core/GameManager';
 import { BaseManager } from '../base/BaseManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
+import { styleButton, styleLabel } from './UIStyleUtil';
 
 const { ccclass, property } = _decorator;
 
@@ -67,6 +68,7 @@ export class MainUI extends Component {
         this._baseManager = BaseManager.getInstance();
 
         this._setupButtonListeners();
+        this._applyStyles();
 
         // 监听状态变化：当回到 main 时刷新 UI
         this._unsubStateChange = this._gameManager.onStateChange((state) => {
@@ -149,6 +151,41 @@ export class MainUI extends Component {
         if (this.settingsButton) {
             this._boundOnSettings = () => this._onSettings();
             this.settingsButton.on(Node.EventType.TOUCH_END, this._boundOnSettings);
+        }
+    }
+
+    // ==================== 样式应用 ====================
+
+    private _applyStyles(): void {
+        // 应用按钮样式
+        if (this.startBattleButton) {
+            styleButton(this.startBattleButton, 'primary');
+        }
+        if (this.buildingButton) {
+            styleButton(this.buildingButton, 'secondary');
+        }
+        if (this.towerUpgradeButton) {
+            styleButton(this.towerUpgradeButton, 'secondary');
+        }
+        if (this.rebirthButton) {
+            styleButton(this.rebirthButton, 'secondary');
+        }
+        if (this.settingsButton) {
+            styleButton(this.settingsButton, 'secondary');
+        }
+
+        // 应用文字样式
+        if (this.baseCoinLabel) {
+            styleLabel(this.baseCoinLabel, 'medium');
+        }
+        if (this.battleCoinLabel) {
+            styleLabel(this.battleCoinLabel, 'medium');
+        }
+        if (this.rebirthTokenLabel) {
+            styleLabel(this.rebirthTokenLabel, 'medium');
+        }
+        if (this.stageLabel) {
+            styleLabel(this.stageLabel, 'medium');
         }
     }
 

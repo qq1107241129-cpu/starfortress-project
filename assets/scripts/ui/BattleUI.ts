@@ -22,6 +22,7 @@ import { GameManager } from '../core/GameManager';
 import { BaseManager } from '../base/BaseManager';
 import { TOWER_CONFIGS } from '../data/TowerConfig';
 import { TowerEffectiveStats } from '../battle/TowerController';
+import { styleButton, styleLabel, stylePanel, stylePanelTitle, styleValueLabel, styleCard, styleOuterFrame } from './UIStyleUtil';
 
 const { ccclass, property } = _decorator;
 
@@ -65,6 +66,34 @@ export class BattleUI extends Component {
 
     @property(Label)
     towerSelectTitleLabel: Label | null = null;
+
+    @property(Node)
+    towerSelectCloseButton: Node | null = null;
+
+    // ==================== 塔详情面板（绑定优先 + 动态 fallback） ====================
+    @property(Node)
+    towerDetailPanelRoot: Node | null = null;
+
+    @property(Label)
+    towerDetailTitleLabel: Label | null = null;
+
+    @property(Label)
+    towerDetailLevelLabel: Label | null = null;
+
+    @property(Label)
+    towerDetailAttackLabel: Label | null = null;
+
+    @property(Label)
+    towerDetailAttackSpeedLabel: Label | null = null;
+
+    @property(Label)
+    towerDetailRangeLabel: Label | null = null;
+
+    @property(Label)
+    towerDetailSpecialLabel: Label | null = null;
+
+    @property(Node)
+    towerDetailCloseButton: Node | null = null;
 
     // ==================== 战斗信息显示（可选绑定） ====================
     @property(Label)
@@ -141,6 +170,8 @@ export class BattleUI extends Component {
         this._gameManager = GameManager.getInstance();
         this._setupEventListeners();
         this._setupButtonListeners();
+        this._applyStyles();
+        this._hideInitialPanels();
 
         if (this._gameManager && !this._unsubStateChange) {
             this._unsubStateChange = this._gameManager.onStateChange((state) => {
@@ -175,6 +206,22 @@ export class BattleUI extends Component {
         }
         this._updateSkillUI();
         this._setupExtraButtons();
+    }
+
+    /**
+     * 隐藏初始面板
+     * 游戏开始时自动隐藏塔详情面板，不依赖 Cocos 场景里手动设置 inactive
+     */
+    private _hideInitialPanels(): void {
+        // 隐藏绑定的塔详情面板
+        if (this.towerDetailPanelRoot) {
+            this.towerDetailPanelRoot.active = false;
+        }
+
+        // 隐藏动态创建的塔详情面板
+        if (this._dynamicTowerDetailPanel) {
+            this._dynamicTowerDetailPanel.active = false;
+        }
     }
 
     /**
@@ -360,6 +407,67 @@ export class BattleUI extends Component {
         });
     }
 
+    // ==================== 样式应用 ====================
+
+    private _applyStyles(): void {
+        // 应用按钮样式
+        if (this.orbitalCannonButton) {
+            styleButton(this.orbitalCannonButton, 'primary');
+        }
+        if (this.freezeButton) {
+            styleButton(this.freezeButton, 'primary');
+        }
+        if (this.pauseButton) {
+            styleButton(this.pauseButton, 'secondary');
+        }
+        if (this.returnMainButton) {
+            styleButton(this.returnMainButton, 'secondary');
+        }
+        if (this.speedButton) {
+            styleButton(this.speedButton, 'secondary');
+        }
+
+        // 应用肉鸽选择按钮样式
+        this.rogueChoiceButtons.forEach((button) => {
+            if (button) {
+                styleButton(button, 'primary');
+            }
+        });
+
+        // 应用塔位选择按钮样式
+        this.towerSelectButtons.forEach((button) => {
+            if (button) {
+                styleButton(button, 'secondary');
+            }
+        });
+
+        // 应用文字样式
+        if (this.orbitalCannonChargeLabel) {
+            styleLabel(this.orbitalCannonChargeLabel, 'medium');
+        }
+        if (this.freezeChargeLabel) {
+            styleLabel(this.freezeChargeLabel, 'medium');
+        }
+        if (this.rogueChoiceTitleLabel) {
+            styleLabel(this.rogueChoiceTitleLabel, 'title');
+        }
+        if (this.towerSelectTitleLabel) {
+            styleLabel(this.towerSelectTitleLabel, 'title');
+        }
+        if (this.timeLabel) {
+            styleLabel(this.timeLabel, 'medium');
+        }
+        if (this.baseHealthLabel) {
+            styleLabel(this.baseHealthLabel, 'medium');
+        }
+        if (this.battleCoinLabel) {
+            styleLabel(this.battleCoinLabel, 'medium');
+        }
+        if (this.baseCoinLabel) {
+            styleLabel(this.baseCoinLabel, 'medium');
+        }
+    }
+
     // ==================== 按钮点击处理 ====================
 
     private _onOrbitalCannonClick(): void {
@@ -402,7 +510,7 @@ export class BattleUI extends Component {
 
         // 优先使用场景中绑定的面板，其次使用动态创建的面板
         if (this.towerSelectPanel) {
-            this._showTowerSelectPanel();
+            this._showBoundTowerSelectPanel();
         } else {
             console.log('[BattleUI] towerSelectPanel 未绑定，使用动态面板');
             this._ensureDynamicTowerSelectPanel();
@@ -642,12 +750,16 @@ export class BattleUI extends Component {
         // 置顶 BattleUIRoot（确保在 BattleVisualRoot 之上）
         this._bringNodeToFront(this.node);
 
+        // 应用外层大框样式（深色半透明背景 + 青色/蓝紫色描边）
+        styleOuterFrame(this.rogueChoicePanel);
+
         // 显示面板
         this.rogueChoicePanel.active = true;
 
         // 更新标题
         if (this.rogueChoiceTitleLabel) {
             this.rogueChoiceTitleLabel.string = `强化选择 (${choiceIndex}/${totalChoices})`;
+            stylePanelTitle(this.rogueChoiceTitleLabel.node);
         }
 
         // 更新选项按钮
@@ -659,11 +771,16 @@ export class BattleUI extends Component {
                 const choice = choices[i];
 
                 // 显示按钮
-                if (button) button.active = true;
+                if (button) {
+                    button.active = true;
+                    // 应用卡片样式
+                    styleCard(button, 'default');
+                }
 
                 // 更新标签
                 if (label) {
                     label.string = `${choice.name}\n${choice.description}`;
+                    styleLabel(label.node, 'medium');
                 }
             } else {
                 // 隐藏多余的按钮
@@ -680,7 +797,10 @@ export class BattleUI extends Component {
         }
     }
 
-    private _showTowerSelectPanel(): void {
+    /**
+     * 显示绑定的塔位选择面板（绑定优先）
+     */
+    private _showBoundTowerSelectPanel(): void {
         if (!this.towerSelectPanel) return;
 
         // 置顶塔位选择面板（确保在 BattleUIRoot 内最上层）
@@ -688,12 +808,16 @@ export class BattleUI extends Component {
         // 置顶 BattleUIRoot（确保在 BattleVisualRoot 之上）
         this._bringNodeToFront(this.node);
 
+        // 应用面板样式
+        stylePanel(this.towerSelectPanel);
+
         // 显示面板
         this.towerSelectPanel.active = true;
 
         // 更新标题
         if (this.towerSelectTitleLabel) {
             this.towerSelectTitleLabel.string = '选择防御塔';
+            stylePanelTitle(this.towerSelectTitleLabel.node);
         }
 
         // 更新选项按钮
@@ -706,16 +830,31 @@ export class BattleUI extends Component {
                 const config = towerConfigs[i];
 
                 // 显示按钮
-                if (button) button.active = true;
+                if (button) {
+                    button.active = true;
+                    // 应用按钮样式
+                    styleButton(button, 'secondary');
+                }
 
                 // 更新标签
                 if (label) {
                     label.string = config.name;
+                    styleLabel(label.node, 'medium');
                 }
             } else {
                 // 隐藏多余的按钮
                 if (button) button.active = false;
             }
+        }
+
+        // 绑定关闭按钮事件（防重复）
+        if (this.towerSelectCloseButton) {
+            this.towerSelectCloseButton.off(Node.EventType.TOUCH_END);
+            this.towerSelectCloseButton.on(Node.EventType.TOUCH_END, () => {
+                this._hideTowerSelectPanel();
+                this._currentSlotId = '';
+            });
+            styleButton(this.towerSelectCloseButton, 'ghost');
         }
 
         console.log('[BattleUI] 显示塔位选择面板（场景绑定）');
@@ -751,15 +890,8 @@ export class BattleUI extends Component {
         const panelTransform = panel.addComponent(UITransform);
         panelTransform.setContentSize(600, 400);
 
-        // 半透明背景
-        const bg = panel.addComponent(Graphics);
-        bg.fillColor = new Color(20, 20, 40, 220);
-        bg.roundRect(-300, -200, 600, 400, 12);
-        bg.fill();
-        bg.strokeColor = new Color(100, 180, 255, 200);
-        bg.lineWidth = 2;
-        bg.roundRect(-300, -200, 600, 400, 12);
-        bg.stroke();
+        // 应用面板样式（深色半透明底、描边）
+        stylePanel(panel);
 
         // 标题
         const titleNode = new Node('Title');
@@ -767,8 +899,7 @@ export class BattleUI extends Component {
         titleNode.setPosition(0, 150, 0);
         const titleLabel = titleNode.addComponent(Label);
         titleLabel.string = '选择防御塔';
-        titleLabel.fontSize = 28;
-        titleLabel.color = new Color(255, 255, 255, 255);
+        stylePanelTitle(titleNode);
 
         // 创建塔选择按钮
         const towerConfigs = TOWER_CONFIGS;
@@ -792,35 +923,8 @@ export class BattleUI extends Component {
             const btnTransform = btnNode.addComponent(UITransform);
             btnTransform.setContentSize(buttonWidth, buttonHeight);
 
-            // 按钮背景
-            const btnGraphics = btnNode.addComponent(Graphics);
-
-            // 根据塔类型设置不同颜色
-            let btnColor: Color;
-            switch (config.type) {
-                case 'machinegun_tower':
-                    btnColor = new Color(40, 80, 140, 255);
-                    break;
-                case 'cannon_tower':
-                    btnColor = new Color(140, 60, 20, 255);
-                    break;
-                case 'ice_tower':
-                    btnColor = new Color(30, 100, 140, 255);
-                    break;
-                case 'electric_tower':
-                    btnColor = new Color(80, 40, 140, 255);
-                    break;
-                default:
-                    btnColor = new Color(60, 60, 60, 255);
-            }
-
-            btnGraphics.fillColor = btnColor;
-            btnGraphics.roundRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
-            btnGraphics.fill();
-            btnGraphics.strokeColor = new Color(150, 200, 255, 180);
-            btnGraphics.lineWidth = 2;
-            btnGraphics.roundRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
-            btnGraphics.stroke();
+            // 应用按钮样式
+            styleButton(btnNode, 'secondary');
 
             // 塔名称
             const nameNode = new Node('Name');
@@ -828,8 +932,7 @@ export class BattleUI extends Component {
             nameNode.setPosition(0, 10, 0);
             const nameLabel = nameNode.addComponent(Label);
             nameLabel.string = config.name;
-            nameLabel.fontSize = 18;
-            nameLabel.color = new Color(255, 255, 255, 255);
+            styleLabel(nameNode, 'medium');
 
             // 塔描述
             const descNode = new Node('Desc');
@@ -837,8 +940,7 @@ export class BattleUI extends Component {
             descNode.setPosition(0, -18, 0);
             const descLabel = descNode.addComponent(Label);
             descLabel.string = config.description.substring(0, 8) + '...';
-            descLabel.fontSize = 12;
-            descLabel.color = new Color(180, 200, 220, 255);
+            styleLabel(descNode, 'small');
 
             const towerIndex = i;
             btnNode.on(Node.EventType.TOUCH_END, () => {
@@ -866,20 +968,13 @@ export class BattleUI extends Component {
         cancelBtnNode.setPosition(0, -130, 0);
         const cancelTransform = cancelBtnNode.addComponent(UITransform);
         cancelTransform.setContentSize(120, 40);
-        const cancelGraphics = cancelBtnNode.addComponent(Graphics);
-        cancelGraphics.fillColor = new Color(80, 40, 40, 255);
-        cancelGraphics.roundRect(-60, -20, 120, 40, 6);
-        cancelGraphics.fill();
-        cancelGraphics.strokeColor = new Color(200, 100, 100, 200);
-        cancelGraphics.lineWidth = 1;
-        cancelGraphics.roundRect(-60, -20, 120, 40, 6);
-        cancelGraphics.stroke();
+        // 应用幽灵按钮样式
+        styleButton(cancelBtnNode, 'ghost');
         const cancelLabelNode = new Node('Label');
         cancelLabelNode.parent = cancelBtnNode;
         const cancelLabel = cancelLabelNode.addComponent(Label);
         cancelLabel.string = '取消';
-        cancelLabel.fontSize = 18;
-        cancelLabel.color = new Color(255, 200, 200, 255);
+        styleLabel(cancelLabelNode, 'medium');
         cancelBtnNode.on(Node.EventType.TOUCH_END, () => {
             console.log('[BattleUI] node TOUCH_END hit cancel button');
             this._hideDynamicTowerSelectPanel();
@@ -938,25 +1033,108 @@ export class BattleUI extends Component {
 
         const stats = tower.getEffectiveStats();
 
-        // 确保面板存在
-        this._ensureTowerDetailPanel();
-        if (!this._dynamicTowerDetailPanel) return;
+        // 优先使用绑定面板，其次使用动态面板
+        if (this.towerDetailPanelRoot) {
+            this._showBoundTowerDetailPanel(stats);
+        } else {
+            this._ensureTowerDetailPanel();
+            if (this._dynamicTowerDetailPanel) {
+                this._updateDynamicTowerDetailContent(stats);
+                this._bringNodeToFront(this._dynamicTowerDetailPanel);
+                this._bringNodeToFront(this.node);
+                this._dynamicTowerDetailPanel.active = true;
+            }
+        }
 
-        // 更新面板内容
-        this._updateTowerDetailContent(stats);
+        console.log(`[BattleUI] 显示塔详情面板: ${stats.name} Lv.${stats.level}`);
+    }
+
+    /**
+     * 显示绑定的塔详情面板（绑定优先）
+     */
+    private _showBoundTowerDetailPanel(stats: TowerEffectiveStats): void {
+        if (!this.towerDetailPanelRoot) return;
 
         // 置顶面板
-        this._bringNodeToFront(this._dynamicTowerDetailPanel);
+        this._bringNodeToFront(this.towerDetailPanelRoot);
         this._bringNodeToFront(this.node);
 
-        this._dynamicTowerDetailPanel.active = true;
-        console.log(`[BattleUI] 显示塔详情面板: ${stats.name} Lv.${stats.level}`);
+        // 应用面板样式
+        stylePanel(this.towerDetailPanelRoot);
+
+        // 更新标题
+        if (this.towerDetailTitleLabel) {
+            this.towerDetailTitleLabel.string = `${stats.name} Lv.${stats.level}`;
+            stylePanelTitle(this.towerDetailTitleLabel.node);
+        }
+
+        // 更新等级
+        if (this.towerDetailLevelLabel) {
+            this.towerDetailLevelLabel.string = `等级: ${stats.level}`;
+            styleLabel(this.towerDetailLevelLabel.node, 'medium');
+        }
+
+        // 更新攻击
+        if (this.towerDetailAttackLabel) {
+            this.towerDetailAttackLabel.string = `攻击: ${stats.attack}`;
+            styleValueLabel(this.towerDetailAttackLabel.node);
+        }
+
+        // 更新攻速
+        if (this.towerDetailAttackSpeedLabel) {
+            this.towerDetailAttackSpeedLabel.string = `攻速: ${stats.attackSpeed.toFixed(2)}s`;
+            styleValueLabel(this.towerDetailAttackSpeedLabel.node);
+        }
+
+        // 更新射程
+        if (this.towerDetailRangeLabel) {
+            this.towerDetailRangeLabel.string = `射程: ${stats.range}`;
+            styleValueLabel(this.towerDetailRangeLabel.node);
+        }
+
+        // 更新特殊属性
+        if (this.towerDetailSpecialLabel) {
+            let specialInfo = '';
+            switch (stats.type) {
+                case 'cannon_tower':
+                    specialInfo = `爆炸范围: ${stats.splashRadius}`;
+                    break;
+                case 'ice_tower':
+                    specialInfo = `减速: ${(stats.slowFactor * 100).toFixed(0)}% / ${stats.slowDuration.toFixed(1)}s`;
+                    break;
+                case 'electric_tower':
+                    specialInfo = `弹射: ${stats.chainCount} 次`;
+                    break;
+                case 'machinegun_tower':
+                    specialInfo = '单体高频输出';
+                    break;
+            }
+            this.towerDetailSpecialLabel.string = specialInfo;
+            styleLabel(this.towerDetailSpecialLabel.node, 'medium');
+        }
+
+        // 绑定关闭按钮事件（防重复）
+        if (this.towerDetailCloseButton) {
+            this.towerDetailCloseButton.off(Node.EventType.TOUCH_END);
+            this.towerDetailCloseButton.on(Node.EventType.TOUCH_END, () => {
+                this._hideTowerDetailPanel();
+            });
+            styleButton(this.towerDetailCloseButton, 'ghost');
+        }
+
+        // 显示面板
+        this.towerDetailPanelRoot.active = true;
     }
 
     /**
      * 隐藏塔详情面板
      */
     private _hideTowerDetailPanel(): void {
+        // 隐藏绑定面板
+        if (this.towerDetailPanelRoot) {
+            this.towerDetailPanelRoot.active = false;
+        }
+        // 隐藏动态面板
         if (this._dynamicTowerDetailPanel) {
             this._dynamicTowerDetailPanel.active = false;
         }
@@ -979,15 +1157,8 @@ export class BattleUI extends Component {
         const panelTransform = panel.addComponent(UITransform);
         panelTransform.setContentSize(500, 600);
 
-        // 半透明背景
-        const bg = panel.addComponent(Graphics);
-        bg.fillColor = new Color(20, 20, 40, 230);
-        bg.roundRect(-250, -300, 500, 600, 12);
-        bg.fill();
-        bg.strokeColor = new Color(100, 180, 255, 200);
-        bg.lineWidth = 2;
-        bg.roundRect(-250, -300, 500, 600, 12);
-        bg.stroke();
+        // 应用面板样式（深色半透明底、描边）
+        stylePanel(panel);
 
         // 标题
         const titleNode = new Node('Title');
@@ -995,8 +1166,7 @@ export class BattleUI extends Component {
         titleNode.setPosition(0, 250, 0);
         const titleLabel = titleNode.addComponent(Label);
         titleLabel.string = '塔详情';
-        titleLabel.fontSize = 28;
-        titleLabel.color = new Color(255, 255, 255, 255);
+        stylePanelTitle(titleNode);
 
         // 内容区域（动态更新）
         const contentNode = new Node('Content');
@@ -1014,20 +1184,13 @@ export class BattleUI extends Component {
         closeBtnNode.setPosition(200, 250, 0);
         const closeTransform = closeBtnNode.addComponent(UITransform);
         closeTransform.setContentSize(60, 40);
-        const closeGraphics = closeBtnNode.addComponent(Graphics);
-        closeGraphics.fillColor = new Color(120, 40, 40, 255);
-        closeGraphics.roundRect(-30, -20, 60, 40, 6);
-        closeGraphics.fill();
-        closeGraphics.strokeColor = new Color(200, 100, 100, 200);
-        closeGraphics.lineWidth = 1;
-        closeGraphics.roundRect(-30, -20, 60, 40, 6);
-        closeGraphics.stroke();
+        // 应用幽灵按钮样式
+        styleButton(closeBtnNode, 'ghost');
         const closeLabelNode = new Node('Label');
         closeLabelNode.parent = closeBtnNode;
         const closeLabel = closeLabelNode.addComponent(Label);
         closeLabel.string = '关闭';
-        closeLabel.fontSize = 18;
-        closeLabel.color = new Color(255, 200, 200, 255);
+        styleLabel(closeLabelNode, 'medium');
         closeBtnNode.on(Node.EventType.TOUCH_END, () => {
             this._hideTowerDetailPanel();
         });
@@ -1037,9 +1200,9 @@ export class BattleUI extends Component {
     }
 
     /**
-     * 更新塔详情面板内容
+     * 更新动态塔详情面板内容
      */
-    private _updateTowerDetailContent(stats: TowerEffectiveStats): void {
+    private _updateDynamicTowerDetailContent(stats: TowerEffectiveStats): void {
         if (!this._dynamicTowerDetailPanel) return;
 
         const contentNode = this._dynamicTowerDetailPanel.getChildByName('Content');

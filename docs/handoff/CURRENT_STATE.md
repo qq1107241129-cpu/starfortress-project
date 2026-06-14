@@ -1,8 +1,57 @@
 # Starfortress Project 当前交接状态
 
-## 2026-06-14 015.4 塔升级属性生效 + 塔详情面板
+## 2026-06-14 015.5.2 UI 美化第二轮细节修复（绑定优先 + 动态 fallback + 肉鸽外框）
 
 - 状态：代码已完成，Web 预览待用户确认
+- 肉鸽选择面板：应用 styleOuterFrame 绘制外层大框
+- 外框风格：深色半透明背景、青色/蓝紫色描边、轻微科幻 UI 质感
+- 外框不遮挡文字和按钮，不影响三个选项点击
+- 塔位选择面板：绑定优先 + 动态 fallback
+- 塔详情面板：新增绑定属性，绑定优先 + 动态 fallback
+- `.scene` 状态：未修改
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-14 015.5.2 UI 美化第二轮细节修复（绑定优先 + 动态 fallback）
+- 肉鸽选择面板：应用 stylePanel、styleCard、stylePanelTitle
+- 塔位选择面板：绑定优先 + 动态 fallback
+- 塔详情面板：新增绑定属性，绑定优先 + 动态 fallback
+- `.scene` 状态：未修改
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-14 015.5.2 UI 美化第二轮细节修复
+- `UITheme.ts`：新增 ghost 按钮颜色、value/warning 文字颜色
+- `UIStyleUtil.ts`：新增 ghost variant、stylePanelTitle、styleValueLabel、styleWarningLabel
+- `BattleUI.ts`：动态面板应用统一样式
+- `.scene` 状态：未修改
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-14 015.5.1 UI 样式未生效修复
+- 修复 UI 美化后按钮和面板几乎没变化的问题
+- 增强 styleButton 方法，按优先级查找 Sprite
+- 设置 Button transition colors
+- Graphics fallback 创建 UIStyleBg 子节点作为背景
+- `.scene` 状态：未修改
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-14 015.5 UI 美化第一轮
+- 新增 `UITheme.ts` 和 `UIStyleUtil.ts`，统一颜色、字号、按钮样式
+- `MainUI.ts`、`BattleUI.ts`、`SettlementUI.ts` 应用统一样式
+- `.meta` 状态：`UITheme.ts.meta` 和 `UIStyleUtil.ts.meta` 已创建
+- `.scene` 状态：未修改
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-14 015.4 塔升级属性生效 + 塔详情面板
 - 修复战斗内放塔读取存档塔等级，使局外升级生效
 - 新增 `TowerController.getEffectiveStats()` 方法，返回当前实际生效属性
 - 新增塔详情面板，点击已放置塔显示属性

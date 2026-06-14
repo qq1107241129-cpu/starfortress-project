@@ -1,5 +1,111 @@
 # CHANGELOG
 
+## 2026-06-14 015.5.2 UI 美化第二轮细节修复（绑定优先 + 动态 fallback + 肉鸽外框）
+
+### Added
+
+- `UITheme.ts`：新增卡片颜色（cardBgColor、cardBorderColor、cardHighlightColor）
+- `UIStyleUtil.ts`：
+  - 新增 styleCard 方法，用于肉鸽选项卡片，有明显边框效果
+  - 新增 styleOuterFrame 方法，用于肉鸽选择面板等需要明显外框的场景
+  - 增强 stylePanel 方法，无论是否有 Sprite 都绘制描边
+- `BattleUI.ts`：
+  - 塔位选择面板：绑定优先 + 动态 fallback
+  - 塔详情面板：新增绑定属性（towerDetailPanelRoot、towerDetailTitleLabel 等）
+  - 塔详情面板：绑定优先 + 动态 fallback
+  - 肉鸽选择面板：应用 styleOuterFrame 绘制外层大框
+  - 绑定按钮事件防重复注册
+
+### Notes
+
+- 肉鸽选择面板有明显外框，把三个选项整体包住
+- 外框风格：深色半透明背景、青色/蓝紫色描边、轻微科幻 UI 质感
+- 外框不遮挡文字和按钮，不影响三个选项点击
+- 塔位选择面板优先使用绑定节点，未绑定时使用动态 fallback
+- 塔详情面板优先使用绑定节点，未绑定时使用动态 fallback
+- 用户后续可以在 Cocos Creator 里自己拖动、修改位置和布局
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
+- `UITheme.ts`：新增卡片颜色（cardBgColor、cardBorderColor、cardHighlightColor）
+- `UIStyleUtil.ts`：新增 styleCard 方法，用于肉鸽选项卡片，有明显边框效果
+- `BattleUI.ts`：
+  - 塔位选择面板：绑定优先 + 动态 fallback
+  - 塔详情面板：新增绑定属性（towerDetailPanelRoot、towerDetailTitleLabel 等）
+  - 塔详情面板：绑定优先 + 动态 fallback
+  - 肉鸽选择面板：应用 stylePanel、styleCard、stylePanelTitle
+  - 绑定按钮事件防重复注册
+
+### Notes
+
+- 肉鸽三选一有明显卡片边框，更清楚
+- 塔位选择面板优先使用绑定节点，未绑定时使用动态 fallback
+- 塔详情面板优先使用绑定节点，未绑定时使用动态 fallback
+- 用户后续可以在 Cocos Creator 里自己拖动、修改位置和布局
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
+- `UITheme.ts`：新增 ghost 按钮颜色、value/warning 文字颜色
+- `UIStyleUtil.ts`：新增 ghost variant、stylePanelTitle、styleValueLabel、styleWarningLabel
+- `BattleUI.ts`：动态面板应用统一样式
+  - 塔位选择面板：应用 stylePanel、stylePanelTitle、styleButton
+  - 塔详情面板：应用 stylePanel、stylePanelTitle、styleButton
+  - 取消/关闭按钮：应用 ghost variant
+
+### Notes
+
+- 按钮不只是变色，文字更清晰、按钮层次更明显
+- 面板有深色半透明底、描边、标题区
+- 动态面板风格统一
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-14 015.5.1 UI 样式未生效修复
+
+### Fixed
+
+- 修复 UI 美化后按钮和面板几乎没变化的问题
+- `UIStyleUtil.ts`：增强 styleButton 方法，按优先级查找 Sprite：
+  1. button.target 上的 Sprite
+  2. 当前节点 Sprite
+  3. 名称包含 Background/Bg 的子节点 Sprite
+  4. 第一个 Sprite
+  5. Graphics fallback
+- 设置 Button transition colors，使用 new Color(...) 而不是直接复用 UI_THEME 对象
+- 如果找到背景节点，设置 button.target
+- Graphics fallback 创建 UIStyleBg 子节点作为背景，放到 children 最前面，避免盖住文字
+- stylePanel 优先修改 Sprite 颜色，如果没有 Sprite 再使用 Graphics fallback
+
+### Notes
+
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-14 015.5 UI 美化第一轮
+
+### Added
+
+- 新增 `assets/scripts/ui/UITheme.ts`：统一颜色、字号、按钮尺寸、面板透明度、描边色定义
+- 新增 `assets/scripts/ui/UIStyleUtil.ts`：通用样式方法（styleButton、styleLabel、stylePanel）
+- `MainUI.ts`：应用统一样式，按钮不再是默认灰按钮
+- `BattleUI.ts`：应用统一样式，战斗 UI 按钮风格统一
+- `SettlementUI.ts`：应用统一样式，结算界面按钮风格统一
+
+### Notes
+
+- 美术方向：深色半透明面板、蓝紫/青色描边、科幻像素轻 UI
+- styleButton 不强行统一所有按钮尺寸，优先保留原 UITransform 尺寸
+- stylePanel 必须读取 UITransform 尺寸，不要用 panelPadding 画 40×40 小面板
+- Graphics 只在初始化时绘制，不做每帧重绘
+- 不破坏 Button 点击区域和 Label 显示
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-14 015.4 塔升级属性生效 + 塔详情面板
 
 ### Fixed
