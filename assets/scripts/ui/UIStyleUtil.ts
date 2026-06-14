@@ -455,3 +455,5 @@ export function styleCard(cardNode: Node, variant: 'default' | 'highlight' = 'de
     graphics.roundRect(-width / 2, -height / 2, width, height, UI_THEME.panelRadius);
     graphics.stroke();
 }
+
+

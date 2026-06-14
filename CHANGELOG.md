@@ -1,5 +1,86 @@
 # CHANGELOG
 
+## 2026-06-14 015.5.3 塔详情和塔位选择界面复用肉鸽大面板逻辑
+
+### Changed
+
+- 放弃单独遮罩节点方案，复用肉鸽 `styleOuterFrame` 大面板逻辑
+- `BattleUI.ts`：
+  - 删除 `_towerModalBackdrop`、`_activeTowerModal` 相关字段
+  - 删除 `_getPanelParent()`、`_ensureTowerModalBackdrop()`、`_showTowerModalBackdrop()`、`_hideTowerModalBackdrop()` 方法
+  - 塔详情面板使用 `styleOuterFrame` 替代 `stylePanel`
+  - 塔位选择面板使用 `styleOuterFrame` 替代 `stylePanel`
+  - 动态 fallback 面板也使用 `styleOuterFrame`
+- `UIStyleUtil.ts`：删除 `styleModalBackdrop`、`ensureModalBackdrop` 方法
+- `UITheme.ts`：删除 `modalBackdropColor`、`frostedPanelColor` 颜色
+
+### Notes
+
+- 塔详情/塔位选择改为深色半透明大底板，复用肉鸽逻辑
+- 用户在 Cocos 里负责调整面板 UITransform 尺寸
+- `styleOuterFrame` 会读取面板本体尺寸绘制大底板
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
+- 修复遮罩不生效问题：遮罩必须创建在面板同一个 parent 下
+- `_getPanelParent()`：优先使用绑定面板的 parent，否则使用 this.node
+- `_ensureTowerModalBackdrop()`：如果遮罩 parent 不对，重新创建
+- `_showTowerModalBackdrop()`：每次显示时重新设置样式
+- `_showBoundTowerDetailPanel()`：面板在遮罩上方
+- `_showBoundTowerSelectPanel()`：面板在遮罩上方
+- 遮罩颜色调明显（调试用）：`new Color(0, 0, 0, 180)`
+
+### Added
+
+- `UITheme.ts`：新增遮罩颜色（modalBackdropColor、frostedPanelColor）
+- `UIStyleUtil.ts`：新增 styleModalBackdrop、ensureModalBackdrop 方法
+- `BattleUI.ts`：
+  - 新增私有字段：`_towerModalBackdrop`、`_activeTowerModal`
+  - 新增方法：`_ensureTowerModalBackdrop()`、`_showTowerModalBackdrop()`、`_hideTowerModalBackdrop()`、`_getPanelParent()`
+  - `_hideInitialPanels()` 已扩展，隐藏所有面板和遮罩
+  - `showTowerSelectPanel()` 已修改，增加遮罩逻辑和互斥逻辑
+  - `_hideTowerSelectPanel()` 已修改，增加遮罩隐藏逻辑
+  - `_showTowerDetailPanel()` 已修改，增加遮罩逻辑和互斥逻辑
+  - `_hideTowerDetailPanel()` 已修改，增加遮罩隐藏逻辑
+
+### Notes
+
+- 塔详情面板显示时，背后战斗画面被半透明暗化
+- 塔位选择面板显示时，背后战斗画面被半透明暗化
+- 遮罩在 BattleVisualRoot 之上、面板之下
+- 遮罩阻止点击穿透到战斗区域
+- 显示塔位选择时，先隐藏塔详情；显示塔详情时，先隐藏塔位选择
+- 记录当前打开的 modal 类型，避免错误隐藏
+- 游戏开始时遮罩默认隐藏
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
+- `UITheme.ts`：新增遮罩颜色（modalBackdropColor、frostedPanelColor）
+- `UIStyleUtil.ts`：新增 styleModalBackdrop、ensureModalBackdrop 方法
+- `BattleUI.ts`：
+  - 新增私有字段：`_towerModalBackdrop`、`_activeTowerModal`
+  - 新增方法：`_ensureTowerModalBackdrop()`、`_showTowerModalBackdrop()`、`_hideTowerModalBackdrop()`
+  - `_hideInitialPanels()` 已扩展，隐藏所有面板和遮罩
+  - `showTowerSelectPanel()` 已修改，增加遮罩逻辑和互斥逻辑
+  - `_hideTowerSelectPanel()` 已修改，增加遮罩隐藏逻辑
+  - `_showTowerDetailPanel()` 已修改，增加遮罩逻辑和互斥逻辑
+  - `_hideTowerDetailPanel()` 已修改，增加遮罩隐藏逻辑
+
+### Notes
+
+- 塔详情面板显示时，背后战斗画面被半透明暗化
+- 塔位选择面板显示时，背后战斗画面被半透明暗化
+- 遮罩在 BattleVisualRoot 之上、面板之下
+- 遮罩阻止点击穿透到战斗区域
+- 显示塔位选择时，先隐藏塔详情；显示塔详情时，先隐藏塔位选择
+- 记录当前打开的 modal 类型，避免错误隐藏
+- 游戏开始时遮罩默认隐藏
+- 未修改 `.scene` 文件
+- 未修改战斗/数值/技能逻辑
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-14 015.5.2 UI 美化第二轮细节修复（绑定优先 + 动态 fallback + 肉鸽外框）
 
 ### Added

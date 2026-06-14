@@ -210,7 +210,7 @@ export class BattleUI extends Component {
 
     /**
      * 隐藏初始面板
-     * 游戏开始时自动隐藏塔详情面板，不依赖 Cocos 场景里手动设置 inactive
+     * 游戏开始时自动隐藏所有面板，不依赖 Cocos 场景里手动设置 inactive
      */
     private _hideInitialPanels(): void {
         // 隐藏绑定的塔详情面板
@@ -221,6 +221,16 @@ export class BattleUI extends Component {
         // 隐藏动态创建的塔详情面板
         if (this._dynamicTowerDetailPanel) {
             this._dynamicTowerDetailPanel.active = false;
+        }
+
+        // 隐藏绑定的塔位选择面板
+        if (this.towerSelectPanel) {
+            this.towerSelectPanel.active = false;
+        }
+
+        // 隐藏动态创建的塔位选择面板
+        if (this._dynamicTowerSelectPanel) {
+            this._dynamicTowerSelectPanel.active = false;
         }
     }
 
@@ -507,6 +517,9 @@ export class BattleUI extends Component {
     showTowerSelectPanel(slotId: string): void {
         console.log(`[BattleUI] showTowerSelectPanel called, slotId=${slotId}`);
         this._currentSlotId = slotId;
+
+        // 互斥：显示塔位选择时，先隐藏塔详情
+        this._hideTowerDetailPanel();
 
         // 优先使用场景中绑定的面板，其次使用动态创建的面板
         if (this.towerSelectPanel) {
@@ -803,13 +816,13 @@ export class BattleUI extends Component {
     private _showBoundTowerSelectPanel(): void {
         if (!this.towerSelectPanel) return;
 
-        // 置顶塔位选择面板（确保在 BattleUIRoot 内最上层）
-        this._bringNodeToFront(this.towerSelectPanel);
-        // 置顶 BattleUIRoot（确保在 BattleVisualRoot 之上）
+        // 置顶 BattleUIRoot
         this._bringNodeToFront(this.node);
+        // 置顶塔位选择面板
+        this._bringNodeToFront(this.towerSelectPanel);
 
-        // 应用面板样式
-        stylePanel(this.towerSelectPanel);
+        // 应用外框样式（复用肉鸽逻辑）
+        styleOuterFrame(this.towerSelectPanel);
 
         // 显示面板
         this.towerSelectPanel.active = true;
@@ -998,10 +1011,13 @@ export class BattleUI extends Component {
     private _showDynamicTowerSelectPanel(): void {
         if (!this._dynamicTowerSelectPanel) return;
 
-        // 置顶动态塔位选择面板（确保在 BattleUIRoot 内最上层）
-        this._bringNodeToFront(this._dynamicTowerSelectPanel);
-        // 置顶 BattleUIRoot（确保在 BattleVisualRoot 之上）
+        // 置顶 BattleUIRoot
         this._bringNodeToFront(this.node);
+        // 置顶动态塔位选择面板
+        this._bringNodeToFront(this._dynamicTowerSelectPanel);
+
+        // 应用外框样式（复用肉鸽逻辑）
+        styleOuterFrame(this._dynamicTowerSelectPanel);
 
         this._dynamicTowerSelectPanel.active = true;
         console.log('[BattleUI] 显示动态塔位选择面板');
@@ -1033,6 +1049,10 @@ export class BattleUI extends Component {
 
         const stats = tower.getEffectiveStats();
 
+        // 互斥：显示塔详情时，先隐藏塔位选择
+        this._hideTowerSelectPanel();
+        this._hideDynamicTowerSelectPanel();
+
         // 优先使用绑定面板，其次使用动态面板
         if (this.towerDetailPanelRoot) {
             this._showBoundTowerDetailPanel(stats);
@@ -1040,8 +1060,8 @@ export class BattleUI extends Component {
             this._ensureTowerDetailPanel();
             if (this._dynamicTowerDetailPanel) {
                 this._updateDynamicTowerDetailContent(stats);
-                this._bringNodeToFront(this._dynamicTowerDetailPanel);
                 this._bringNodeToFront(this.node);
+                this._bringNodeToFront(this._dynamicTowerDetailPanel);
                 this._dynamicTowerDetailPanel.active = true;
             }
         }
@@ -1055,12 +1075,13 @@ export class BattleUI extends Component {
     private _showBoundTowerDetailPanel(stats: TowerEffectiveStats): void {
         if (!this.towerDetailPanelRoot) return;
 
-        // 置顶面板
-        this._bringNodeToFront(this.towerDetailPanelRoot);
+        // 置顶 BattleUIRoot
         this._bringNodeToFront(this.node);
+        // 置顶塔详情面板
+        this._bringNodeToFront(this.towerDetailPanelRoot);
 
-        // 应用面板样式
-        stylePanel(this.towerDetailPanelRoot);
+        // 应用外框样式（复用肉鸽逻辑）
+        styleOuterFrame(this.towerDetailPanelRoot);
 
         // 更新标题
         if (this.towerDetailTitleLabel) {
@@ -1157,8 +1178,8 @@ export class BattleUI extends Component {
         const panelTransform = panel.addComponent(UITransform);
         panelTransform.setContentSize(500, 600);
 
-        // 应用面板样式（深色半透明底、描边）
-        stylePanel(panel);
+        // 应用外框样式（复用肉鸽逻辑）
+        styleOuterFrame(panel);
 
         // 标题
         const titleNode = new Node('Title');
