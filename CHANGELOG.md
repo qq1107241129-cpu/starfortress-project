@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## 2026-06-14 015 肉鸽选择面板与塔位选择面板置顶修复
+
+### Fixed
+
+- 修复肉鸽选择面板（RogueChoicePanel）被 BattleVisualRoot 盖住的问题：弹出时调用 `setSiblingIndex` 置顶
+- 修复塔位选择面板（TowerSelectPanel）被 BattleVisualRoot 盖住的问题：弹出时调用 `setSiblingIndex` 置顶
+- 修复动态创建的塔位选择面板同样被盖住的问题：显示时调用 `setSiblingIndex` 置顶
+
+### Changed
+
+- `BattleUI.ts` 新增 `_bringNodeToFront()` 方法，统一封装节点置顶逻辑
+- `_showRogueChoicePanel()` 在显示面板前调用置顶：先置顶 RogueChoicePanel（在 BattleUIRoot 内），再置顶 BattleUIRoot（在 Canvas 下）
+- `_showTowerSelectPanel()` 在显示面板前调用置顶
+- `_showDynamicTowerSelectPanel()` 在显示面板前调用置顶
+
+### Notes
+
+- 使用 `setSiblingIndex(parent.children.length - 1)` 实现置顶，Cocos Creator 3.x 标准 API
+- siblingIndex 越大，渲染越靠后，视觉上越靠上
+- 未修改 `.scene` 文件
+- 未修改战斗数值
+- 未引入新依赖
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-14 Codex 审查修复 014 系列
 
 ### Fixed

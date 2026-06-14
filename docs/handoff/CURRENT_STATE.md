@@ -4,6 +4,23 @@
 
 本文件基于当前仓库读取结果整理，用于新会话接手。未重新启动 Cocos Creator，也未重新运行 Web 预览；无法确认的内容均标注为"不确定，需要人工确认"。
 
+## 2026-06-14 015 肉鸽选择面板与塔位选择面板置顶修复
+
+- 状态：代码已完成，Web 预览待用户确认
+- 问题：肉鸽选择面板和塔位选择面板被 BattleVisualRoot 盖住，按钮无法点击
+- 修复：在 `BattleUI.ts` 中新增 `_bringNodeToFront()` 方法，弹出面板时调用 `setSiblingIndex` 置顶
+- 影响范围：
+  - `_showRogueChoicePanel()`：肉鸽选择面板置顶
+  - `_showTowerSelectPanel()`：塔位选择面板置顶（场景绑定版本）
+  - `_showDynamicTowerSelectPanel()`：动态创建的塔位选择面板置顶
+- `.meta` 状态：无新增脚本，无需创建 `.meta`
+- `.scene` 状态：未修改，检测到的 `.scene` 差异默认视为用户人工改动
+- 未修改战斗数值
+- 未引入新依赖
+- 代码已实现，Web 预览待用户确认
+
+---
+
 ## 2026-06-14 Codex 审查修复 014 / 014.1 / 014.2
 
 - 状态：已完成最小修复，Web 预览待用户确认

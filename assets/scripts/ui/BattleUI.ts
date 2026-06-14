@@ -553,6 +553,16 @@ export class BattleUI extends Component {
 
     // ==================== UI 更新 ====================
 
+    /**
+     * 将节点置顶到其父节点的最上层
+     * Cocos Creator 3.x 中 siblingIndex 越大，渲染越靠后，视觉上越靠上
+     * @param target 目标节点
+     */
+    private _bringNodeToFront(target: Node | null): void {
+        if (!target || !target.parent) return;
+        target.setSiblingIndex(target.parent.children.length - 1);
+    }
+
     private _updateSkillUI(): void {
         if (!this._battleManager) return;
 
@@ -594,6 +604,11 @@ export class BattleUI extends Component {
     ): void {
         if (!this.rogueChoicePanel) return;
 
+        // 置顶肉鸽选择面板（确保在 BattleUIRoot 内最上层）
+        this._bringNodeToFront(this.rogueChoicePanel);
+        // 置顶 BattleUIRoot（确保在 BattleVisualRoot 之上）
+        this._bringNodeToFront(this.node);
+
         // 显示面板
         this.rogueChoicePanel.active = true;
 
@@ -634,6 +649,11 @@ export class BattleUI extends Component {
 
     private _showTowerSelectPanel(): void {
         if (!this.towerSelectPanel) return;
+
+        // 置顶塔位选择面板（确保在 BattleUIRoot 内最上层）
+        this._bringNodeToFront(this.towerSelectPanel);
+        // 置顶 BattleUIRoot（确保在 BattleVisualRoot 之上）
+        this._bringNodeToFront(this.node);
 
         // 显示面板
         this.towerSelectPanel.active = true;
@@ -849,6 +869,12 @@ export class BattleUI extends Component {
      */
     private _showDynamicTowerSelectPanel(): void {
         if (!this._dynamicTowerSelectPanel) return;
+
+        // 置顶动态塔位选择面板（确保在 BattleUIRoot 内最上层）
+        this._bringNodeToFront(this._dynamicTowerSelectPanel);
+        // 置顶 BattleUIRoot（确保在 BattleVisualRoot 之上）
+        this._bringNodeToFront(this.node);
+
         this._dynamicTowerSelectPanel.active = true;
         console.log('[BattleUI] 显示动态塔位选择面板');
     }
