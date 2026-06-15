@@ -1,5 +1,71 @@
 # CHANGELOG
 
+## 2026-06-15 016.1 关卡选择面板布局优化
+
+### Changed
+
+- 重写 `StageSelectPanel.ts` 布局逻辑：
+  - 容器固定尺寸 560 x 980，布局不再依赖外部节点尺寸
+  - 标题 y=420，返回按钮 y=360，关卡列表从 y=260 开始
+  - 关卡按钮内部文字分层：标题 y+24、描述 y-4、状态 y-28
+  - 已解锁按钮：青色描边，白色文字，"点击挑战"
+  - 未解锁按钮：灰色描边，灰色文字，"🔒 未解锁"
+  - 最多显示前 6 关，超过时底部显示"更多关卡后续开放"
+  - 添加调试日志：open、refresh stage count、click stage
+
+### Notes
+
+- 只优化内部布局，不扩展新功能
+- 不做 ScrollView，不做复杂关卡地图
+- 不修改 `.scene` 文件
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-15 016 关卡选择动态面板（含 lazy init 修复）
+
+### Added
+
+- 新增 `assets/scripts/ui/StageSelectPanel.ts`：关卡选择面板组件
+  - 动态生成关卡列表 UI（使用 Graphics + Label，不引入图片资源）
+  - 读取 StageConfig 自动生成关卡按钮
+  - 读取 SaveManager.highestStage 判断解锁状态
+  - 已解锁关卡可点击进入战斗
+  - 未解锁关卡显示锁定状态，不可点击
+  - 提供 open() / close() / refresh() 方法
+  - **支持 lazy init**：即使节点初始 active=false，也能在第一次 open() 时正常初始化
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
+### Changed
+
+- `MainUI.ts`：
+  - 新增 `stageSelectPanel` 属性（可选绑定）
+  - "开始游戏"按钮改为打开关卡选择面板
+  - 移除兜底 enterBattle 逻辑，找不到时只报错
+- `SaveManager.ts`：
+  - 新增 `updateHighestStage(stageIndex)` 方法
+  - highestStage 语义：已通关最高关卡编号（默认 0，通关第 1 关后变为 1）
+- `GameBootstrap.ts`：
+  - 监听 BATTLE_RESULT 事件
+  - 胜利时调用 SaveManager.updateHighestStage() 更新最高关卡记录
+- `SettlementUI.ts`：
+  - "继续"按钮改为返回主界面（保守处理，不直接进入下一关）
+  - 玩家可通过主界面关卡选择面板选择已解锁的下一关
+
+### Notes
+
+- 不新增 stageSelect 状态，避免影响 MainUIRoot 显隐逻辑
+- StageSelectPanel 自身控制 active 昼隐
+- StageSelectPanelRoot 默认 active=false 由用户在 Cocos Creator 中手动设置
+- `.scene` 文件未修改
+- `StageSelectPanel.ts.meta` 需要用户用 Cocos Creator 打开项目自动生成
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-15 015 系列审查修复
 
 ### Fixed
@@ -18,6 +84,14 @@
 - 代码修复完成，Web 预览待用户确认
 
 ## 2026-06-14 015.5.3 塔详情和塔位选择界面复用肉鸽大面板逻辑
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -169,6 +243,14 @@
 
 ## 2026-06-14 015.3 Boss 击杀胜利 + Boss 进基地结算
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - 修改战斗胜利条件：不再因为 180 秒时间到达自动胜利，改为 Boss 被击杀后才胜利结算
@@ -222,6 +304,14 @@
 
 ## 2026-06-14 015.1 active skill VFX redo
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - Reworked `assets/scripts/battle/SkillEffectView.ts` from one-shot static Graphics drawings to update-driven staged VFX.
@@ -264,6 +354,14 @@
 - 修复肉鸽选择面板（RogueChoicePanel）被 BattleVisualRoot 盖住的问题：弹出时调用 `setSiblingIndex` 置顶
 - 修复塔位选择面板（TowerSelectPanel）被 BattleVisualRoot 盖住的问题：弹出时调用 `setSiblingIndex` 置顶
 - 修复动态创建的塔位选择面板同样被盖住的问题：显示时调用 `setSiblingIndex` 置顶
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -310,6 +408,14 @@
 - `BattleVisualManager.ts` 新增 `_syncSlowEffectPositions()` 方法，每帧同步减速特效位置跟随敌人。
 - 爆炸特效第一帧立即可见：橙红色实心爆点 + 外圈冲击波。
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - `EnemyController.applySlow()` 施加减速时发出 `ENEMY_SLOWED` 事件。
@@ -342,6 +448,14 @@
 - `BattleVisualManager.ts` 新增 `_updateFloatingTexts()` 方法，处理飘字上浮、淡出、销毁动画。
 - 飘字使用真实 `deltaTime`，不跟随战斗倍速，确保 x4 下不会瞬间消失。
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - `EnemyController.takeDamage()` 返回实际扣血值（考虑护甲后），便于伤害飘字显示真实数值。
@@ -369,6 +483,14 @@
 - `BattleUI.ts` 新增场景绑定字段 `speedButton` 和 `speedButtonLabel`，倍速按钮由 Cocos 场景绑定，代码负责事件监听和文本更新。
 - `AttackEffectView.ts` 接入倍速，特效生命周期跟随战斗速度。
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - `BattleManager.update()` 内部使用 `scaledDeltaTime` 替代原始 `deltaTime`，统一驱动 TimeManager、EnemySpawner、TowerManager。
@@ -389,6 +511,14 @@
 
 - 新增 `assets/scripts/data/BattleBalanceConfig.ts`：战斗平衡配置文件，集中管理 20+ 个原散落在战斗代码中的硬编码常量。
 - 配置项涵盖：敌人基础速度/伤害、投射物速度/碰撞容差、范围/链式伤害衰减、技能半径、结算倍率、肉鸽触发时间、放置塔数量。
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -435,6 +565,14 @@
   - `ice_tower`：冰锥 / 冰冻扩散
   - `electric_tower`：折线闪电
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - `BattleVisualManager._createAttackEffect()` 改为调用 `AttackEffectView.playTowerAttackEffect()`，不再让所有防御塔共用普通长直线攻击效果。
@@ -450,6 +588,14 @@
 - 人工验收确认：可进入战斗，基地和塔位显示正常，可点击塔位并放置防御塔，4 种塔都能攻击，攻击弹道已从统一线条改为不同效果，未发现阻塞问题。
 
 ## 2026-06-10 013.3.1 统一塔类型命名
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -523,6 +669,14 @@
 
 ## 2026-06-08 013.2-battle-layout-redesign 战斗布局重新设计
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - 更新 `assets/scripts/battle/StageManager.ts`：定义基地中心坐标(960,540)、8个塔位坐标、新增随机路径生成方法。移除旧的单条路径，改为支持四面八方随机方向。
@@ -546,6 +700,14 @@
 ### Added
 
 - 新增 `assets/scripts/ui/UILayerController.ts`：UILayer 显隐控制器，监听 GameManager 状态变化，战斗状态时显示 UILayer（调试 Label），非战斗状态时隐藏。
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -584,6 +746,14 @@
 - 更新 `docs/PUBLISH_MATRIX.md` 添加构建步骤和体积检查说明
 - 添加源码体积估算：TypeScript 脚本约 300KB，assets 目录约 875KB
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - 更新 `settings/v2/packages/builder.json` 添加构建任务配置（Battle.scene UUID 修正为 3a1a0eba-8136-47cf-82d1-febcf32362c0）
@@ -606,6 +776,14 @@
 - 新增 `assets/scripts/battle/EnemyView.ts`：敌人可视化组件，使用 Graphics 绘制圆形敌人和血条，根据敌人类型设置不同颜色。
 - 新增 `assets/scripts/battle/TowerView.ts`：防御塔可视化组件，使用 Graphics 绘制矩形防御塔，显示攻击闪烁反馈，根据塔类型设置不同颜色。
 - 新增 `assets/scripts/battle/AttackEffectView.ts`：攻击特效可视化组件，使用 Graphics 绘制攻击线和命中特效。
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -641,6 +819,14 @@
 - 修复 BattleUI 不随状态显示/隐藏：新增 `onStateChange` 监听，`battle` 状态时显示，其他状态隐藏；新增 `update()` 方法自动刷新倒计时和基地生命 Label。
 - 修复 SettlementUI 继续按钮可能重复点击：点击后清空 `_currentResult` 防止重入；新增 `onStateChange` 监听，非 `settlement` 状态时隐藏。
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - 更新 `docs/TECH_DESIGN.md`：修正启动流程描述，GameBootstrap 不再自动启动战斗，改为主界面触发；补充 UI 面板通过 `GameManager.onStateChange()` 自动显示/隐藏的说明。
@@ -663,6 +849,14 @@
 - 新增 `assets/scripts/ui/SettlementUI.ts`：战斗结算 UI 组件，显示胜负结果、星级评定、击杀数、奖励金额，提供继续和返回主界面按钮。
 - 新增 `assets/scripts/ui/TowerUpgradeUI.ts`：塔升级 UI 组件，显示 4 种 MVP 塔列表、等级、攻击/射速/射程属性和升级按钮，升级消耗战斗金币并持久化到存档。
 - 新增 `assets/scripts/ui/SettingsUI.ts`：设置 UI 组件，提供音效/震动开关和存档重置功能。
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -701,6 +895,14 @@
 - 新增 `assets/scripts/base/RebirthManager.ts`：星核重构管理器，管理转生条件判断、星核碎片计算、转生执行、永久技能升级和加成读取。
 - 新增 `assets/scripts/ui/RebirthUI.ts`：星核重构 UI 组件，显示转生条件、预计碎片、确认弹窗和永久技能列表。
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - 更新 `assets/scripts/core/SaveManager.ts`：新增 `resetForRebirth()` 方法，重置普通资源但保留永久内容（星核碎片、永久技能、历史最高关卡、塔等级）。
@@ -735,6 +937,14 @@
 - 新增 `assets/scripts/base/IdleIncomeManager.ts`：放置收益管理器，在线时每帧累加经营币，启动时计算离线收益，提供领取接口。
 - 新增 `assets/scripts/ui/OfflineRewardUI.ts`：离线收益弹窗组件，显示离线时长、收益金额和领取按钮，广告翻倍预留入口。
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - 更新 `assets/scripts/data/EconomyConfig.ts`：新增 `calculateOnlineIncomePerMinute(mineOutput, factoryLevel)` 函数，在线收益公式改为「矿场产出 × 工厂在线倍率 × baseCoinMultiplier」；`calculateOfflineIncome` 新增 `mineOutput` 参数，返回值新增 `maxMinutes` 字段。
@@ -761,6 +971,14 @@
 - 新增 `assets/scripts/base/BuildingManager.ts`：建筑管理器，管理 5 个 MVP 建筑的等级、升级、消耗和属性加成。
 - 新增 `assets/scripts/base/BaseManager.ts`：基地总管理器，协调 SaveManager 和 BuildingManager，管理资源和建筑效果查询。
 - 新增 `assets/scripts/ui/BuildingUI.ts`：建筑 UI 组件，显示建筑列表、等级、效果和升级按钮。
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -791,6 +1009,14 @@
 - 新增 `assets/scripts/battle/RogueChoiceManager.ts`：肉鸽选择管理器，管理局内 3 选 1 强化选择（触发计时、选项生成、选择生效）。
 - 新增 `assets/scripts/battle/SkillManager.ts`：主动技能管理器，管理技能充能次数和释放逻辑（轨道炮区域伤害、全屏冻结）。
 - 新增 `assets/scripts/ui/BattleUI.ts`：战斗 UI 组件，管理技能按钮和肉鸽选择面板的交互。
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -862,6 +1088,14 @@
 
 ## 2026-06-05 006-enemy-wave-system 完成
 
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+
 ### Changed
 
 - 更新 `assets/scripts/battle/BattleSettlement.ts`：`recordKill()` 新增 `reward` 参数，累计敌人击杀奖励；新增 `_totalEnemyReward` 字段；`_calculateBattleCoinReward()` 改为基于累计敌人奖励 × 关卡倍率 × 胜负倍率计算。
@@ -883,6 +1117,14 @@
 - 新增 `assets/scripts/battle/TowerManager.ts`：塔管理器，管理所有塔实例、固定槽位、攻击调度。
 - 新增 `assets/scripts/battle/TowerController.ts`：塔控制器，控制单个塔的目标选择、攻击冷却、属性读取。
 - 新增 `assets/scripts/battle/ProjectileManager.ts`：投射物管理器，管理投射物飞行、碰撞检测、伤害结算，支持单体/范围/链式三种类型。
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 
@@ -968,6 +1210,14 @@
 - 无业务代码改动，无 Cocos 场景或资源文件改动。
 
 ## 2026-06-05
+
+### Fixed
+
+- 修复点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
 
 ### Changed
 

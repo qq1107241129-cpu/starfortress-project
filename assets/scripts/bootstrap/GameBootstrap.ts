@@ -26,6 +26,7 @@ import { TimeManager } from '../core/TimeManager';
 import { BattleManager } from '../battle/BattleManager';
 import { BaseManager } from '../base/BaseManager';
 import { IdleIncomeManager } from '../base/IdleIncomeManager';
+import { SaveManager } from '../core/SaveManager';
 
 const { ccclass, property } = _decorator;
 
@@ -51,6 +52,7 @@ export class GameBootstrap extends Component {
 
     private _battleManager: BattleManager | null = null;
     private _baseManager: BaseManager | null = null;
+    private _saveManager: SaveManager | null = null;
     private _idleIncomeManager: IdleIncomeManager | null = null;
     private _eventBus: EventBus | null = null;
     private _isBattleRunning: boolean = false;
@@ -134,6 +136,9 @@ export class GameBootstrap extends Component {
         this._baseManager = BaseManager.getInstance();
         await this._baseManager.init();
 
+        // 6.5 获取 SaveManager 实例（用于更新 highestStage）
+        this._saveManager = SaveManager.getInstance();
+
         // 7. 初始化 RebirthManager（星核重构，通过 BaseManager 已初始化）
         console.log('[GameBootstrap] RebirthManager 已随 BaseManager 初始化');
 
@@ -181,6 +186,11 @@ export class GameBootstrap extends Component {
         // 监听战斗结果
         bind(BATTLE_EVENTS.BATTLE_RESULT, (data: any) => {
             console.log('[GameBootstrap] 战斗结果:', data.result);
+
+            // 胜利时更新最高关卡记录
+            if (data.result === 'victory') {
+                this._updateHighestStageOnVictory();
+            }
         });
 
         // 监听敌人生成
@@ -354,6 +364,27 @@ export class GameBootstrap extends Component {
 
         // 保存存档，确保奖励持久化
         this._baseManager.save();
+    }
+
+    /**
+     * 胜利时更新最高关卡记录
+     * 从当前战斗的 stageId 推算 stageIndex，然后更新 SaveManager.highestStage
+     */
+    private _updateHighestStageOnVictory(): void {
+        if (!this._battleManager || !this._saveManager) return;
+
+        const battleInfo = this._battleManager.getBattleInfo();
+        const stageId = battleInfo.stageId;
+
+        // 从 stageId 推算 stageIndex（stage_1 -> 0, stage_2 -> 1, ...）
+        const match = stageId.match(/stage_(\d+)/);
+        if (match) {
+            const stageNumber = parseInt(match[1], 10);
+            const stageIndex = stageNumber - 1;
+            this._saveManager.updateHighestStage(stageIndex);
+        } else {
+            console.warn(`[GameBootstrap] 无法从 stageId 推算 stageIndex: ${stageId}`);
+        }
     }
 
     onDestroy() {

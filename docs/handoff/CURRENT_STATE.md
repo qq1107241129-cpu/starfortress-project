@@ -1,5 +1,56 @@
 # Starfortress Project 当前交接状态
 
+## 2026-06-15 016.1 关卡选择面板布局优化
+
+- 状态：代码已完成，Web 预览待用户确认
+- 重写 `StageSelectPanel.ts` 布局逻辑：
+  - 容器固定尺寸 560 x 980，布局不再依赖外部节点尺寸
+  - 标题 y=420，返回按钮 y=360，关卡列表从 y=260 开始
+  - 关卡按钮内部文字分层：标题 y+24、描述 y-4、状态 y-28
+  - 已解锁按钮：青色描边，白色文字，"点击挑战"
+  - 未解锁按钮：灰色描边，灰色文字，"🔒 未解锁"
+  - 最多显示前 6 关，超过时底部显示"更多关卡后续开放"
+  - 添加调试日志：open、refresh stage count、click stage
+- `.scene` 状态：未修改
+- `.meta` 状态：`StageSelectPanel.ts.meta` 需要用户用 Cocos Creator 打开项目确认
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-15 016 关卡选择动态面板（含 lazy init 修复）
+
+- 状态：代码已完成，Web 预览待用户确认
+- 新增 `assets/scripts/ui/StageSelectPanel.ts`：关卡选择面板组件
+  - 动态生成关卡列表 UI（Graphics + Label，不引入图片资源）
+  - 读取 StageConfig 自动生成关卡按钮
+  - 读取 SaveManager.highestStage 判断解锁状态
+  - 已解锁关卡可点击进入战斗，未解锁关卡显示锁定状态
+  - 提供 open() / close() / refresh() 方法
+  - **支持 lazy init**：即使节点初始 active=false，也能在第一次 open() 时正常初始化
+- **修复**：点击"开始游戏"需要点两次才出现关卡选择面板的问题
+  - 根因：节点 active=false 时 onLoad() 不执行，Manager 引用未初始化
+  - 修复：open() 中先激活节点，再调用 _ensureInitialized() 确保初始化
+  - _ensureInitialized() 幂等，只执行一次
+  - MainUI 不再兜底 enterBattle，找不到 StageSelectPanel 时只 console.error
+- 修改 `MainUI.ts`："开始游戏"按钮改为打开关卡选择面板
+- 修改 `SaveManager.ts`：新增 updateHighestStage() 方法
+- 修改 `GameBootstrap.ts`：胜利时更新 highestStage
+- 修改 `SettlementUI.ts`："继续"按钮改为返回主界面（保守处理）
+- 不新增 stageSelect 状态，避免影响 MainUIRoot 显隐
+- `.scene` 状态：未修改
+- `.meta` 状态：`StageSelectPanel.ts.meta` 需要用户用 Cocos Creator 打开项目自动生成
+- 代码已实现，Web 预览待用户确认
+
+**Cocos 人工操作清单**：
+1. 在 MainUIRoot 下新建空节点 StageSelectPanelRoot
+2. 设置 StageSelectPanelRoot 默认 active=false
+3. 将 StageSelectPanel.ts 挂载到 StageSelectPanelRoot
+4. 在 MainUI.ts 中绑定 stageSelectPanel 属性（可选）
+5. 调整 StageSelectPanelRoot 的位置、大小、锚点
+6. 保存场景
+
+---
+
 ## 2026-06-15 015 系列审查修复
 
 - 状态：代码修复完成，Web 预览待用户确认

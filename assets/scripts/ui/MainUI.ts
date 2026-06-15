@@ -13,6 +13,7 @@ import { GameManager } from '../core/GameManager';
 import { BaseManager } from '../base/BaseManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { styleButton, styleLabel } from './UIStyleUtil';
+import { StageSelectPanel } from './StageSelectPanel';
 
 const { ccclass, property } = _decorator;
 
@@ -21,6 +22,9 @@ export class MainUI extends Component {
     // ==================== 按钮 ====================
     @property(Node)
     startBattleButton: Node | null = null;
+
+    @property(Node)
+    stageSelectPanel: Node | null = null;
 
     @property(Node)
     buildingButton: Node | null = null;
@@ -192,8 +196,19 @@ export class MainUI extends Component {
     // ==================== 按钮事件 ====================
 
     private _onStartBattle(): void {
-        // 默认进入第 1 关（后续可根据进度选择关卡）
-        this._gameManager?.enterBattle(0);
+        console.log('[MainUI] start battle clicked, open stage select');
+
+        // 打开关卡选择面板
+        if (this.stageSelectPanel) {
+            const panel = this.stageSelectPanel.getComponent(StageSelectPanel);
+            if (panel) {
+                panel.open();
+                return;
+            }
+        }
+
+        // 找不到 StageSelectPanel 时只报错，不兜底进入战斗
+        console.error('[MainUI] StageSelectPanel 未找到，请在 Cocos Creator 中绑定 stageSelectPanel 属性');
     }
 
     private _onBuilding(): void {

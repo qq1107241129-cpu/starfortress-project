@@ -184,6 +184,7 @@ Platform.instance.showRewardAd()
 -> 014.1-battle-speed-control
 -> 014.2-electric-chain-effect-and-damage-float-text
 -> 015-rogue-choice-panel-zindex-fix
+-> 016-stage-select-dynamic-panel
 ```
 
 ## 战斗数值配置位置
@@ -227,6 +228,21 @@ Platform.instance.showRewardAd()
 - 特效生命周期：轨道炮约 0.9 秒，全屏冻结约 1.17 秒
 - 特效使用 `update(deltaTime)` 和内部 active effect list 管理，不跟随战斗倍速
 - `BATTLE_END` 事件自动清理所有特效
+
+## 关卡选择系统（016）
+
+- `StageSelectPanel.ts`：关卡选择面板组件，挂载在 `StageSelectPanelRoot` 节点
+- 动态生成关卡列表 UI（Graphics + Label，不引入图片资源）
+- 读取 `StageConfig` 自动生成关卡按钮，不手写固定按钮
+- 读取 `SaveManager.highestStage` 判断解锁状态
+- 解锁逻辑：第 1 关始终解锁，第 N 关（index N-1）需要 `highestStage >= N-1`
+- highestStage 语义：已通关最高关卡编号（默认 0，通关第 1 关后变为 1）
+- 胜利后 `GameBootstrap` 监听 `BATTLE_RESULT` 事件更新 highestStage
+- 失败不解锁下一关
+- `SettlementUI` 继续按钮返回主界面（保守处理），玩家通过关卡选择面板进入下一关
+- 不新增 stageSelect 状态，避免影响 MainUIRoot 显隐逻辑
+- StageSelectPanel 自身控制 active 显隐
+- 后续增加关卡优先只改 `StageConfig`，面板自动扩展
 
 ## .scene 仍由用户人工维护
 

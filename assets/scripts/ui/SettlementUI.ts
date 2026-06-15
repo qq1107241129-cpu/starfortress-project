@@ -172,15 +172,16 @@ export class SettlementUI extends Component {
     // ==================== 按钮事件 ====================
 
     private _onContinue(): void {
-        // 继续下一关（如有）
+        // 保守处理：胜利或失败后都返回主界面
+        // 玩家可通过主界面的关卡选择面板选择下一关
         if (!this._currentResult) return;
 
         // 清空当前结果，防止重复点击
         this._currentResult = null;
 
-        // 重新开始同一关（GameManager.enterBattle 会自动处理 ended 状态）
+        // 返回主界面
         this.node.active = false;
-        this._gameManager?.enterBattle(0);
+        this._gameManager?.returnToMain();
     }
 
     private _onReturnMain(): void {

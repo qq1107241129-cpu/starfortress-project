@@ -174,6 +174,31 @@ export class SaveManager {
     }
 
     /**
+     * 更新最高关卡记录
+     * 只在新记录更高时更新
+     * @param stageIndex 关卡索引（0-based），通关后传入当前关卡索引
+     *
+     * 语义：highestStage 表示"已通关最高关卡编号"
+     * - 默认 0（未通关任何关卡）
+     * - 通关第 1 关（index 0）后变为 1
+     * - 通关第 2 关（index 1）后变为 2
+     * - 解锁条件：第 N 关（index N-1）解锁需要 highestStage >= N-1
+     */
+    async updateHighestStage(stageIndex: number): Promise<void> {
+        if (!this._currentSave) return;
+
+        // stageIndex 0 = 第 1 关，通关后 highestStage 应为 1
+        const stageNumber = stageIndex + 1;
+
+        // 只在新记录更高时更新
+        if (stageNumber > this._currentSave.highestStage) {
+            this._currentSave.highestStage = stageNumber;
+            await this.save();
+            console.log(`[SaveManager] 最高关卡更新: ${stageNumber}`);
+        }
+    }
+
+    /**
      * 重置存档为默认值
      * 用于星核重构后的普通资源重置（保留永久内容由调用方处理）
      */
