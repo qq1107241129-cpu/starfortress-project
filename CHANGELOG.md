@@ -1,5 +1,167 @@
 # CHANGELOG
 
+## 2026-06-15 019.1 战斗暂停弹窗置顶修复
+
+### Fixed
+
+- 修复暂停弹窗被塔位/可视节点盖住的问题：
+  - `BattlePausePanel.open()` 中新增 `_bringToFront()` 调用
+  - 将 BattlePausePanelRoot 在父节点中置顶
+  - 将父节点（BattleUIRoot）在祖父节点（Canvas）中置顶
+
+### Notes
+
+- 最小修复，未改变暂停/继续/重打/返回主菜单逻辑
+- 不修改 `.scene` 文件
+
+## 2026-06-15 019 战斗暂停弹窗
+
+### Added
+
+- 新增 `assets/scripts/ui/BattlePausePanel.ts`：战斗暂停弹窗组件
+  - 半透明遮罩 + 居中面板 + 青色描边
+  - 标题："暂停"
+  - 说明："战斗已暂停"
+  - 三个按钮：继续游戏、重打本关、返回主菜单
+  - 支持 lazy init（节点初始 active=false）
+  - 使用 Graphics 动态绘制，不新增图片资源
+
+- 修改 `assets/scripts/ui/BattleUI.ts`：
+  - 新增 `battlePausePanel` 属性（用户绑定 BattlePausePanelRoot）
+  - 修改 `_onPause()`：暂停后显示弹窗
+  - 新增 `_showPausePanel()`：获取或初始化 BattlePausePanel 组件
+  - 新增 `_onPauseContinue()`：继续游戏，恢复战斗
+  - 新增 `_onPauseRetry()`：重打本关，复用当前 stageId
+  - 新增 `_onPauseReturnMain()`：返回主菜单，不触发结算
+
+### Notes
+
+- 暂停逻辑复用 BattleManager.pauseBattle()，不新增暂停方法
+- 重打本关调用 returnToIdle() + startBattle(stageId)，倍速自动重置为 1x
+- 返回主菜单调用 GameManager.returnToMain()，内部已调用 returnToIdle()，不触发 BATTLE_SETTLEMENT
+- 暂停（_state='paused'）和肉鸽暂停（_isForcePaused）独立，不冲突
+- 不修改 `.scene` 文件
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-15 018 倍速 UI 重置同步修复
+
+### Fixed
+
+- 修复开完 4 倍速后重新开始游戏时，UI 仍显示 4 倍速但实际逻辑已是 1 倍速的问题：
+  - `BattleManager.startBattle()` 中重置 `_battleSpeed = 1` 后发射 `BATTLE_SPEED_CHANGE` 事件
+  - `BattleManager.returnToIdle()` 中重置 `_battleSpeed = 1` 后发射 `BATTLE_SPEED_CHANGE` 事件
+  - BattleUI 监听事件自动更新倍速按钮文本
+
+### Notes
+
+- 最小修复，只在两处重置位置补充事件发射
+- 不修改倍速循环逻辑（1x → 2x → 3x → 4x）
+- 不修改战斗数值
+- 不修改 `.scene` 文件
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-15 017 分裂无人机死亡分裂逻辑
+
+### Added
+
+- 实现分裂无人机 (`enemy_split_drone`) 死亡后分裂生成小单位：
+  - `EventBus.ts`：添加 `ENEMY_SPLIT` 事件常量
+  - `EnemyController.ts`：
+    - 添加 `getPath()` 和 `getPathIndex()` getter，支持路径继承
+    - `_die()` 中检查分裂配置，发射 `ENEMY_SPLIT` 事件
+    - 分裂事件包含父单位路径和路径索引
+  - `EnemySpawner.ts`：
+    - 添加 `spawnEnemyAtPosition()` 方法
+    - 子单位继承父单位的路径目标点，从死亡位置继续向基地方向移动
+  - `BattleManager.ts`：
+    - 监听 `ENEMY_SPLIT` 事件
+    - 子单位位置稍微偏移避免重叠
+
+### Notes
+
+- 分裂只在 `_die()` 中触发（被攻击击杀），`_reachBase()` 不触发
+- 子单位是 `enemy_mech_bug`（普通机械虫），没有 split 配置，不会递归分裂
+- 子单位路径：继承父单位目标点，从死亡位置到基地边缘
+- 不修改 `.scene` 文件
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-15 016.2.3 关卡选择面板默认滚动定位修复（顶部空白）
+
+### Fixed
+
+- 修复打开面板后标题下方出现大块空白，第 1 关从列表中部才开始显示的问题：
+  - 改用"可见窗口 startIndex 算法"替代 `recommendedBottomY - SCROLL_AREA_HEIGHT`
+  - 计算一屏最多能完整显示几个按钮 (visibleCount)
+  - startIndex = max(0, recommendedIndex - visibleCount + 1)
+  - targetScrollY = startIndex * itemStride
+  - 使用 `scrollToOffset` 替代直接设置 content.position
+  - 添加 Vec2 导入
+
+### Notes
+
+- 最小修复，未重写 StageSelectPanel
+- 不修改 `.scene` 文件
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-15 016.2.2 关卡选择面板默认滚动位置修复
+
+### Fixed
+
+- 修复打开面板后默认显示第 1～6 关，没有滚动到推荐关卡的问题：
+  - `scrollToPercentVertical` 在同一帧调用不生效，改用 `scheduleOnce` 延迟一帧
+  - 改为直接设置 `content.position.y`，更可靠
+  - 推荐关卡出现在可视区域底部附近（而非顶部）
+  - 计算逻辑：`recommendedBottomY - SCROLL_AREA_HEIGHT + LIST_BOTTOM_PADDING`
+- 增强调试日志：输出 recommendedIndex、targetScrollY、maxScrollY
+
+### Notes
+
+- 最小修复，未重写 StageSelectPanel
+- 不修改 `.scene` 文件
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-15 016.2.1 关卡选择面板 ScrollView 顶部裁剪修复
+
+### Fixed
+
+- 修复第 1 关顶部被 Mask 裁剪的问题：
+  - Content 添加 LIST_TOP_PADDING=32 和 LIST_BOTTOM_PADDING=32
+  - 第一个按钮从 content 顶部往下偏移 padding，不再贴边
+  - 滚动偏移计算加入 padding 补偿
+- 调整 ScrollView 与标题/返回按钮的间距：
+  - SCROLL_AREA_Y 从 20 改为 10
+  - SCROLL_AREA_HEIGHT 从 720 改为 700
+  - 标题底部与 ScrollView 顶部间距 ~30px
+  - ScrollView 底部与返回按钮顶部间距 ~52px
+
+### Notes
+
+- 最小修复，未重写 StageSelectPanel
+- 不修改 `.scene` 文件
+- 代码已实现，Web 预览待用户确认
+
+## 2026-06-15 016.2 关卡选择面板滚动列表与布局修复
+
+### Changed
+
+- 重写 `StageSelectPanel.ts` 布局，实现可滚动关卡列表：
+  - 返回按钮从 y=360 移至 y=-420（固定底部）
+  - 标题固定在顶部 y=420
+  - 中间区域改为 ScrollView + Mask + Content 可滚动结构
+  - 移除 MAX_VISIBLE_STAGES=6 限制，显示所有 StageConfig 关卡
+  - 打开面板时默认滚动到推荐关卡（highestStage 对应位置）
+  - Content 使用顶部锚点（anchorY=1），从上往下排列按钮
+  - 关卡按钮内部文字位置微调：标题 y+28、描述 y=0、状态 y-28
+  - 移除"更多关卡后续开放"提示（不再需要）
+  - 增强清理逻辑：refresh() 前清理 Content 所有子节点
+
+### Notes
+
+- ScrollView API 兜底：scrollToPercentVertical 失败时直接设置 content.position
+- 不修改 `.scene` 文件
+- 不新增图片资源、不引入第三方依赖
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-15 016.1 关卡选择面板布局优化
 
 ### Changed

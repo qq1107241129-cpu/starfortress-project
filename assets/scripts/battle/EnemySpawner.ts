@@ -7,7 +7,7 @@ import { EnemyController } from './EnemyController';
 import { StageConfig } from '../data/StageConfig';
 import { EnemyConfig, getEnemyConfig } from '../data/EnemyConfig';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
-import { StageManager } from './StageManager';
+import { StageManager, BASE_CENTER } from './StageManager';
 
 export class EnemySpawner {
     private _stageConfig: StageConfig;
@@ -129,6 +129,46 @@ export class EnemySpawner {
                 bossId: this._stageConfig.bossEnemyId
             });
         }
+    }
+
+    /**
+     * 从指定位置生成敌人（用于分裂逻辑）
+     * 子单位继承父单位的路径目标点，从死亡位置继续向基地方向移动
+     *
+     * @param configId 敌人配置ID
+     * @param position 生成位置（父敌人死亡位置）
+     * @param parentPath 父敌人的路径（可选，用于继承目标点）
+     * @param parentPathIndex 父敌人的路径索引（可选）
+     */
+    spawnEnemyAtPosition(
+        configId: string,
+        position: { x: number; y: number },
+        parentPath?: { x: number; y: number }[],
+        parentPathIndex?: number
+    ): void {
+        const config = getEnemyConfig(configId);
+        if (!config) return;
+
+        // 构建子单位路径：从死亡位置到父单位的目标点
+        // 如果父单位路径可用，继承目标点；否则使用基地中心
+        let path: { x: number; y: number }[];
+        if (parentPath && parentPath.length >= 2) {
+            // 继承父单位的目标点（路径最后一个点）
+            const targetPoint = parentPath[parentPath.length - 1];
+            path = [position, targetPoint];
+        } else {
+            // 兜底：从死亡位置到基地中心
+            path = [position, { x: BASE_CENTER.x, y: BASE_CENTER.y }];
+        }
+
+        const enemy = new EnemyController(configId, config, path, position);
+        this._enemies.set(enemy.getId(), enemy);
+
+        this._eventBus.emit(BATTLE_EVENTS.ENEMY_SPAWN, {
+            enemyId: enemy.getId(),
+            configId: configId,
+            position: position
+        });
     }
 
     /**

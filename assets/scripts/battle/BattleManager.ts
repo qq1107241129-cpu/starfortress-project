@@ -105,6 +105,33 @@ export class BattleManager {
             }
         });
 
+        // 监听敌人分裂（分裂无人机被击杀后生成小单位）
+        this._eventBus.on(BATTLE_EVENTS.ENEMY_SPLIT, (data: {
+            position: { x: number; y: number };
+            splitCount: number;
+            splitEnemyId: string;
+            parentPath: { x: number; y: number }[];
+            parentPathIndex: number;
+        }) => {
+            if (this._enemySpawner && this._state === 'playing') {
+                for (let i = 0; i < data.splitCount; i++) {
+                    // 子单位位置稍微偏移，避免重叠
+                    const offset = (i - (data.splitCount - 1) / 2) * 20;
+                    const spawnPos = {
+                        x: data.position.x + offset,
+                        y: data.position.y + offset
+                    };
+                    // 子单位继承父单位的路径目标点
+                    this._enemySpawner.spawnEnemyAtPosition(
+                        data.splitEnemyId,
+                        spawnPos,
+                        data.parentPath,
+                        data.parentPathIndex
+                    );
+                }
+            }
+        });
+
         // 监听战斗结果
         this._eventBus.on(BATTLE_EVENTS.BATTLE_RESULT, (data: { result: 'victory' | 'defeat' }) => {
             this._endBattle(data.result);
@@ -169,6 +196,7 @@ export class BattleManager {
         this._isPlacementPaused = true; // 开始时暂停，等待玩家放置塔
         this._placedTowerCount = 0;
         this._battleSpeed = 1; // 重置倍速为 1x
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, { speed: this._battleSpeed });
 
         // 开始计时
         this._timeManager.startBattleTimer(stageConfig.duration);
@@ -377,6 +405,7 @@ export class BattleManager {
         this._isPlacementPaused = false;
         this._placedTowerCount = 0;
         this._battleSpeed = 1; // 重置倍速为 1x
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, { speed: this._battleSpeed });
         // 如果是玩家主动中断战斗（暂停/进行中），需要停止计时并发出 BATTLE_END
         // 如果是战斗已结束（victory/defeat），_endBattle() 已经发出过 BATTLE_END
         if (wasPlaying) {

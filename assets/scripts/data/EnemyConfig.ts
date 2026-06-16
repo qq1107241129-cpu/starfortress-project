@@ -64,7 +64,7 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         reward: 30,
         baseDamage: 12,
         special: {
-            splitCount: 2,
+            splitCount: 3,
             splitEnemyId: 'enemy_mech_bug',
         },
     },

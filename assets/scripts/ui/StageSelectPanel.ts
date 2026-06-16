@@ -1,6 +1,6 @@
 /**
  * 关卡选择面板
- * 动态生成关卡列表 UI，支持解锁/锁定状态
+ * 动态生成关卡列表 UI，支持解锁/锁定状态，可滚动查看全部关卡
  *
  * 使用方式：
  * 1. 在 Cocos Creator 中创建空节点 StageSelectPanelRoot（放在 MainUIRoot 下）
@@ -10,12 +10,14 @@
  *
  * 布局说明：
  * - 容器固定尺寸 560 x 980
- * - 标题在顶部，返回按钮在标题下方
- * - 关卡按钮从上往下排列，最多显示 6 关
- * - 超过 6 关时底部显示"更多关卡后续开放"
+ * - 标题固定在顶部 y=420
+ * - 返回按钮固定在底部 y=-420
+ * - 中间区域为可滚动关卡列表（ScrollView + Mask + Content）
+ * - 所有关卡根据 StageConfig 动态生成，支持滚动查看
+ * - 打开面板时默认滚动到推荐关卡附近
  */
 
-import { _decorator, Component, Node, Label, Graphics, Color, UITransform, Vec3, Button } from 'cc';
+import { _decorator, Component, Node, Label, Graphics, Color, UITransform, Button, ScrollView, Mask, Vec2 } from 'cc';
 import { GameManager } from '../core/GameManager';
 import { SaveManager } from '../core/SaveManager';
 import { ConfigManager } from '../core/ConfigManager';
@@ -37,29 +39,31 @@ export class StageSelectPanel extends Component {
     private readonly PANEL_WIDTH = 560;
     private readonly PANEL_HEIGHT = 980;
 
-    // ==================== 标题区域 ====================
+    // ==================== 标题区域（固定顶部）====================
     private readonly TITLE_Y = 420;
     private readonly TITLE_FONT_SIZE = 36;
 
-    // ==================== 返回按钮 ====================
-    private readonly BACK_BTN_Y = 360;
-    private readonly BACK_BTN_WIDTH = 160;
+    // ==================== 返回按钮（固定底部）====================
+    private readonly BACK_BTN_Y = -420;
+    private readonly BACK_BTN_WIDTH = 180;
     private readonly BACK_BTN_HEIGHT = 56;
 
-    // ==================== 关卡按钮列表 ====================
-    private readonly STAGE_LIST_START_Y = 260;
-    private readonly STAGE_BTN_HEIGHT = 100;
-    private readonly STAGE_BTN_GAP = 20;
+    // ==================== 滚动区域 ====================
+    private readonly SCROLL_AREA_Y = 10;
+    private readonly SCROLL_AREA_HEIGHT = 700;
     private readonly STAGE_BTN_WIDTH = 480;
-    private readonly MAX_VISIBLE_STAGES = 6;
+    private readonly STAGE_BTN_HEIGHT = 96;
+    private readonly STAGE_BTN_GAP = 16;
+    private readonly LIST_TOP_PADDING = 32;
+    private readonly LIST_BOTTOM_PADDING = 32;
 
     // ==================== 关卡按钮内部文字 ====================
-    private readonly STAGE_TITLE_Y = 24;
-    private readonly STAGE_TITLE_FONT = 26;
-    private readonly STAGE_DESC_Y = -4;
-    private readonly STAGE_DESC_FONT = 18;
+    private readonly STAGE_TITLE_Y = 28;
+    private readonly STAGE_TITLE_FONT = 24;
+    private readonly STAGE_DESC_Y = 0;
+    private readonly STAGE_DESC_FONT = 16;
     private readonly STAGE_STATUS_Y = -28;
-    private readonly STAGE_STATUS_FONT = 20;
+    private readonly STAGE_STATUS_FONT = 18;
 
     // ==================== 内部状态 ====================
     private _gameManager: GameManager | null = null;
@@ -67,8 +71,10 @@ export class StageSelectPanel extends Component {
     private _configManager: ConfigManager | null = null;
     private _stageButtons: StageButtonData[] = [];
     private _panelContainer: Node | null = null;
-    private _stageListNode: Node | null = null;
+    private _scrollView: ScrollView | null = null;
+    private _scrollContent: Node | null = null;
     private _initialized: boolean = false;
+    private _uiCreated: boolean = false;
 
     // ==================== 生命周期 ====================
 
@@ -81,6 +87,9 @@ export class StageSelectPanel extends Component {
         this._gameManager = null;
         this._saveManager = null;
         this._configManager = null;
+        this._scrollView = null;
+        this._scrollContent = null;
+        this._panelContainer = null;
     }
 
     // ==================== 公开接口 ====================
@@ -116,15 +125,21 @@ export class StageSelectPanel extends Component {
         const save = this._saveManager.getSave();
         const highestStage = save.highestStage;
 
-        // 确保 panelContainer 已创建
-        if (!this._panelContainer) {
+        // 确保 UI 已创建（只执行一次）
+        if (!this._uiCreated) {
             this._createUI();
+            this._uiCreated = true;
         }
 
         // 更新关卡按钮
         this._updateStageButtons(stageConfigs, highestStage);
 
-        console.log(`[StageSelectPanel] refresh stage count: ${stageConfigs.length}`);
+        // 默认滚动到推荐关卡
+        const recommendedIndex = Math.min(highestStage, stageConfigs.length - 1);
+        this._scrollToRecommended(recommendedIndex, stageConfigs.length);
+
+        console.log(`[StageSelectPanel] refresh stage count: ${stageConfigs.length} highestStage: ${highestStage} recommendedIndex: ${recommendedIndex}`);
+        console.log(`[StageSelectPanel] scroll to recommended stage index: ${recommendedIndex}`);
     }
 
     // ==================== 初始化 ====================
@@ -161,24 +176,20 @@ export class StageSelectPanel extends Component {
         // 绘制面板背景
         this._drawPanelBackground();
 
-        // 创建标题
+        // 创建标题（固定顶部）
         this._createTitle();
 
-        // 创建返回按钮
+        // 创建返回按钮（固定底部）
         this._createBackButton();
 
-        // 创建关卡列表容器
-        this._stageListNode = new Node('StageList');
-        const listTransform = this._stageListNode.addComponent(UITransform);
-        listTransform.setContentSize(this.STAGE_BTN_WIDTH, this.STAGE_BTN_HEIGHT * this.MAX_VISIBLE_STAGES + this.STAGE_BTN_GAP * (this.MAX_VISIBLE_STAGES - 1));
-        this._panelContainer.addChild(this._stageListNode);
+        // 创建可滚动关卡列表区域
+        this._createScrollView();
     }
 
     /**
      * 创建半透明背景遮罩
      */
     private _createBackground(): void {
-        // 获取 StageSelectPanelRoot 的尺寸
         const rootTransform = this.node.getComponent(UITransform);
         const rootWidth = rootTransform ? rootTransform.width : 720;
         const rootHeight = rootTransform ? rootTransform.height : 1280;
@@ -224,7 +235,7 @@ export class StageSelectPanel extends Component {
     }
 
     /**
-     * 创建标题
+     * 创建标题（固定顶部）
      */
     private _createTitle(): void {
         if (!this._panelContainer) return;
@@ -246,7 +257,7 @@ export class StageSelectPanel extends Component {
     }
 
     /**
-     * 创建返回按钮
+     * 创建返回按钮（固定底部）
      */
     private _createBackButton(): void {
         if (!this._panelContainer) return;
@@ -292,20 +303,75 @@ export class StageSelectPanel extends Component {
         this._panelContainer.addChild(btnNode);
     }
 
+    /**
+     * 创建可滚动关卡列表区域
+     * 使用 ScrollView + Mask + Content 结构
+     */
+    private _createScrollView(): void {
+        if (!this._panelContainer) return;
+
+        // 创建 ScrollView 节点（作为裁剪容器）
+        const scrollNode = new Node('ScrollView');
+        const scrollTransform = scrollNode.addComponent(UITransform);
+        scrollTransform.setContentSize(this.STAGE_BTN_WIDTH, this.SCROLL_AREA_HEIGHT);
+        scrollNode.setPosition(0, this.SCROLL_AREA_Y, 0);
+
+        // 添加 Mask 组件实现裁剪
+        const mask = scrollNode.addComponent(Mask);
+        mask.type = Mask.Type.RECT;
+        mask.enabled = true;
+
+        // 绘制滚动区域背景（可选，便于调试）
+        const scrollBg = scrollNode.addComponent(Graphics);
+        scrollBg.fillColor = new Color(15, 18, 30, 100);
+        scrollBg.rect(-this.STAGE_BTN_WIDTH / 2, -this.SCROLL_AREA_HEIGHT / 2, this.STAGE_BTN_WIDTH, this.SCROLL_AREA_HEIGHT);
+        scrollBg.fill();
+
+        // 创建 Content 节点（ScrollView 的内容容器）
+        this._scrollContent = new Node('Content');
+        const contentTransform = this._scrollContent.addComponent(UITransform);
+        contentTransform.setContentSize(this.STAGE_BTN_WIDTH, 0);
+        contentTransform.setAnchorPoint(0.5, 1); // 顶部对齐
+        scrollNode.addChild(this._scrollContent);
+
+        // 添加 ScrollView 组件
+        this._scrollView = scrollNode.addComponent(ScrollView);
+        this._scrollView.content = this._scrollContent;
+        this._scrollView.horizontal = false;
+        this._scrollView.vertical = true;
+        this._scrollView.bounceDuration = 0.2;
+        this._scrollView.inertia = true;
+        this._scrollView.brake = 0.5;
+        this._scrollView.elastic = true;
+
+        this._panelContainer.addChild(scrollNode);
+    }
+
     // ==================== 关卡按钮管理 ====================
 
     /**
      * 更新关卡按钮列表
+     * 遍历所有 StageConfig，不再限制显示数量
      */
     private _updateStageButtons(stageConfigs: StageConfig[], highestStage: number): void {
         // 清除旧按钮
         this._clearStageButtons();
 
-        if (!this._stageListNode) return;
+        if (!this._scrollContent) return;
 
-        const visibleCount = Math.min(stageConfigs.length, this.MAX_VISIBLE_STAGES);
+        const stageCount = stageConfigs.length;
+        if (stageCount === 0) return;
 
-        for (let i = 0; i < visibleCount; i++) {
+        // 计算 Content 高度（含顶部和底部 padding）
+        const itemHeight = this.STAGE_BTN_HEIGHT + this.STAGE_BTN_GAP;
+        const contentHeight = this.LIST_TOP_PADDING + stageCount * itemHeight - this.STAGE_BTN_GAP + this.LIST_BOTTOM_PADDING;
+        const contentTransform = this._scrollContent.getComponent(UITransform);
+        if (contentTransform) {
+            contentTransform.setContentSize(this.STAGE_BTN_WIDTH, contentHeight);
+        }
+
+        // 从上往下排列所有关卡按钮（第一个按钮从 content 顶部往下偏移 padding）
+        for (let i = 0; i < stageCount; i++) {
             const stageConfig = stageConfigs[i];
             const stageIndex = i;
             const stageNumber = i + 1;
@@ -313,12 +379,11 @@ export class StageSelectPanel extends Component {
 
             const btnNode = this._createStageButton(stageConfig, stageIndex, stageNumber, isUnlocked);
 
-            // 从上往下排列
-            const yPos = (this.STAGE_BTN_HEIGHT + this.STAGE_BTN_GAP) * (visibleCount - 1 - i) -
-                          (this.STAGE_BTN_HEIGHT + this.STAGE_BTN_GAP) * (visibleCount - 1) / 2;
+            // 从上往下排列：第一个按钮在 padding 下方
+            const yPos = -this.LIST_TOP_PADDING - this.STAGE_BTN_HEIGHT / 2 - i * itemHeight;
             btnNode.setPosition(0, yPos, 0);
 
-            this._stageListNode.addChild(btnNode);
+            this._scrollContent.addChild(btnNode);
 
             this._stageButtons.push({
                 stageIndex,
@@ -326,11 +391,6 @@ export class StageSelectPanel extends Component {
                 isUnlocked,
                 node: btnNode
             });
-        }
-
-        // 如果关卡数超过 MAX_VISIBLE_STAGES，显示提示
-        if (stageConfigs.length > this.MAX_VISIBLE_STAGES) {
-            this._createMoreHint();
         }
     }
 
@@ -469,27 +529,55 @@ export class StageSelectPanel extends Component {
         parent.addChild(node);
     }
 
+    // ==================== 滚动控制 ====================
+
     /**
-     * 创建"更多关卡后续开放"提示
+     * 滚动到推荐关卡位置
+     * recommendedIndex = min(highestStage, stageCount - 1)
+     * highestStage=0 → 推荐 index 0（第 1 关）
+     * highestStage=1 → 推荐 index 1（第 2 关）
+     *
+     * 使用"可见窗口 startIndex 算法"：
+     * 1. 计算一屏最多能完整显示几个按钮 (visibleCount)
+     * 2. startIndex = max(0, recommendedIndex - visibleCount + 1)
+     * 3. targetScrollY = startIndex * itemStride
+     * 4. 限制在 [0, maxScrollY] 范围内
+     *
+     * 使用 scheduleOnce 延迟一帧执行，确保 contentSize 更新后再滚动
      */
-    private _createMoreHint(): void {
-        if (!this._panelContainer) return;
+    private _scrollToRecommended(recommendedIndex: number, stageCount: number): void {
+        if (!this._scrollView || !this._scrollContent || stageCount === 0) return;
 
-        const node = new Node('MoreHint');
-        const transform = node.addComponent(UITransform);
-        transform.setContentSize(this.PANEL_WIDTH, 30);
-        node.setPosition(0, -this.PANEL_HEIGHT / 2 + 80, 0);
+        const itemStride = this.STAGE_BTN_HEIGHT + this.STAGE_BTN_GAP;
+        const contentHeight = this.LIST_TOP_PADDING + stageCount * itemStride - this.STAGE_BTN_GAP + this.LIST_BOTTOM_PADDING;
+        const maxScrollY = Math.max(0, contentHeight - this.SCROLL_AREA_HEIGHT);
 
-        const label = node.addComponent(Label);
-        label.string = '更多关卡后续开放';
-        label.fontSize = 18;
-        label.lineHeight = 22;
-        label.color = new Color(100, 110, 130, 180);
-        label.horizontalAlign = Label.HorizontalAlign.CENTER;
-        label.verticalAlign = Label.VerticalAlign.CENTER;
+        // 一屏最多能完整显示几个按钮
+        const visibleCount = Math.max(1, Math.floor((this.SCROLL_AREA_HEIGHT - this.LIST_TOP_PADDING - this.LIST_BOTTOM_PADDING) / itemStride));
 
-        this._panelContainer.addChild(node);
+        // 计算应该从第几关开始显示
+        // recommendedIndex = 0, visibleCount = 5 → startIndex = 0
+        // recommendedIndex = 3, visibleCount = 5 → startIndex = 0
+        // recommendedIndex = 6, visibleCount = 5 → startIndex = 2
+        const startIndex = Math.max(0, recommendedIndex - visibleCount + 1);
+
+        // 计算滚动距离
+        const targetScrollY = startIndex * itemStride;
+        const finalScrollY = Math.min(Math.max(0, targetScrollY), maxScrollY);
+
+        console.log(`[StageSelectPanel] visibleCount: ${visibleCount} recommendedIndex: ${recommendedIndex} startIndex: ${startIndex} finalScrollY: ${finalScrollY.toFixed(1)} maxScrollY: ${maxScrollY.toFixed(1)}`);
+
+        // 延迟一帧执行，确保 contentSize 更新后再滚动
+        this.scheduleOnce(() => {
+            if (!this._scrollView || !this._scrollView.isValid) return;
+
+            // 使用 scrollToOffset 滚动（Cocos ScrollView 的 offset 是从顶部开始的偏移）
+            const offset = new Vec2(0, finalScrollY);
+            this._scrollView.scrollToOffset(offset, 0.1, true);
+        }, 0);
     }
+
+    // ==================== 清理逻辑 ====================
 
     /**
      * 清除所有关卡按钮
@@ -501,5 +589,10 @@ export class StageSelectPanel extends Component {
             }
         }
         this._stageButtons = [];
+
+        // 清理 Content 子节点（防御性清理）
+        if (this._scrollContent && this._scrollContent.isValid) {
+            this._scrollContent.removeAllChildren();
+        }
     }
 }

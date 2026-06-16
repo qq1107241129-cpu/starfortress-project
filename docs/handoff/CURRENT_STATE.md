@@ -1,5 +1,125 @@
 # Starfortress Project 当前交接状态
 
+## 2026-06-15 019 战斗暂停弹窗
+
+- 状态：代码已完成，Web 预览待用户确认
+- 新增 `BattlePausePanel.ts`：战斗暂停弹窗组件
+  - 半透明遮罩 + 居中面板 + 青色描边
+  - 三个按钮：继续游戏、重打本关、返回主菜单
+  - 支持 lazy init
+- 修改 `BattleUI.ts`：
+  - 新增 `battlePausePanel` 属性（用户绑定）
+  - `_onPause()` 暂停后显示弹窗
+  - 继续游戏：恢复战斗
+  - 重打本关：复用当前 stageId，倍速重置为 1x
+  - 返回主菜单：GameManager.returnToMain()，不触发结算
+- 暂停逻辑：复用 BattleManager.pauseBattle()，和肉鸽暂停独立
+- `.scene` 状态：未修改
+- `.meta` 状态：`BattlePausePanel.ts.meta` 需要用户用 Cocos Creator 打开项目自动生成
+- 代码已实现，Web 预览待用户确认
+
+**Cocos 人工绑定清单**：
+1. 在 BattleUIRoot 下创建空节点 BattlePausePanelRoot
+2. 设置 BattlePausePanelRoot 默认 active=false
+3. 将 BattlePausePanel.ts 挂载到 BattlePausePanelRoot
+4. 在 BattleUI 组件中绑定 battlePausePanel（指向 BattlePausePanelRoot）
+5. 确认 pauseButton 已绑定（如果还没有）
+6. 保存 Battle.scene
+7. 用 Cocos Creator 打开项目自动生成 BattlePausePanel.ts.meta
+
+---
+
+## 2026-06-15 018 倍速 UI 重置同步修复
+
+- 状态：代码已完成，Web 预览待用户确认
+- 修复开完 4 倍速后重新开始游戏时，UI 仍显示 4 倍速但实际逻辑已是 1 倍速的问题：
+  - `BattleManager.startBattle()` 中重置 `_battleSpeed = 1` 后发射 `BATTLE_SPEED_CHANGE` 事件
+  - `BattleManager.returnToIdle()` 中重置 `_battleSpeed = 1` 后发射 `BATTLE_SPEED_CHANGE` 事件
+- `.scene` 状态：未修改
+- `.meta` 状态：无新增脚本
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-15 017 分裂无人机死亡分裂逻辑
+
+- 状态：代码已完成，Web 预览待用户确认
+- 实现分裂无人机死亡后分裂生成小单位：
+  - `EnemyController._die()` 发射 `ENEMY_SPLIT` 事件
+  - `EnemySpawner.spawnEnemyAtPosition()` 从指定位置生成敌人
+  - 子单位继承父单位路径目标点，从死亡位置继续移动
+  - `BattleManager` 监听分裂事件，生成子单位
+- 分裂触发时机：只在 `_die()` 中（被攻击击杀），`_reachBase()` 不触发
+- 子单位路径：继承父单位目标点，从死亡位置到基地边缘
+- 防止无限分裂：子单位是 `enemy_mech_bug`，无 split 配置
+- `.scene` 状态：未修改
+- `.meta` 状态：无新增脚本
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-15 016.2.3 关卡选择面板默认滚动定位修复（顶部空白）
+
+- 状态：代码已完成，Web 预览待用户确认
+- 修复打开面板后标题下方出现大块空白的问题：
+  - 改用"可见窗口 startIndex 算法"
+  - startIndex = max(0, recommendedIndex - visibleCount + 1)
+  - targetScrollY = startIndex * itemStride
+  - 使用 `scrollToOffset` 替代直接设置 content.position
+- `.scene` 状态：未修改
+- `.meta` 状态：`StageSelectPanel.ts.meta` 已存在
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-15 016.2.2 关卡选择面板默认滚动位置修复
+
+- 状态：代码已完成，Web 预览待用户确认
+- 修复打开面板后默认显示第 1～6 关，没有滚动到推荐关卡的问题：
+  - 改用 `scheduleOnce` 延迟一帧执行滚动
+  - 直接设置 `content.position.y`，更可靠
+  - 推荐关卡出现在可视区域底部附近
+- `.scene` 状态：未修改
+- `.meta` 状态：`StageSelectPanel.ts.meta` 已存在
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-15 016.2.1 关卡选择面板 ScrollView 顶部裁剪修复
+
+- 状态：代码已完成，Web 预览待用户确认
+- 修复第 1 关顶部被 Mask 裁剪的问题：
+  - Content 添加顶部/底部 padding（32px）
+  - 第一个按钮从 padding 下方开始排列
+  - 滚动偏移计算加入 padding 补偿
+  - ScrollView 与标题/返回按钮间距调整
+- `.scene` 状态：未修改
+- `.meta` 状态：`StageSelectPanel.ts.meta` 已存在
+- 代码已实现，Web 预览待用户确认
+
+---
+
+## 2026-06-15 016.2 关卡选择面板滚动列表与布局修复
+
+- 状态：代码已完成，Web 预览待用户确认
+- 重写 `StageSelectPanel.ts` 布局，实现可滚动关卡列表：
+  - 返回按钮固定底部 y=-420
+  - 标题固定顶部 y=420
+  - 中间区域 ScrollView + Mask + Content 可滚动结构
+  - 显示所有 StageConfig 关卡（不再限制 6 关）
+  - 打开时默认滚动到推荐关卡（highestStage 对应位置）
+  - 移除"更多关卡后续开放"提示
+- `.scene` 状态：未修改
+- `.meta` 状态：`StageSelectPanel.ts.meta` 已存在（016 时创建）
+- 代码已实现，Web 预览待用户确认
+
+**Cocos 人工操作说明**：
+- 整体面板位置不满意时，用户只移动 StageSelectPanelRoot
+- 执行 Agent 不修改 .scene
+- 如果 Battle.scene 出现变更，默认视为用户人工 Cocos Creator 操作
+
+---
+
 ## 2026-06-15 016.1 关卡选择面板布局优化
 
 - 状态：代码已完成，Web 预览待用户确认

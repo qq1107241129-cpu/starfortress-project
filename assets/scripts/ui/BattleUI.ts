@@ -23,6 +23,7 @@ import { BaseManager } from '../base/BaseManager';
 import { TOWER_CONFIGS } from '../data/TowerConfig';
 import { TowerEffectiveStats } from '../battle/TowerController';
 import { styleButton, styleLabel, stylePanel, stylePanelTitle, styleValueLabel, styleCard, styleOuterFrame } from './UIStyleUtil';
+import { BattlePausePanel } from './BattlePausePanel';
 
 const { ccclass, property } = _decorator;
 
@@ -121,12 +122,19 @@ export class BattleUI extends Component {
     @property(Label)
     speedButtonLabel: Label | null = null;
 
+    // ==================== 暂停弹窗（场景绑定） ====================
+    @property(Node)
+    battlePausePanel: Node | null = null;
+
     // ==================== 内部状态 ====================
     private _battleManager: BattleManager | null = null;
     private _gameManager: GameManager | null = null;
     private _eventBus: EventBus | null = null;
     private _currentChoices: RogueUpgradeConfig[] = [];
     private _currentSlotId: string = ''; // 当前选择的塔位ID
+
+    // 暂停弹窗组件
+    private _pausePanel: BattlePausePanel | null = null;
 
     // 动态创建的塔位选择面板
     private _dynamicTowerSelectPanel: Node | null = null;
@@ -621,11 +629,68 @@ export class BattleUI extends Component {
         if (!this._battleManager) return;
         if (this._battleManager.isPlaying()) {
             this._battleManager.pauseBattle();
+            this._showPausePanel();
             console.log('[BattleUI] 战斗暂停');
-        } else if (this._battleManager.isPaused()) {
-            this._battleManager.resumeBattle();
-            console.log('[BattleUI] 战斗恢复');
         }
+    }
+
+    /**
+     * 显示暂停弹窗
+     */
+    private _showPausePanel(): void {
+        if (!this.battlePausePanel) {
+            console.error('[BattleUI] battlePausePanel 未绑定');
+            return;
+        }
+
+        // 获取或初始化 BattlePausePanel 组件
+        if (!this._pausePanel) {
+            this._pausePanel = this.battlePausePanel.getComponent(BattlePausePanel);
+            if (!this._pausePanel) {
+                this._pausePanel = this.battlePausePanel.addComponent(BattlePausePanel);
+            }
+            this._pausePanel.setCallbacks(
+                () => this._onPauseContinue(),
+                () => this._onPauseRetry(),
+                () => this._onPauseReturnMain()
+            );
+        }
+
+        this._pausePanel.open();
+    }
+
+    /**
+     * 暂停弹窗 - 继续游戏
+     */
+    private _onPauseContinue(): void {
+        this._battleManager?.resumeBattle();
+        this._pausePanel?.close();
+        console.log('[BattleUI] 继续游戏');
+    }
+
+    /**
+     * 暂停弹窗 - 重打本关
+     * 复用当前关卡 stageId，不硬编码关卡
+     * 重打后倍速自动重置为 1x（startBattle 中已重置）
+     */
+    private _onPauseRetry(): void {
+        this._pausePanel?.close();
+        const stageId = this._battleManager?.getCurrentStage()?.id;
+        this._battleManager?.returnToIdle();
+        if (stageId) {
+            this._battleManager?.startBattle(stageId);
+        }
+        console.log('[BattleUI] 重打本关');
+    }
+
+    /**
+     * 暂停弹窗 - 返回主菜单
+     * GameManager.returnToMain() 内部已调用 returnToIdle()，不触发 BATTLE_SETTLEMENT
+     */
+    private _onPauseReturnMain(): void {
+        this._pausePanel?.close();
+        this._gameManager?.returnToMain();
+        console.log('[BattleUI] 返回主菜单');
     }
 
     private _onReturnMain(): void {

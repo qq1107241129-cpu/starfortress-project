@@ -94,6 +94,8 @@ export const BATTLE_EVENTS = {
     BATTLE_PLACEMENT_COMPLETE: 'battle:placement_complete',
     // 战斗倍速变化
     BATTLE_SPEED_CHANGE: 'battle:speed_change',
+    // 敌人分裂事件
+    ENEMY_SPLIT: 'enemy:split',
     // 放置收益事件
     IDLE_INCOME_TICK: 'idle:income_tick',
     OFFLINE_REWARD_READY: 'idle:offline_reward_ready',

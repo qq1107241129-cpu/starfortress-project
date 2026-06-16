@@ -220,6 +220,20 @@ export class EnemyController {
     }
 
     /**
+     * 获取当前路径（用于分裂逻辑，子单位继承父单位路径）
+     */
+    getPath(): { x: number; y: number }[] {
+        return this._path;
+    }
+
+    /**
+     * 获取当前路径索引
+     */
+    getPathIndex(): number {
+        return this._state.pathIndex;
+    }
+
+    /**
      * 获取生命值百分比
      */
     getHealthPercent(): number {
@@ -241,7 +255,9 @@ export class EnemyController {
     }
 
     /**
-     * 敌人死亡
+     * 敌人死亡（被攻击击杀）
+     * 只在 takeDamage() 中调用，代表被塔击杀
+     * 到达基地由 _reachBase() 处理，不触发分裂
      */
     private _die(): void {
         this._state.isAlive = false;
@@ -254,5 +270,17 @@ export class EnemyController {
             isBoss: this._state.isBoss,
             position: { ...this._state.position }
         });
+
+        // 检查是否需要分裂（只在被击杀时触发，到达基地时不分裂）
+        // 子单位是 enemy_mech_bug，没有 split 配置，不会递归分裂
+        if (this._config.special?.splitCount && this._config.special?.splitEnemyId) {
+            this._eventBus.emit(BATTLE_EVENTS.ENEMY_SPLIT, {
+                position: { ...this._state.position },
+                splitCount: this._config.special.splitCount,
+                splitEnemyId: this._config.special.splitEnemyId,
+                parentPath: this._path,
+                parentPathIndex: this._state.pathIndex
+            });
+        }
     }
 }
