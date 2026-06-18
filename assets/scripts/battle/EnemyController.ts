@@ -16,6 +16,8 @@ export interface EnemyState {
     armor: number;
     reward: number;
     baseDamage: number;
+    /** 死亡掉落合金（020） */
+    alloyReward: number;
     position: { x: number; y: number };
     pathIndex: number;
     pathProgress: number;
@@ -52,6 +54,7 @@ export class EnemyController {
             armor: config.armor,
             reward: config.reward,
             baseDamage: config.baseDamage,
+            alloyReward: config.alloyDrop, // 020
             position: { ...spawnPosition },
             pathIndex: 0,
             pathProgress: 0,
@@ -267,6 +270,7 @@ export class EnemyController {
             enemyId: this._state.id,
             configId: this._state.configId,
             reward: this._state.reward,
+            alloyReward: this._state.alloyReward, // 020
             isBoss: this._state.isBoss,
             position: { ...this._state.position }
         });

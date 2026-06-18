@@ -13,6 +13,8 @@ export interface EnemyConfig {
     armor: number;
     reward: number;
     baseDamage: number;
+    /** 死亡掉落合金（020） */
+    alloyDrop: number;
     special?: {
         splitCount?: number;
         splitEnemyId?: string;
@@ -25,44 +27,48 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         name: '普通机械虫',
         description: '血量低、速度中、奖励低',
         type: 'normal',
-        health: 15,
+        health: 9,
         speed: 1.0,
         armor: 0,
-        reward: 10,
-        baseDamage: 10,
+        reward: 5,
+        baseDamage: 7,
+        alloyDrop: 5,
     },
     {
         id: 'enemy_fast_bug',
         name: '快速突击虫',
         description: '血量低、速度快',
         type: 'fast',
-        health: 15,
+        health: 9,
         speed: 2.0,
         armor: 0,
-        reward: 15,
-        baseDamage: 8,
+        reward: 8,
+        baseDamage: 6,
+        alloyDrop: 8,
     },
     {
         id: 'enemy_heavy_mech',
         name: '重甲机械兵',
         description: '血量高、护甲高、速度慢',
         type: 'heavy',
-        health: 100,
+        health: 60,
         speed: 0.5,
         armor: 20,
-        reward: 50,
-        baseDamage: 20,
+        reward: 25,
+        baseDamage: 14,
+        alloyDrop: 20,
     },
     {
         id: 'enemy_split_drone',
         name: '分裂无人机',
         description: '死亡后分裂或生成小单位',
         type: 'split',
-        health: 40,
+        health: 25,
         speed: 1.2,
         armor: 5,
-        reward: 30,
-        baseDamage: 12,
+        reward: 15,
+        baseDamage: 8,
+        alloyDrop: 15,
         special: {
             splitCount: 3,
             splitEnemyId: 'enemy_mech_bug',
@@ -73,11 +79,12 @@ export const ENEMY_CONFIGS: EnemyConfig[] = [
         name: '小 Boss',
         description: '血量高、奖励高、最后 30 秒出现',
         type: 'boss',
-        health: 700,
+        health: 500,
         speed: 0.3,
         armor: 15,
-        reward: 200,
-        baseDamage: 90,
+        reward: 100,
+        baseDamage: 70,
+        alloyDrop: 50,
     },
 ];
 

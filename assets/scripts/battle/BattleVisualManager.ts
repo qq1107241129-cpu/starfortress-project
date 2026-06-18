@@ -778,18 +778,14 @@ export class BattleVisualManager extends Component {
             const dy = Math.abs(localPos.y - slot.position.y);
 
             if (dx <= SLOT_HALF_SIZE && dy <= SLOT_HALF_SIZE) {
-                if (this._battleManager.isPlacementPhase()) {
-                    // 放置阶段：点击空槽位显示建塔选择
-                    if (!slot.towerId) {
-                        console.log(`[BattleVisualManager] 系统触摸命中空槽位 ${slot.id}`);
-                        this._onSlotClick(slot.id);
-                    }
+                if (slot.towerId) {
+                    // 点击已放置塔显示详情
+                    console.log(`[BattleVisualManager] 系统触摸命中已放置塔 ${slot.towerId}`);
+                    this._onTowerClick(slot.towerId, slot.id);
                 } else {
-                    // 战斗阶段：点击已放置塔显示详情
-                    if (slot.towerId) {
-                        console.log(`[BattleVisualManager] 系统触摸命中已放置塔 ${slot.towerId}`);
-                        this._onTowerClick(slot.towerId, slot.id);
-                    }
+                    // 点击空槽位显示建塔选择（020: playing 状态也可点击）
+                    console.log(`[BattleVisualManager] 点击塔位: slotId=${slot.id} occupied=false`);
+                    this._onSlotClick(slot.id);
                 }
                 return;
             }
@@ -817,18 +813,14 @@ export class BattleVisualManager extends Component {
             const dy = Math.abs(localPos.y - slot.position.y);
 
             if (dx <= SLOT_HALF_SIZE && dy <= SLOT_HALF_SIZE) {
-                if (this._battleManager.isPlacementPhase()) {
-                    // 放置阶段：点击空槽位显示建塔选择
-                    if (!slot.towerId) {
-                        console.log(`[BattleVisualManager] system mouse hit empty slot ${slot.id}`);
-                        this._onSlotClick(slot.id);
-                    }
+                if (slot.towerId) {
+                    // 点击已放置塔显示详情
+                    console.log(`[BattleVisualManager] system mouse hit placed tower ${slot.towerId}`);
+                    this._onTowerClick(slot.towerId, slot.id);
                 } else {
-                    // 战斗阶段：点击已放置塔显示详情
-                    if (slot.towerId) {
-                        console.log(`[BattleVisualManager] system mouse hit placed tower ${slot.towerId}`);
-                        this._onTowerClick(slot.towerId, slot.id);
-                    }
+                    // 点击空槽位显示建塔选择（020: playing 状态也可点击）
+                    console.log(`[BattleVisualManager] 点击塔位: slotId=${slot.id} occupied=false`);
+                    this._onSlotClick(slot.id);
                 }
                 return;
             }
@@ -905,7 +897,7 @@ export class BattleVisualManager extends Component {
     }
 
     /**
-     * 塔位点击处理
+     * 塔位点击处理（020: 移除 isPlacementPhase 检查，playing 状态也可点击）
      */
     private _onSlotClick(slotId: string): void {
         console.log(`[BattleVisualManager] _onSlotClick: slotId=${slotId}`);
@@ -915,9 +907,9 @@ export class BattleVisualManager extends Component {
             return;
         }
 
-        // 检查是否处于放置阶段
-        if (!this._battleManager.isPlacementPhase()) {
-            console.log('[BattleVisualManager] 不在放置阶段，忽略点击');
+        // 检查是否在战斗中
+        if (!this._battleManager.isPlaying()) {
+            console.log('[BattleVisualManager] 不在战斗中，忽略点击');
             return;
         }
 
@@ -936,7 +928,7 @@ export class BattleVisualManager extends Component {
         }
 
         // 通知 BattleUI 显示塔选择面板
-        console.log(`[BattleVisualManager] 发送 SHOW_TOWER_SELECT 事件, slotId=${slotId}`);
+        console.log(`[BattleVisualManager] 打开塔选择: slotId=${slotId}`);
         if (this._eventBus) {
             this._eventBus.emit('SHOW_TOWER_SELECT', { slotId });
         }

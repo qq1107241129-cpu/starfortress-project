@@ -3,12 +3,16 @@
  * 定义 MVP 四种塔的属性
  */
 
+import { BATTLE_BALANCE } from './BattleBalanceConfig';
+
 export interface TowerLevelConfig {
     level: number;
     attack: number;
     attackSpeed: number;
     range: number;
     upgradeCost: number;
+    /** 局内升级消耗合金（020） */
+    upgradeCostAlloy: number;
 }
 
 export interface TowerConfig {
@@ -27,6 +31,8 @@ export interface TowerConfig {
     slowFactor: number;
     /** 冰塔：减速持续时间（秒） */
     slowDuration: number;
+    /** 建造消耗合金（020） */
+    buildCostAlloy: number;
     levels: TowerLevelConfig[];
 }
 
@@ -43,12 +49,13 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         chainCount: 0,
         slowFactor: 0,
         slowDuration: 0,
+        buildCostAlloy: 80,
         levels: [
-            { level: 1, attack: 10, attackSpeed: 0.5, range: 450, upgradeCost: 0 },
-            { level: 2, attack: 15, attackSpeed: 0.45, range: 460, upgradeCost: 100 },
-            { level: 3, attack: 22, attackSpeed: 0.4, range: 470, upgradeCost: 250 },
-            { level: 4, attack: 30, attackSpeed: 0.35, range: 480, upgradeCost: 500 },
-            { level: 5, attack: 40, attackSpeed: 0.3, range: 500, upgradeCost: 1000 },
+            { level: 1, attack: 10, attackSpeed: 0.5, range: 450, upgradeCost: 0, upgradeCostAlloy: 0 },
+            { level: 2, attack: 15, attackSpeed: 0.45, range: 460, upgradeCost: 100, upgradeCostAlloy: 50 },
+            { level: 3, attack: 22, attackSpeed: 0.4, range: 470, upgradeCost: 250, upgradeCostAlloy: 80 },
+            { level: 4, attack: 30, attackSpeed: 0.35, range: 480, upgradeCost: 500, upgradeCostAlloy: 120 },
+            { level: 5, attack: 40, attackSpeed: 0.3, range: 500, upgradeCost: 1000, upgradeCostAlloy: 180 },
         ],
     },
     {
@@ -63,12 +70,13 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         chainCount: 0,
         slowFactor: 0,
         slowDuration: 0,
+        buildCostAlloy: 150,
         levels: [
-            { level: 1, attack: 25, attackSpeed: 1.5, range: 420, upgradeCost: 0 },
-            { level: 2, attack: 40, attackSpeed: 1.4, range: 430, upgradeCost: 150 },
-            { level: 3, attack: 60, attackSpeed: 1.3, range: 440, upgradeCost: 350 },
-            { level: 4, attack: 85, attackSpeed: 1.2, range: 450, upgradeCost: 700 },
-            { level: 5, attack: 120, attackSpeed: 1.1, range: 460, upgradeCost: 1400 },
+            { level: 1, attack: 25, attackSpeed: 1.5, range: 420, upgradeCost: 0, upgradeCostAlloy: 0 },
+            { level: 2, attack: 40, attackSpeed: 1.4, range: 430, upgradeCost: 150, upgradeCostAlloy: 70 },
+            { level: 3, attack: 60, attackSpeed: 1.3, range: 440, upgradeCost: 350, upgradeCostAlloy: 110 },
+            { level: 4, attack: 85, attackSpeed: 1.2, range: 450, upgradeCost: 700, upgradeCostAlloy: 160 },
+            { level: 5, attack: 120, attackSpeed: 1.1, range: 460, upgradeCost: 1400, upgradeCostAlloy: 240 },
         ],
     },
     {
@@ -83,12 +91,13 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         chainCount: 0,
         slowFactor: 0.8,
         slowDuration: 2.0,
+        buildCostAlloy: 120,
         levels: [
-            { level: 1, attack: 5, attackSpeed: 1.0, range: 430, upgradeCost: 0 },
-            { level: 2, attack: 8, attackSpeed: 0.9, range: 440, upgradeCost: 120 },
-            { level: 3, attack: 12, attackSpeed: 0.8, range: 450, upgradeCost: 280 },
-            { level: 4, attack: 18, attackSpeed: 0.7, range: 460, upgradeCost: 560 },
-            { level: 5, attack: 25, attackSpeed: 0.6, range: 480, upgradeCost: 1100 },
+            { level: 1, attack: 5, attackSpeed: 1.0, range: 430, upgradeCost: 0, upgradeCostAlloy: 0 },
+            { level: 2, attack: 8, attackSpeed: 0.9, range: 440, upgradeCost: 120, upgradeCostAlloy: 60 },
+            { level: 3, attack: 12, attackSpeed: 0.8, range: 450, upgradeCost: 280, upgradeCostAlloy: 95 },
+            { level: 4, attack: 18, attackSpeed: 0.7, range: 460, upgradeCost: 560, upgradeCostAlloy: 140 },
+            { level: 5, attack: 25, attackSpeed: 0.6, range: 480, upgradeCost: 1100, upgradeCostAlloy: 210 },
         ],
     },
     {
@@ -103,12 +112,13 @@ export const TOWER_CONFIGS: TowerConfig[] = [
         chainCount: 3,
         slowFactor: 0,
         slowDuration: 0,
+        buildCostAlloy: 140,
         levels: [
-            { level: 1, attack: 15, attackSpeed: 0.8, range: 440, upgradeCost: 0 },
-            { level: 2, attack: 22, attackSpeed: 0.75, range: 450, upgradeCost: 130 },
-            { level: 3, attack: 32, attackSpeed: 0.7, range: 460, upgradeCost: 300 },
-            { level: 4, attack: 45, attackSpeed: 0.65, range: 470, upgradeCost: 600 },
-            { level: 5, attack: 60, attackSpeed: 0.6, range: 480, upgradeCost: 1200 },
+            { level: 1, attack: 15, attackSpeed: 0.8, range: 440, upgradeCost: 0, upgradeCostAlloy: 0 },
+            { level: 2, attack: 22, attackSpeed: 0.75, range: 450, upgradeCost: 130, upgradeCostAlloy: 65 },
+            { level: 3, attack: 32, attackSpeed: 0.7, range: 460, upgradeCost: 300, upgradeCostAlloy: 100 },
+            { level: 4, attack: 45, attackSpeed: 0.65, range: 470, upgradeCost: 600, upgradeCostAlloy: 150 },
+            { level: 5, attack: 60, attackSpeed: 0.6, range: 480, upgradeCost: 1200, upgradeCostAlloy: 225 },
         ],
     },
 ];
@@ -120,4 +130,13 @@ export function getTowerConfig(towerId: string): TowerConfig | undefined {
 export function getTowerLevelConfig(towerId: string, level: number): TowerLevelConfig | undefined {
     const tower = getTowerConfig(towerId);
     return tower?.levels.find(l => l.level === level);
+}
+
+/**
+ * 根据基地核心等级计算塔等级总上限（020）
+ * @param baseCoreLevel 基地核心等级
+ * @returns 塔等级总上限
+ */
+export function getTowerGlobalLevelCap(baseCoreLevel: number): number {
+    return baseCoreLevel * BATTLE_BALANCE.towerLevelCapPerBaseLevel;
 }

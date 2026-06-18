@@ -121,4 +121,6 @@ export const BATTLE_EVENTS = {
     // 塔详情面板事件
     TOWER_DETAIL_SHOW: 'battle:tower_detail_show',
     TOWER_DETAIL_HIDE: 'battle:tower_detail_hide',
+    // 合金变化事件（020）
+    BATTLE_ALLOY_CHANGE: 'battle:alloy_change',
 } as const;

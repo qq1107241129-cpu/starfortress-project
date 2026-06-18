@@ -109,6 +109,10 @@ export class BattleUI extends Component {
     @property(Label)
     baseCoinLabel: Label | null = null;
 
+    /** 合金显示 Label（020，可选绑定） */
+    @property(Label)
+    alloyLabel: Label | null = null;
+
     @property(Node)
     pauseButton: Node | null = null;
 
@@ -152,6 +156,8 @@ export class BattleUI extends Component {
     private _boundOnSkillUse: ((data: any) => void) | null = null;
     private _boundOnShowTowerSelect: ((data: any) => void) | null = null;
     private _boundOnTowerDetailShow: ((data: any) => void) | null = null;
+    private _boundOnAlloyChange: ((data: { alloy: number }) => void) | null = null; // 020
+    private _alloyWarnShown: boolean = false; // 020: 合金 warn 只输出一次
 
     // 动态创建的塔详情面板
     private _dynamicTowerDetailPanel: Node | null = null;
@@ -285,6 +291,11 @@ export class BattleUI extends Component {
                 this._eventBus.off(BATTLE_EVENTS.TOWER_DETAIL_SHOW, this._boundOnTowerDetailShow);
                 this._boundOnTowerDetailShow = null;
             }
+            // 解绑合金变化事件（020）
+            if (this._boundOnAlloyChange) {
+                this._eventBus.off(BATTLE_EVENTS.BATTLE_ALLOY_CHANGE, this._boundOnAlloyChange);
+                this._boundOnAlloyChange = null;
+            }
         }
 
         // 解绑技能按钮事件
@@ -391,6 +402,12 @@ export class BattleUI extends Component {
             this._showTowerDetailPanel(data.towerId);
         };
         this._eventBus.on(BATTLE_EVENTS.TOWER_DETAIL_SHOW, this._boundOnTowerDetailShow);
+
+        // 监听合金变化事件（020）
+        this._boundOnAlloyChange = (data: { alloy: number }) => {
+            this._updateAlloyDisplay(data.alloy);
+        };
+        this._eventBus.on(BATTLE_EVENTS.BATTLE_ALLOY_CHANGE, this._boundOnAlloyChange);
     }
 
     private _setupButtonListeners(): void {
@@ -561,17 +578,10 @@ export class BattleUI extends Component {
         }
 
         const towerConfig = towerConfigs[towerIndex];
-        console.log(`[BattleUI] 选择塔: ${towerConfig.name} (${towerConfig.id})`);
+        console.log(`[BattleUI] 选择塔: slotId=${this._currentSlotId} tower=${towerConfig.name} (${towerConfig.id})`);
 
-        // 从存档读取塔等级（兜底为 1）
-        let towerLevel = 1;
-        try {
-            const saveMgr = BaseManager.getInstance().getSaveManager();
-            const save = saveMgr.getSave();
-            towerLevel = save.towerLevels?.[towerConfig.id] ?? 1;
-        } catch (e) {
-            console.warn('[BattleUI] 读取塔等级失败，使用默认等级 1');
-        }
+        // 020: 局内塔从 1 级开始，不再从存档读取等级
+        const towerLevel = 1;
         console.log(`[BattleUI] 塔等级: ${towerLevel}`);
 
         // 放置塔
@@ -768,6 +778,24 @@ export class BattleUI extends Component {
         if (this.baseHealthLabel) {
             this.baseHealthLabel.string = `基地: ${info.baseHealth}/${info.baseHealthMax}`;
         }
+
+        // 更新合金显示（020）
+        this._updateAlloyDisplay(info.battleAlloy);
+    }
+
+    /**
+     * 更新合金显示（020）
+     */
+    private _updateAlloyDisplay(alloy: number): void {
+        if (this.alloyLabel) {
+            this.alloyLabel.string = `合金: ${alloy}`;
+        } else {
+            // 只在首次输出 warn，避免刷屏
+            if (!this._alloyWarnShown) {
+                console.warn('[BattleUI] alloyLabel 未绑定，合金 UI 不显示');
+                this._alloyWarnShown = true;
+            }
+        }
     }
 
     // ==================== UI 更新 ====================
@@ -914,9 +942,9 @@ export class BattleUI extends Component {
                     styleButton(button, 'secondary');
                 }
 
-                // 更新标签
+                // 更新标签（显示塔名 + 合金价格）
                 if (label) {
-                    label.string = config.name;
+                    label.string = `${config.name}\n合金 ${config.buildCostAlloy}`;
                     styleLabel(label.node, 'medium');
                 }
             } else {
@@ -1012,12 +1040,12 @@ export class BattleUI extends Component {
             nameLabel.string = config.name;
             styleLabel(nameNode, 'medium');
 
-            // 塔描述
+            // 塔描述 + 价格
             const descNode = new Node('Desc');
             descNode.parent = btnNode;
             descNode.setPosition(0, -18, 0);
             const descLabel = descNode.addComponent(Label);
-            descLabel.string = config.description.substring(0, 8) + '...';
+            descLabel.string = `合金 ${config.buildCostAlloy}`;
             styleLabel(descNode, 'small');
 
             const towerIndex = i;

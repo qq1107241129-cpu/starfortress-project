@@ -185,6 +185,7 @@ Platform.instance.showRewardAd()
 -> 014.2-electric-chain-effect-and-damage-float-text
 -> 015-rogue-choice-panel-zindex-fix
 -> 016-stage-select-dynamic-panel
+-> 020-battle-alloy-tower-growth-and-wave-density-rework
 ```
 
 ## 战斗数值配置位置
@@ -192,6 +193,30 @@ Platform.instance.showRewardAd()
 - `assets/scripts/data/BattleBalanceConfig.ts`：集中管理战斗平衡常量（敌人速度、投射物速度、伤害衰减、技能半径、结算倍率等）
 - 默认值与原硬编码值一致，修改此文件可统一调整战斗体验
 - 后续数值调优在 `TASKS/015-battle-balance-first-tuning.md`
+
+## 合金系统（020）
+
+- 局内资源名称：合金
+- 内部字段：`BattleManager._battleAlloy`
+- 合金只在单局战斗内有效，不写入存档
+- 每局开始时给初始合金（`BATTLE_BALANCE.initialAlloy`，默认 200）
+- 怪物死亡时掉落合金（`EnemyConfig.alloyDrop`）
+- 合金用途：
+  - 在空塔位建造防御塔（`TowerConfig.buildCostAlloy`）
+  - 在战斗中升级已放置的防御塔（`TowerLevelConfig.upgradeCostAlloy`）
+- 战斗结束、返回主菜单、重打本关时，合金清空并重新初始化
+- 合金不进入战斗结算奖励（`BattleSettlement.ts` 未修改）
+
+## 塔等级语义（020）
+
+- `SaveManager.towerLevels` 语义变更：从"永久塔等级"改为"局外塔等级上限"
+- 局外塔升级的含义：提升该塔"局内可升级上限"
+- 局内塔等级：
+  - 每个已放置塔进入战斗时从 1 级开始
+  - 玩家消耗合金在局内升级该塔
+  - 局内实际等级不能超过：该塔局外上限、基地核心等级决定的总上限
+- 基地核心等级决定塔等级总上限：`baseCoreLevel * BATTLE_BALANCE.towerLevelCapPerBaseLevel`（默认每级 6）
+- 字段名 `towerLevels` 保留不变，仅注释和文档说明语义变更
 
 ## 战斗倍速规则
 

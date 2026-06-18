@@ -1,5 +1,117 @@
 # CHANGELOG
 
+## 2026-06-18 020.2 验收优化：放置塔界面显示价格
+
+### Changed
+
+- 放置塔选择界面增加建造价格显示：
+  - 绑定面板：标签显示 "塔名\n合金 价格"
+  - 动态面板：描述文本改为 "合金 价格"
+  - 价格来源：`TowerConfig.buildCostAlloy`
+  - 不硬编码价格，不修改 .scene
+
+### Notes
+
+- 只修改 `BattleUI.ts`，不改战斗逻辑
+- 合金不足拦截仍由 `BattleManager.placeTower()` 处理
+- 不修改 .scene 文件
+
+## 2026-06-18 020.1 验收修复：合金显示 + 放塔逻辑
+
+### Fixed
+
+- 修复 playing 状态下无法点击空塔位放塔的问题：
+  - `BattleVisualManager.ts` 移除 `_onSlotClick()` 中的 `isPlacementPhase()` 检查
+  - `BattleVisualManager.ts` 修改触摸处理逻辑，playing 状态下点击空槽位也能触发建塔
+  - 改为检查 `isPlaying()`，战斗中才允许点击
+
+- 修复局内塔等级读取错误：
+  - `BattleUI._onTowerSelect()` 不再从 `SaveManager.towerLevels` 读取等级
+  - 局内塔固定从 1 级开始
+
+- 合金显示最小修复：
+  - 如果 `alloyLabel` 未绑定，只输出一次 warn，不影响战斗逻辑
+  - 用户可临时将 DebugInfoLabel 拖到 BattleUI.alloyLabel 绑定
+
+- 增强放塔失败日志：
+  - `[BattleManager] 放塔失败: slotId=xxx tower=xxx reason=xxx alloy=xxx`
+  - `[BattleVisualManager] 点击塔位: slotId=xxx occupied=false`
+  - `[BattleVisualManager] 打开塔选择: slotId=xxx`
+  - `[BattleUI] 选择塔: slotId=xxx tower=xxx`
+
+### Notes
+
+- 不修改 `.scene` 文件
+- 不修改 UI 节点结构
+- 后续单独整理战斗 HUD 结构
+
+## 2026-06-18 020 战斗合金系统 + 塔等级重构 + 怪物密度提升
+
+### Added
+
+- 新增合金系统（局内资源）：
+  - `BattleManager` 新增 `_battleAlloy` 字段、`getBattleAlloy()`、`addBattleAlloy()`、`spendBattleAlloy()` 方法
+  - `EventBus.ts` 新增 `BATTLE_ALLOY_CHANGE` 事件
+  - `BattleBalanceConfig.ts` 新增 `initialAlloy: 200`、`towerLevelCapPerBaseLevel: 6` 配置
+  - 战斗开始时初始化合金，战斗结束/返回主菜单时清空合金
+  - 合金不写入存档，不进入战斗结算
+
+- 敌人死亡掉落合金：
+  - `EnemyConfig.ts` 新增 `alloyDrop` 字段
+  - `EnemyController.ts` 新增 `alloyReward` 字段，死亡事件携带合金
+  - `BattleManager` 监听死亡事件自动累加合金
+
+- 建塔消耗合金：
+  - `TowerConfig.ts` 新增 `buildCostAlloy` 字段（各塔不同）
+  - `BattleManager.placeTower()` 检查并扣除合金
+
+- 局内塔升级消耗合金：
+  - `TowerConfig.levels` 新增 `upgradeCostAlloy` 字段（按等级增长）
+  - `TowerController` 新增 `_maxLevelCap`、`setMaxLevelCap()`、`isAtMaxLevel()`、`getUpgradeCostAlloy()` 方法
+  - `TowerManager` 新增 `executeUpgrade()` 方法，`upgradeTower()` 改为返回升级信息
+  - `BattleManager` 新增 `upgradeTowerAtSlot()` 方法，处理合金扣除和等级上限检查
+
+- 塔等级上限逻辑：
+  - `TowerConfig.ts` 新增 `getTowerGlobalLevelCap(baseCoreLevel)` 函数
+  - 局内塔等级不能超过局外上限（`SaveManager.towerLevels`）
+  - 局内塔等级不能超过基地核心等级决定的总上限（`baseCoreLevel * 6`）
+  - `TowerManager.placeTower()` 时自动计算并设置等级上限
+
+### Changed
+
+- 取消开局放置阶段暂停：
+  - `BattleManager.startBattle()` 不再设置 `_isPlacementPaused = true`
+  - 移除 `_placedTowerCount`、`_requiredTowerCount`、`_resumeFromPlacement()`
+  - 战斗开始后直接刷怪，玩家可在任意时刻建塔
+  - `isPlacementPhase()` 保留但始终返回 false
+
+- 怪物密度大幅提升（第 1～3 关）：
+  - 波次 `count` 增加 2~3 倍
+  - 波次 `interval` 缩短到 0.5~0.7 倍
+  - 第 1 关总怪数从 75 增加到 160
+
+- 敌人数值调整（保持总体难度不变）：
+  - `enemy_mech_bug`: health 15→9, baseDamage 10→7, reward 10→5
+  - `enemy_fast_bug`: health 15→9, baseDamage 8→6, reward 15→8
+  - `enemy_heavy_mech`: health 100→60, baseDamage 20→14, reward 50→25
+  - `enemy_split_drone`: health 40→25, baseDamage 12→8, reward 30→15
+  - `enemy_boss`: health 700→500, baseDamage 90→70, reward 200→100
+
+- `SaveManager.towerLevels` 语义变更：
+  - 从"永久塔等级"改为"局外塔等级上限"
+  - 局内塔从 1 级开始，消耗合金升级
+  - 字段名保留不变，仅注释更新
+
+### Notes
+
+- `BattleSettlement.ts` 未修改，合金不进入结算奖励
+- `TowerUpgradeUI.ts` 未修改，局外升级文案后续处理
+- 不修改 `.scene` 文件
+- 不新增图片、prefab、第三方依赖
+- 合金显示复用 `BattleUI.alloyLabel`（可选绑定）
+- 第 4～10 关怪物密度暂未调整，后续可扩展
+- 代码已实现，Web 预览待用户确认
+
 ## 2026-06-15 019.1 战斗暂停弹窗置顶修复
 
 ### Fixed

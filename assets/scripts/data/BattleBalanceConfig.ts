@@ -58,6 +58,12 @@ export interface BattleBalanceConfig {
     // ==================== 战斗流程 ====================
     /** 放置阶段需要放置的塔数量。原硬编码: 4 */
     requiredTowerCount: number;
+
+    // ==================== 合金系统（020） ====================
+    /** 开局初始合金 */
+    initialAlloy: number;
+    /** 每级基地核心对应的塔等级上限 */
+    towerLevelCapPerBaseLevel: number;
 }
 
 export const BATTLE_BALANCE: BattleBalanceConfig = {
@@ -93,4 +99,8 @@ export const BATTLE_BALANCE: BattleBalanceConfig = {
 
     // 战斗流程
     requiredTowerCount: 4,
+
+    // 合金系统（020）
+    initialAlloy: 200,
+    towerLevelCapPerBaseLevel: 6,
 };

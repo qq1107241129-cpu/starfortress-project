@@ -6,9 +6,10 @@
 import { TowerController } from './TowerController';
 import { ProjectileManager } from './ProjectileManager';
 import { EnemyController } from './EnemyController';
-import { getTowerConfig } from '../data/TowerConfig';
+import { getTowerConfig, getTowerGlobalLevelCap } from '../data/TowerConfig';
 import { RogueUpgradeConfig } from '../data/SkillConfig';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
+import { BaseManager } from '../base/BaseManager';
 
 /** 固定塔位定义 */
 export interface TowerSlot {
@@ -57,6 +58,13 @@ export class TowerManager {
         }
 
         const tower = new TowerController(towerConfigId, config, level, slot.position);
+
+        // 计算等级上限：min(局外上限, 基地总上限)（020）
+        const externalCap = this._getExternalLevelCap(towerConfigId);
+        const globalCap = this._getGlobalLevelCap();
+        tower.setMaxLevelCap(Math.min(externalCap, globalCap));
+        console.log(`[TowerManager] 塔等级上限: ${tower.getMaxLevelCap()} (局外: ${externalCap}, 全局: ${globalCap})`);
+
         this._towers.set(tower.getId(), tower);
         slot.towerId = tower.getId();
 
@@ -184,9 +192,26 @@ export class TowerManager {
     }
 
     /**
-     * 升级指定槽位的塔
+     * 升级指定槽位的塔（020: 返回升级信息，由 BattleManager 处理合金扣除）
+     * @returns 升级信息：成功、成本、原因
      */
-    upgradeTower(slotId: string): boolean {
+    upgradeTower(slotId: string): { success: boolean; costAlloy: number; reason?: string } {
+        const slot = this._slots.find(s => s.id === slotId);
+        if (!slot || !slot.towerId) return { success: false, costAlloy: 0, reason: 'slot_empty' };
+
+        const tower = this._towers.get(slot.towerId);
+        if (!tower) return { success: false, costAlloy: 0, reason: 'tower_not_found' };
+
+        if (tower.isAtMaxLevel()) return { success: false, costAlloy: 0, reason: 'max_level' };
+
+        const costAlloy = tower.getUpgradeCostAlloy();
+        return { success: true, costAlloy };
+    }
+
+    /**
+     * 执行塔升级（由 BattleManager 调用）
+     */
+    executeUpgrade(slotId: string): boolean {
         const slot = this._slots.find(s => s.id === slotId);
         if (!slot || !slot.towerId) return false;
 
@@ -194,6 +219,31 @@ export class TowerManager {
         if (!tower) return false;
 
         return tower.upgrade();
+    }
+
+    /**
+     * 获取局外塔等级上限（从存档读取）（020）
+     */
+    private _getExternalLevelCap(towerConfigId: string): number {
+        try {
+            const saveMgr = BaseManager.getInstance().getSaveManager();
+            const save = saveMgr.getSave();
+            return save.towerLevels?.[towerConfigId] ?? 1;
+        } catch {
+            return 1;
+        }
+    }
+
+    /**
+     * 获取基地核心等级决定的全局上限（020）
+     */
+    private _getGlobalLevelCap(): number {
+        try {
+            const baseCoreLevel = BaseManager.getInstance().getBaseCoreLevel();
+            return getTowerGlobalLevelCap(baseCoreLevel);
+        } catch {
+            return 6; // 兜底
+        }
     }
 
     /**

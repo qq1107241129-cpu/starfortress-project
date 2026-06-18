@@ -45,6 +45,8 @@ export class TowerController {
     private _chainCountBonus: number = 0;
     /** 肉鸽强化加成：减速效果倍率 */
     private _slowBonus: number = 0;
+    /** 局内可升级上限（020） */
+    private _maxLevelCap: number = 999;
 
     constructor(
         configId: string,
@@ -222,11 +224,44 @@ export class TowerController {
         });
     }
 
+    // ==================== 等级上限（020） ====================
+
+    /**
+     * 设置等级上限
+     */
+    setMaxLevelCap(cap: number): void {
+        this._maxLevelCap = cap;
+    }
+
+    /**
+     * 获取等级上限
+     */
+    getMaxLevelCap(): number {
+        return this._maxLevelCap;
+    }
+
+    /**
+     * 是否已达上限
+     */
+    isAtMaxLevel(): boolean {
+        return this._state.level >= this._maxLevelCap;
+    }
+
+    /**
+     * 获取升级消耗合金
+     */
+    getUpgradeCostAlloy(): number {
+        const nextLevel = this._state.level + 1;
+        const nextConfig = getTowerLevelConfig(this._state.configId, nextLevel);
+        return nextConfig?.upgradeCostAlloy ?? 999999;
+    }
+
     /**
      * 升级塔
      * @returns 是否升级成功
      */
     upgrade(): boolean {
+        if (this.isAtMaxLevel()) return false;
         const nextLevel = this._state.level + 1;
         const nextConfig = getTowerLevelConfig(this._state.configId, nextLevel);
         if (!nextConfig) return false;

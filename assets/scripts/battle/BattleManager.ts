@@ -13,6 +13,7 @@ import { TimeManager } from '../core/TimeManager';
 import { EventBus, BATTLE_EVENTS } from '../core/EventBus';
 import { ConfigManager } from '../core/ConfigManager';
 import { BATTLE_BALANCE } from '../data/BattleBalanceConfig';
+import { getTowerConfig } from '../data/TowerConfig';
 
 export type BattleState = 'idle' | 'playing' | 'paused' | 'victory' | 'defeat' | 'settlement';
 
@@ -27,6 +28,8 @@ export interface BattleInfo {
     bossKillCount: number;
     enemyCount: number;
     towerCount: number;
+    /** 当前合金（020） */
+    battleAlloy: number;
 }
 
 export class BattleManager {
@@ -43,18 +46,16 @@ export class BattleManager {
     private _configManager: ConfigManager;
     /** 是否因肉鸽选择而暂停 */
     private _isForcePaused: boolean = false;
-    /** 是否因塔位选择而暂停 */
-    private _isPlacementPaused: boolean = false;
-    /** 已放置的塔数量 */
-    private _placedTowerCount: number = 0;
-    /** 需要放置的塔数量（从配置读取） */
-    private get _requiredTowerCount(): number { return BATTLE_BALANCE.requiredTowerCount; }
 
     // ==================== 战斗倍速 ====================
     /** 当前战斗倍速 */
     private _battleSpeed: number = 1;
     /** 可选倍速列表 */
     private readonly SPEED_OPTIONS: number[] = [1, 2, 3, 4];
+
+    // ==================== 合金系统（020） ====================
+    /** 当前局内合金 */
+    private _battleAlloy: number = 0;
 
     constructor() {
         this._stageManager = new StageManager();
@@ -95,9 +96,13 @@ export class BattleManager {
         });
 
         // 监听敌人死亡
-        this._eventBus.on(BATTLE_EVENTS.ENEMY_DEATH, (data: { enemyId: string; reward: number; isBoss: boolean }) => {
+        this._eventBus.on(BATTLE_EVENTS.ENEMY_DEATH, (data: { enemyId: string; reward: number; alloyReward?: number; isBoss: boolean }) => {
             if (this._battleSettlement) {
                 this._battleSettlement.recordKill(data.isBoss, data.reward);
+            }
+            // 掉落合金（020）
+            if (data.alloyReward && data.alloyReward > 0) {
+                this.addBattleAlloy(data.alloyReward);
             }
             // Boss 死亡触发胜利
             if (data.isBoss && this._state === 'playing') {
@@ -193,10 +198,13 @@ export class BattleManager {
 
         // 重置强制暂停状态
         this._isForcePaused = false;
-        this._isPlacementPaused = true; // 开始时暂停，等待玩家放置塔
-        this._placedTowerCount = 0;
         this._battleSpeed = 1; // 重置倍速为 1x
         this._eventBus.emit(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, { speed: this._battleSpeed });
+
+        // 初始化合金（020）
+        this._battleAlloy = BATTLE_BALANCE.initialAlloy;
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_ALLOY_CHANGE, { alloy: this._battleAlloy });
+        console.log(`[BattleManager] 初始化合金: ${this._battleAlloy}`);
 
         // 开始计时
         this._timeManager.startBattleTimer(stageConfig.duration);
@@ -204,59 +212,91 @@ export class BattleManager {
         // 更新状态
         this._state = 'playing';
 
+        // 直接开始生成敌人（020: 取消放置阶段暂停）
+        if (this._enemySpawner) {
+            this._enemySpawner.start();
+        }
+
         // 通知外部战斗已开始
-        this._eventBus.emit(BATTLE_EVENTS.BATTLE_START, { stageId, isPlacementPhase: true });
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_START, { stageId });
 
         return true;
     }
 
     /**
      * 放置塔（玩家选择后调用）
+     * 020: 新增合金检查
      */
     placeTower(slotId: string, towerConfigId: string, level: number = 1): boolean {
-        console.log(`[BattleManager] placeTower: slotId=${slotId}, towerConfigId=${towerConfigId}, level=${level}`);
+        console.log(`[BattleManager] placeTower: slotId=${slotId}, towerConfigId=${towerConfigId}, level=${level}, alloy=${this._battleAlloy}`);
 
         if (!this._towerManager) {
             console.warn('[BattleManager] placeTower: towerManager is null');
             return false;
         }
 
-        const success = this._towerManager.placeTower(slotId, towerConfigId, level);
-        console.log(`[BattleManager] placeTower result: ${success}`);
-
-        if (success) {
-            this._placedTowerCount++;
-            console.log(`[BattleManager] 放置塔 ${this._placedTowerCount}/${this._requiredTowerCount}`);
-
-            // 检查是否放够了塔
-            if (this._placedTowerCount >= this._requiredTowerCount) {
-                this._resumeFromPlacement();
-            }
+        // 检查合金（020）
+        const config = getTowerConfig(towerConfigId);
+        if (!config) {
+            console.warn(`[BattleManager] 放塔失败: slotId=${slotId} tower=${towerConfigId} reason=config_not_found`);
+            return false;
         }
+        if (!this.spendBattleAlloy(config.buildCostAlloy)) {
+            console.log(`[BattleManager] 放塔失败: slotId=${slotId} tower=${config.name} reason=alloy_insufficient alloy=${this._battleAlloy} need=${config.buildCostAlloy}`);
+            return false;
+        }
+
+        const success = this._towerManager.placeTower(slotId, towerConfigId, level);
+
+        if (!success) {
+            // 放塔失败，退还合金
+            this.addBattleAlloy(config.buildCostAlloy);
+            console.log(`[BattleManager] 放塔失败: slotId=${slotId} tower=${config.name} reason=place_failed alloy=${this._battleAlloy}`);
+        } else {
+            console.log(`[BattleManager] 放塔成功: slotId=${slotId} tower=${config.name} alloy=${this._battleAlloy}`);
+        }
+
         return success;
     }
 
     /**
-     * 从放置阶段恢复，开始战斗
+     * 是否处于放置阶段（020: 始终返回 false，保留接口兼容）
      */
-    private _resumeFromPlacement(): void {
-        this._isPlacementPaused = false;
-        console.log('[BattleManager] 塔放置完成，战斗开始');
-
-        // 开始生成敌人
-        if (this._enemySpawner) {
-            this._enemySpawner.start();
-        }
-
-        // 通知外部放置阶段完成（使用独立事件，避免重复触发 BATTLE_START）
-        this._eventBus.emit(BATTLE_EVENTS.BATTLE_PLACEMENT_COMPLETE, { stageId: this._stageManager.getCurrentStage()?.id });
+    isPlacementPhase(): boolean {
+        return false;
     }
 
     /**
-     * 是否处于放置阶段
+     * 升级指定槽位的塔（020）
+     * @param slotId 槽位ID
+     * @returns 是否升级成功
      */
-    isPlacementPhase(): boolean {
-        return this._isPlacementPaused;
+    upgradeTowerAtSlot(slotId: string): boolean {
+        if (!this._towerManager) return false;
+
+        const result = this._towerManager.upgradeTower(slotId);
+        if (!result.success) {
+            if (result.reason === 'max_level') {
+                console.log(`[BattleManager] 塔已达等级上限`);
+            }
+            return false;
+        }
+
+        if (!this.spendBattleAlloy(result.costAlloy)) {
+            console.log(`[BattleManager] 合金不足，无法升级，需要 ${result.costAlloy}，当前 ${this._battleAlloy}`);
+            return false;
+        }
+
+        // 执行升级
+        const upgradeSuccess = this._towerManager.executeUpgrade(slotId);
+        if (!upgradeSuccess) {
+            // 升级失败，退还合金
+            this.addBattleAlloy(result.costAlloy);
+            return false;
+        }
+
+        console.log(`[BattleManager] 塔升级成功，消耗合金 ${result.costAlloy}`);
+        return true;
     }
 
     /**
@@ -298,8 +338,8 @@ export class BattleManager {
     update(deltaTime: number): void {
         if (this._state !== 'playing') return;
 
-        // 如果因肉鸽选择或塔位选择而暂停，跳过战斗逻辑更新
-        if (this._isForcePaused || this._isPlacementPaused) return;
+        // 如果因肉鸽选择而暂停，跳过战斗逻辑更新（020: 移除放置阶段暂停）
+        if (this._isForcePaused) return;
 
         // 应用战斗倍速
         const scaledDeltaTime = deltaTime * this._battleSpeed;
@@ -321,6 +361,35 @@ export class BattleManager {
             const aliveEnemies = this._enemySpawner.getAliveEnemies();
             this._towerManager.update(scaledDeltaTime, aliveEnemies);
         }
+    }
+
+    // ==================== 合金系统（020） ====================
+
+    /**
+     * 获取当前合金
+     */
+    getBattleAlloy(): number {
+        return this._battleAlloy;
+    }
+
+    /**
+     * 增加合金
+     */
+    addBattleAlloy(amount: number): void {
+        this._battleAlloy += amount;
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_ALLOY_CHANGE, { alloy: this._battleAlloy });
+        console.log(`[BattleManager] 合金 +${amount}，当前: ${this._battleAlloy}`);
+    }
+
+    /**
+     * 消耗合金，返回是否成功
+     */
+    spendBattleAlloy(amount: number): boolean {
+        if (this._battleAlloy < amount) return false;
+        this._battleAlloy -= amount;
+        this._eventBus.emit(BATTLE_EVENTS.BATTLE_ALLOY_CHANGE, { alloy: this._battleAlloy });
+        console.log(`[BattleManager] 合金 -${amount}，当前: ${this._battleAlloy}`);
+        return true;
     }
 
     // ==================== 战斗倍速控制 ====================
@@ -360,6 +429,9 @@ export class BattleManager {
      */
     private _endBattle(result: 'victory' | 'defeat'): void {
         this._state = result;
+
+        // 清空合金（020）
+        this._battleAlloy = 0;
 
         // 停止计时
         this._timeManager.stopBattleTimer();
@@ -402,8 +474,7 @@ export class BattleManager {
         this._battleSettlement = null;
         this._enemySpawner = null;
         this._towerManager = null;
-        this._isPlacementPaused = false;
-        this._placedTowerCount = 0;
+        this._battleAlloy = 0; // 清空合金（020）
         this._battleSpeed = 1; // 重置倍速为 1x
         this._eventBus.emit(BATTLE_EVENTS.BATTLE_SPEED_CHANGE, { speed: this._battleSpeed });
         // 如果是玩家主动中断战斗（暂停/进行中），需要停止计时并发出 BATTLE_END
@@ -439,6 +510,7 @@ export class BattleManager {
             bossKillCount: this._battleSettlement?.getBossKillCount() || 0,
             enemyCount: this._enemySpawner?.getEnemyCount() || 0,
             towerCount: this._towerManager?.getTowers().length || 0,
+            battleAlloy: this._battleAlloy,
         };
     }
 

@@ -21,6 +21,12 @@ export interface SaveData {
     mineLevel: number;
     reactorLevel: number;
     factoryLevel: number;
+    /**
+     * 局外塔等级上限（020 语义变更）
+     * 不再表示进入战斗后的实际塔等级
+     * 改为表示该塔在局内可升级的上限等级
+     * 局内塔从 1 级开始，消耗合金升级，不能超过此上限
+     */
     towerLevels: Record<string, number>;
     permanentSkillLevels: Record<string, number>;
     lastOfflineTimestamp: number;
